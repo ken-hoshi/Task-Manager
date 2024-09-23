@@ -7,9 +7,13 @@ import classNames from "classnames";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
+import NotificationBanner from "@/app/component/notificationBanner/notificationBanner";
+import { useFormContext } from "@/app/provider/formProvider";
 
 const SuspenseComplete: React.FC = () => {
+  const { setBackForm } = useFormContext();
   const { setNotificationValue } = useNotificationContext();
+  const { notificationValue } = useNotificationContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramsName = searchParams.get("name");
@@ -29,8 +33,9 @@ const SuspenseComplete: React.FC = () => {
     setLoading(false);
   }, []);
 
-  const handleNavigateTaskPage = async () => {
-    router.push("/task");
+  const handleNavigateTopPage = async () => {
+    setBackForm(true);
+    router.push("/");
   };
 
   return (
@@ -38,37 +43,49 @@ const SuspenseComplete: React.FC = () => {
       {loading ? (
         <Loading />
       ) : (
-        <div className={styles.complete}>
-          <BackgroundImage2 />
+        <>
+          {notificationValue.message && (
+            <NotificationBanner
+              message={notificationValue.message}
+              color={notificationValue.color}
+            />
+          )}
 
-          <div className={styles[`text-area`]}>
-            <h1>Success!</h1>
+          <div className={styles.complete}>
+            <BackgroundImage2 />
 
-            <ul>
-              <p>Name</p>
-              <li className={styles[`name-item`]}>{paramsName}</li>
-              <p>Email Address</p>
-              <li className={styles[`email-item`]}>{paramsEmail}</li>
-            </ul>
+            <div className={styles[`text-area`]}>
+              <h1>Success!</h1>
 
-            <div className={styles[`to-task-page-area`]}>
-              <span
-                className={classNames("material-symbols-outlined", styles.icon)}
-                onClick={handleNavigateTaskPage}
-              >
-                arrow_circle_right
-              </span>
-              <p>To Task page</p>
-            </div>
-            <div className={styles[`confirm-mail-area`]}>
-              <p>
-                登録したメールアドレス宛にメールが送信されます。問題がなければメール内の
-                <span>Confirm your mail</span>
-                をクリックして認証してください。その後、上記ボタンからタスクページに移動が可能になります。
-              </p>
+              <ul>
+                <p>Name</p>
+                <li className={styles[`name-item`]}>{paramsName}</li>
+                <p>Email Address</p>
+                <li className={styles[`email-item`]}>{paramsEmail}</li>
+              </ul>
+
+              <div className={styles[`to-task-page-area`]}>
+                <span
+                  className={classNames(
+                    "material-symbols-outlined",
+                    styles.icon
+                  )}
+                  onClick={handleNavigateTopPage}
+                >
+                  arrow_circle_right
+                </span>
+                <p>To Login page</p>
+              </div>
+              <div className={styles[`confirm-mail-area`]}>
+                <p>
+                  登録したメールアドレス宛にメールが送信されます。問題がなければメール内の
+                  <span>Confirm your mail</span>
+                  をクリックして認証してください。その後、ログインが可能になります。
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );

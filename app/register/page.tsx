@@ -7,11 +7,14 @@ import { useFormContext } from "../provider/formProvider";
 import { useState } from "react";
 import { signUp } from "../hooks/signUp";
 import BackgroundImage2 from "../component/backgroundImage2/backgroundImage2";
+import { useNotificationContext } from "../provider/notificationProvider";
+import NotificationBanner from "../component/notificationBanner/notificationBanner";
 
 const Register: React.FC = () => {
   const WORD_LINCRAFT = "lincraft";
 
   const { setBackForm } = useFormContext();
+  const { notificationValue } = useNotificationContext();
   const router = useRouter();
   const { useSignUp } = signUp();
 
@@ -74,72 +77,81 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className={styles.register}>
-      <BackgroundImage2 />
+    <>
+      {notificationValue.message && (
+        <NotificationBanner
+          message={notificationValue.message}
+          color={notificationValue.color}
+        />
+      )}
 
-      <div className={styles[`text-area`]}>
-        <span
-          className={classNames("material-symbols-outlined", styles.icon)}
-          onClick={handleBackTop}
-        >
-          arrow_back
-        </span>
+      <div className={styles.register}>
+        <BackgroundImage2 />
 
-        <div className={styles[`form-area`]}>
-          <h1>Sign up</h1>
+        <div className={styles[`text-area`]}>
+          <span
+            className={classNames("material-symbols-outlined", styles.icon)}
+            onClick={handleBackTop}
+          >
+            arrow_back
+          </span>
 
-          <form onSubmit={handleSubmit}>
-            <input
-              type="text"
-              placeholder="Name"
-              name="name"
-              required
-              value={formData.name}
-              onChange={handleChange}
-              onFocus={handleFocus}
-              className={styles.input}
-            />
-            <p className={styles.instruction}>Enter your Name</p>
+          <div className={styles[`form-area`]}>
+            <h1>Sign up</h1>
 
-            <input
-              type="email"
-              placeholder="Email"
-              name="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              onFocus={handleFocus}
-              className={styles.input}
-            />
-            {emailError ? (
-              <p className={styles.error}>{emailError}</p>
-            ) : (
-              <p className={styles.instruction}>Enter your Email Address</p>
-            )}
+            <form onSubmit={handleSubmit}>
+              <input
+                type="text"
+                placeholder="Name"
+                name="name"
+                required
+                value={formData.name}
+                onChange={handleChange}
+                onFocus={handleFocus}
+                className={styles.input}
+              />
+              <p className={styles.instruction}>Enter your Name</p>
 
-            <input
-              type="password"
-              placeholder="Password"
-              name="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              onFocus={handleFocus}
-              className={styles.input}
-            />
-            {passwordError ? (
-              <p className={styles.error}>{passwordError}</p>
-            ) : (
-              <p className={styles.instruction}>Enter Password</p>
-            )}
+              <input
+                type="email"
+                placeholder="Email"
+                name="email"
+                required
+                value={formData.email}
+                onChange={handleChange}
+                onFocus={handleFocus}
+                className={styles.input}
+              />
+              {emailError ? (
+                <p className={styles.error}>{emailError}</p>
+              ) : (
+                <p className={styles.instruction}>Enter your Email Address</p>
+              )}
 
-            <button type="submit" disabled={loading}>
-              {loading ? <div className={styles.spinner}></div> : "Sign Up"}
-            </button>
-          </form>
+              <input
+                type="password"
+                placeholder="Password"
+                name="password"
+                required
+                value={formData.password}
+                onChange={handleChange}
+                onFocus={handleFocus}
+                className={styles.input}
+              />
+              {passwordError ? (
+                <p className={styles.error}>{passwordError}</p>
+              ) : (
+                <p className={styles.instruction}>Enter Password</p>
+              )}
+
+              <button type="submit" disabled={loading}>
+                {loading ? <div className={styles.spinner}></div> : "Sign Up"}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
