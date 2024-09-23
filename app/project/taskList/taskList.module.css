@@ -1,0 +1,226 @@
+.task-list {
+  position: relative;
+}
+
+.non-tasks {
+  width: 130vh;
+  height: 65.5vh;
+  font-size: 5vh;
+  color: #cccfd0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.task-list table {
+  border-collapse: collapse;
+  background-color: #ffffff;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.8);
+  margin: 0 auto;
+  text-align: center;
+  align-items: center;
+  vertical-align: middle;
+  width: 130vh;
+  z-index: 0;
+}
+
+.task-list thead,
+.task-list tbody {
+  display: block;
+}
+
+.task-list tbody {
+  max-height: 65.5vh;
+  overflow-y: auto;
+}
+
+.task-list th {
+  background-color: #0aa9ec;
+  color: white;
+  font-weight: normal;
+  position: relative;
+}
+
+.task-list tr {
+  border: 1px solid #878788;
+}
+
+.task-list th.col-task-name {
+  width: 43vh;
+  padding: 1vh;
+  box-sizing: border-box;
+}
+
+.task-list td.col-task-name {
+  width: 43vh;
+  display: flex;
+  justify-content: flex-start;
+  text-align: start;
+  padding: 1vh 2vh 1vh 0;
+  box-sizing: border-box;
+  word-wrap: break-word;
+}
+
+.task-list th.col-status,
+.task-list td.col-status {
+  width: 15vh;
+}
+
+.task-list th.col-start-day,
+.task-list td.col-start-day,
+.task-list th.col-deadline-day,
+.task-list td.col-deadline-day {
+  width: 21vh;
+  padding: 1vh;
+  box-sizing: border-box;
+}
+
+.task-list th.col-assigned-person,
+.task-list td.col-assigned-person {
+  width: 25vh;
+  padding: 1vh;
+  box-sizing: border-box;
+}
+
+.task-list th.col-actions,
+.task-list td.col-actions {
+  width: 5vh;
+  padding: 1vh;
+  box-sizing: border-box;
+}
+
+.task-list th.col-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.separator {
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  right: 0;
+  width: 0.5px;
+  background-color: #878788;
+}
+
+.blink {
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.detailHidden {
+  display: none;
+}
+
+.detailOpen {
+  display: table-row;
+  background-color: #efefef;
+  animation: open 0.3s ease-in-out forwards;
+  transform-origin: top;
+}
+
+@keyframes open {
+  0% {
+    transform: scaleY(0);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+.arrow-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 4vh;
+}
+
+.task-name {
+  max-width: 37vh;
+  box-sizing: border-box;
+  word-wrap: break-word;
+}
+
+.task-list dl {
+  margin: 0;
+}
+
+.task-list dt {
+  text-align: left;
+  margin: 3vh auto 0 10vh;
+  font-weight: 600;
+}
+
+.task-list dd {
+  margin: 0 auto;
+  padding: 1.5vh 0;
+  border-bottom: 1.5px dotted black;
+  width: 80%;
+}
+
+dd.dd-last {
+  border-bottom: none;
+}
+
+.scrollable-content {
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+.attachmentFile-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.file-info {
+  display: flex;
+  justify-content: center;
+}
+
+.display-attachmentFile-container {
+  margin: 0 1vh;
+  width: 9vh;
+  height: 9vh;
+}
+
+.downloadIcon {
+  font-size: 5vh !important;
+  margin: 0 auto;
+  cursor: pointer;
+  color: black;
+}
+.downloadIcon:hover {
+  color: #969696;
+}
+
+.display-attachmentFile-container p {
+  margin: 0 auto;
+  word-break: break-all;
+  font-size: 1.5vh;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.button-container {
+  text-align: center;
+}
+
+dd.dd-comment {
+  width: 100%;
+  padding: 0;
+}

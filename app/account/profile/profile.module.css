@@ -1,0 +1,29 @@
+.name {
+  font-size: 4.5vh;
+  margin: 0;
+}
+
+.profile-area table {
+  background-color: rgb(255, 255, 255);
+  margin: 4vh auto;
+  border-radius: 1vh;
+  width: 45vh;
+  height: 20vh;
+  font-size: 2.5vh;
+}
+
+.bottom {
+  border-bottom: 0.1vh solid rgb(160, 159, 159);
+}
+
+.red {
+  color: red;
+}
+
+.profile-area tr {
+  cursor: pointer;
+}
+
+.profile-area tr:hover {
+  background-color: #dfdfdf;
+}

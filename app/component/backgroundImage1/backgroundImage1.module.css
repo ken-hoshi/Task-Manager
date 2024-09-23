@@ -1,0 +1,11 @@
+.backgroundContainer {
+    position: absolute;
+    width: 100%;
+    height: 60vh;
+    bottom: 0;
+  }
+  
+  .backgroundContainer img {
+    opacity: 0.05;
+  }
+  

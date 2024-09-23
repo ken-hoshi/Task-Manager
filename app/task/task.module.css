@@ -1,0 +1,10 @@
+.task {
+  position: relative;
+  margin-top: 10vh;
+}
+
+.under-area {
+  display: flex;
+  justify-content: center;
+  font-size: 1.7vh;
+}

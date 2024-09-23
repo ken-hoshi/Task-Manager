@@ -1,0 +1,75 @@
+.text-area {
+  background-color: rgba(10, 169, 236, 0.7);
+  position: absolute;
+  top: 50vh;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 75vh;
+  height: 75vh;
+  border-radius: 3vh;
+  box-shadow: 3px 3px 20px rgba(0, 0, 0, 10);
+}
+
+.text-area h1 {
+  font-weight: 300;
+  font-size: 6.5vh;
+  text-align: center;
+  color: #00e425;
+  text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.5);
+  margin: 10vh auto 4vh;
+}
+
+.text-area ul {
+  list-style-type: none;
+  padding: 0;
+  width: 70%;
+  margin: 0 auto;
+}
+
+.text-area ul p {
+  font-size: 2vh;
+  color: #fff;
+  margin-bottom: 0;
+}
+
+.text-area li {
+  border-bottom: 1px solid #fff;
+  margin-bottom: 5.5vh;
+  font-size: 4.5vh;
+  padding-left: 2vh;
+}
+
+.to-task-page-area {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+}
+
+.icon {
+  color: #fff;
+  font-size: 6vh !important;
+  cursor: pointer;
+}
+
+.icon:hover {
+  color: dimgrey;
+}
+
+.to-task-page-area p {
+  margin: auto 0;
+  color: #fff;
+  font-size: 1.8vh;
+}
+
+.confirm-mail-area p {
+  text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.5);
+  width: 70%;
+  margin: 1vh auto 0;
+  color: #fff;
+  font-size: 1.8vh;
+}
+
+.confirm-mail-area span {
+  color: rgb(7, 3, 255);
+  font-style: italic;
+}

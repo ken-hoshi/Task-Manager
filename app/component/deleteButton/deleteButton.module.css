@@ -1,0 +1,9 @@
+.delete {
+  cursor: pointer;
+  float: right;
+  font-size: 3vh !important;
+}
+
+.delete:hover {
+  color: #357ae8;
+}

@@ -1,0 +1,272 @@
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.popupInner {
+  background: white;
+  color: black;
+  border-radius: 8px;
+  width: 80vh;
+  height: 90vh;
+  position: relative;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 90vh;
+}
+
+.spinner {
+  border: 1.5vh solid #f3f3f3;
+  border-top: 1.5vh solid #3498db;
+  border-radius: 50%;
+  width: 10vh;
+  height: 10vh;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading {
+  margin-top: 2vh;
+  font-size: 3vh;
+  color: #555;
+}
+
+.popupInnerArea {
+  width: 80%;
+  margin: 0 auto;
+}
+
+.popupInner h1 {
+  margin: 5vh;
+}
+
+.formGroup {
+  margin-bottom: 3vh;
+}
+
+.formGroup input {
+  font-size: 2vh;
+  font-family: "Roboto", sans-serif;
+}
+
+.formGroup input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px #d9d9d9 inset;
+}
+
+.instruction {
+  margin-top: 0;
+  font-size: 1.5vh;
+  text-align: left;
+}
+
+.popupInner input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #000000;
+  transition: border-color 0.3s;
+  height: 6vh;
+  background-color: #d9d9d9;
+  font-size: 2vh;
+}
+
+.popupInner textarea {
+  resize: none;
+  height: 10vh;
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #000000;
+  background-color: #d9d9d9;
+  font-size: 2vh;
+  font-family: "Roboto", sans-serif;
+}
+
+.attached-file-area {
+  background-color: #d9d9d9;
+  margin: 0 auto;
+  height: 17vh;
+  width: 100%;
+  border: 1px dotted #000000;
+}
+
+.attached-file-area.drag-over {
+  border-color: #4a90e2;
+}
+
+.none-attached-file-area p {
+  margin: 1vh;
+}
+
+.top-area-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.attached-file-area p {
+  margin: 0 auto;
+}
+
+.display-attached-file-area {
+  margin: 0.5vh;
+  display: flex;
+  justify-content: center;
+}
+
+.display-attached-file-container {
+  margin: 1vh;
+  width: 10vh;
+  height: 9vh;
+}
+
+.file-info {
+  display: flex;
+  justify-content: center;
+}
+
+.display-attached-file-container p {
+  font-size: 1.5vh;
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.clipIcon {
+  font-size: 5vh !important;
+  margin: 1vh auto;
+}
+
+.attachedFileIcon {
+  font-size: 5vh !important;
+  margin: 1vh 0 0 2vh;
+}
+
+.cancelIcon {
+  font-size: 2vh !important;
+  color: #ff1100;
+  cursor: pointer;
+}
+
+.cancelIcon:hover {
+  color: #f1746b;
+}
+
+.attached-file-area button {
+  font-size: 1.5vh;
+  height: 3.5vh;
+  width: 14vh;
+  margin: 0.5vh;
+  border: none;
+  background-color: #207dea;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 10);
+}
+
+.attached-file-area button:hover {
+  background-color: #007bbd;
+}
+
+.button-container {
+  text-align: center;
+}
+
+.attention {
+  text-align: right;
+  margin: 0 auto 4vh;
+  font-size: 1.5vh;
+}
+
+.button-area {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1vh;
+  margin: 0 auto;
+}
+
+.button-area button {
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 10vh;
+  height: 5vh;
+  font-size: 2vh;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cancel {
+  background-color: #f44336;
+  color: white;
+}
+
+.add {
+  background-color: #007bff;
+  color: white;
+}
+
+.button-area button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.button-area button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.button-spinner {
+  border: 0.5vh solid #f3f3f3;
+  border-top: 0.5vh solid #94bfce;
+  border-radius: 50%;
+  width: 1.5vh;
+  height: 1.5vh;
+  animation: buttonSpin 1s linear infinite;
+  margin: auto;
+}
+
+@keyframes buttonSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

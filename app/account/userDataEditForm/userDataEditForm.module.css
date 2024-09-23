@@ -1,0 +1,106 @@
+.user-data-edit-form-area {
+  width: 80%;
+  margin: 0 auto;
+}
+
+.user-data-edit-form-area input[type="text"],
+.user-data-edit-form-area input[type="email"],
+.user-data-edit-form-area input[type="password"] {
+  width: 100%;
+  padding: 0.5vh;
+  height: 5vh;
+  border: none;
+  border-bottom: 1px solid #000000;
+  transition: border-color 0.3s;
+  font-size: 3vh;
+}
+
+.user-data-edit-form-area input[type="text"]::placeholder,
+.user-data-edit-form-area input[type="email"]::placeholder,
+.user-data-edit-form-area input[type="password"]::placeholder {
+  color: #b9b9b9;
+}
+
+.user-data-edit-form-area input[type="text"]:focus,
+.user-data-edit-form-area input[type="email"]:focus,
+.user-data-edit-form-area input[type="password"]:focus {
+  border-color: #4285f4;
+}
+
+.user-data-edit-form-area input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px white inset;
+}
+
+.instruction {
+  margin: 0 0 2.5vh 0.5vh;
+  font-size: 1.5vh;
+  text-align: left;
+}
+
+.error {
+  margin: 0 0 2.5vh 0.5vh;
+  font-size: 1.5vh;
+  text-align: left;
+  color: red;
+}
+
+.button-area {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.back-button {
+  width: 20%;
+  height: 6vh;
+  background-color: rgb(222, 61, 61);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  margin-right: 0.5vh;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 10);
+  font-size: 2vh;
+}
+
+.back-button:hover {
+  background-color: #dd2b2b;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.update-button {
+  width: 20%;
+  height: 6vh;
+  background-color: #4285f4;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  margin-left: 0.5vh;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 10);
+  font-size: 2vh;
+}
+.update-button:hover {
+  background-color: #357ae8;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.spinner {
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #94bfce;
+  border-radius: 50%;
+  width: 1.5vh;
+  height: 1.5vh;
+  animation: spin 1s linear infinite;
+  margin: auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

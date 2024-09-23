@@ -1,0 +1,10 @@
+.edit {
+  cursor: pointer;
+  float: right;
+  font-size: 3vh !important;
+  z-index: 1;
+}
+
+.edit:hover {
+  color: #357ae8;
+}

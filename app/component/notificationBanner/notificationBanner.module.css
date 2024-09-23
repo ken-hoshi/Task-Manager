@@ -1,0 +1,48 @@
+.notificationBanner {
+  position: fixed;
+  text-align: center;
+  top: 9vh;
+  left: -35vh;
+  width: 35vh;
+  height: 8vh;
+  color: white;
+  border-radius: 4px;
+  box-shadow: 3px 4px 5px rgba(0, 0, 0, 0.5);
+  z-index: 1001;
+  transition: transform 3s ease;
+  font-size: 1.8vh;
+}
+
+.notificationBanner.show {
+  transform: translateX(35.5vh);
+}
+
+.notificationBanner.hide {
+  transform: translateX(-35vh);
+}
+
+.green {
+  background-color: #4caf50;
+}
+
+.red {
+  background-color: #fc460f;
+}
+
+.flex-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1vh 1vh 0 1vh;
+}
+
+.flex-area p {
+  font-size: 2.5vh;
+  margin: 0;
+}
+
+.success,
+.failure {
+  font-size: 3vh !important;
+  margin-right: 1vh;
+}

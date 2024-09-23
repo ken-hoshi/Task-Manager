@@ -1,0 +1,37 @@
+.account-area {
+  background-color: rgba(10, 169, 236, 0.7);
+  position: absolute;
+  top: 50vh;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 75vh;
+  height: 75vh;
+  border-radius: 3vh;
+  box-shadow: 3px 3px 20px rgba(0, 0, 0, 10);
+}
+
+.back {
+  color: white;
+  font-size: 10vh !important;
+  cursor: pointer;
+  margin: 1.5vh 1.5vh 0 1.5vh;
+}
+
+.back:hover {
+  color: dimgrey;
+}
+
+.detail-area {
+  position: relative;
+  width: 70vh;
+  height: 60vh;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.icon {
+  color: white;
+  font-size: 20vh !important;
+  font-weight: 500;
+  text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.5);
+}

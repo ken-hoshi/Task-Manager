@@ -1,0 +1,296 @@
+.my-task-area {
+  margin: 0 auto;
+}
+
+.non-tasks {
+  width: 75vh;
+  height: 25vh;
+  font-size: 5vh;
+  color: #cccfd0;
+}
+
+.title {
+  display: inline-block;
+  font-weight: 700;
+  font-family: "Roboto", sans-serif;
+  color: #202124;
+  margin: 1.5vh auto;
+  position: relative;
+}
+
+.title::before {
+  content: "";
+  position: absolute;
+  bottom: -0.5vh;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background-color: #4285f4;
+  transform: translateX(-50%);
+}
+
+.title-icon {
+  margin-right: 0.5vh;
+  font-size: 2vh;
+}
+
+.my-task-area table {
+  width: 75vh;
+  border-collapse: collapse;
+  background-color: #ffffff;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.8);
+  margin: 0 auto 2vh;
+  text-align: center;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.my-task-area thead,
+.my-task-area tbody {
+  display: block;
+}
+
+.my-task-area tbody {
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+.my-task-area tr {
+  border: 1px solid #878788;
+}
+
+.my-task-area th.col-task-name {
+  width: 33.5vh;
+  padding: 0.5 1.5vh 0.5vh;
+  box-sizing: border-box;
+}
+
+.my-task-area td.col-task-name {
+  width: 33vh;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: start;
+  padding: 0.5vh 0.5vh 0.5vh 0;
+  box-sizing: border-box;
+  word-wrap: break-word;
+}
+
+.my-task-area th.col-status,
+.my-task-area td.col-status {
+  width: 10vh;
+  padding: 0;
+}
+
+.my-task-area th.col-deadline,
+.my-task-area td.col-deadline {
+  width: 14.5vh;
+  padding: 0.5vh;
+  box-sizing: border-box;
+}
+
+.my-task-area th.col-assigned-person,
+.my-task-area td.col-assigned-person {
+  width: 13.5vh;
+  padding: 0.5vh;
+  box-sizing: border-box;
+}
+
+.my-task-area th.col-actions,
+.my-task-area td.col-actions {
+  width: 1.5vh;
+  padding: 0.5vh;
+  box-sizing: border-box;
+}
+
+.separator {
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  right: 0;
+  width: 0.5px;
+  background-color: #878788;
+}
+
+.blink {
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.detailHidden {
+  display: none;
+}
+
+.detailOpen {
+  display: table-row;
+  background-color: #efefef;
+  animation: open 0.3s ease-in-out forwards;
+  transform-origin: top;
+}
+
+@keyframes open {
+  0% {
+    transform: scaleY(0);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+.my-task-area th {
+  background-color: #0aa9ec;
+  color: white;
+  font-weight: normal;
+  position: relative;
+}
+
+.arrow-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 4vh;
+}
+
+.task-name {
+  max-width: 27vh;
+  box-sizing: border-box;
+  word-wrap: break-word;
+}
+
+.status-situation-part {
+  display: flex;
+  justify-content: center;
+  height: 4vh;
+  line-height: 4vh;
+}
+
+.edit,
+.delete {
+  cursor: pointer;
+  float: right;
+  font-size: 3vh !important;
+}
+
+.edit:hover,
+.delete:hover {
+  color: #357ae8;
+}
+
+.scrollable-content {
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+.scrollable-content dl {
+  margin: 0;
+}
+
+.scrollable-content dt {
+  text-align: left;
+  margin: 1vh auto 0 4vh;
+  font-weight: 600;
+}
+
+.scrollable-content dd {
+  margin: 0 auto;
+  padding: 1.5vh 0;
+  border-bottom: 1.5px dotted black;
+  width: 80%;
+}
+
+.scrollable-content-container {
+  display: flex;
+  justify-content: center;
+}
+
+.project-part,
+.period-part {
+  width: 100%;
+}
+
+.project-part dd,
+.period-part dd {
+  padding: 1.5vh 0;
+  width: 27vh;
+  border-bottom: 1.5px dotted black;
+}
+
+.project-part dd {
+  margin-left: 7.5vh;
+}
+
+.period-part dd {
+  margin-right: 7.5vh;
+}
+
+.period-part dt {
+  margin: 1vh auto 0 0;
+}
+
+.project-name {
+  max-width: 25vh;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  text-align: center !important;
+}
+
+.scrollable-content dd.dd-last {
+  border-bottom: none;
+}
+
+.attachmentFile-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.file-info {
+  display: flex;
+  justify-content: center;
+}
+
+.display-attachmentFile-container {
+  margin: 0 1vh;
+  width: 9vh;
+  height: 9vh;
+}
+
+.downloadIcon {
+  font-size: 5vh !important;
+  margin: 0 auto;
+  cursor: pointer;
+  color: black;
+}
+.downloadIcon:hover {
+  color: #969696;
+}
+
+.display-attachmentFile-container p {
+  margin: 0 auto;
+  word-break: break-all;
+  font-size: 1.5vh;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.my-task-area.status-icon {
+  margin: 0 auto;
+  width: 8vh;
+  font-size: 1.3vh;
+  border-radius: 6px;
+  height: 3.5vh;
+  line-height: 3.5vh;
+}

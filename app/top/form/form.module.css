@@ -1,0 +1,132 @@
+.form-area {
+  text-align: center;
+  height: 100vh;
+  perspective: 1000px;
+}
+
+.form-board {
+  background-color: #ffffff;
+  box-shadow: 5px 5px 10px rgb(109, 109, 109);
+  border-radius: 3vh;
+  display: flex;
+  height: 75vh;
+  width: 75vh;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.backgroundImage3 {
+  position: relative;
+  width: 50%;
+  height: 75vh;
+}
+
+.background-image3 {
+  border-radius: 3vh 0 0 3vh;
+}
+
+.login-area {
+  margin: 0 auto;
+  width: 50%;
+}
+
+.login-area form {
+  flex-direction: column;
+  width: 100%;
+}
+
+.login-area h4 {
+  font-size: 5vh;
+  margin-top: 5vh;
+  margin-bottom: 0;
+  text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.2);
+}
+
+.message {
+  font-size: 2vh;
+  width: 70%;
+  margin: 5vh auto;
+}
+
+.login-area input[type="password"],
+.login-area input[type="email"] {
+  height: 6vh;
+  width: 80%;
+  border: none;
+  border-bottom: 1px solid #000000;
+  transition: border-color 0.3s;
+  background-color: #d9d9d9;
+  font-size: 2vh;
+}
+
+.login-area input[type="password"]:focus,
+.login-area input[type="email"]:focus {
+  border-color: #4285f4;
+}
+
+.login-area input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px #d9d9d9 inset;
+}
+
+.instruction {
+  margin-left: 4vh;
+  margin-top: 2px;
+  margin-bottom: 4vh;
+  font-size: 1.5vh;
+  text-align: left;
+}
+
+.login-area button {
+  height: 5vh;
+  width: 30%;
+  background-color: #4285f4;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  margin: 0px auto 3vh;
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 1);
+  font-size: 2vh;
+}
+
+.login-area button:hover {
+  background-color: #357ae8;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.spinner {
+  border: 0.5vh solid #f3f3f3;
+  border-top: 0.5vh solid #94bfce;
+  border-radius: 50%;
+  width: 1.5vh;
+  height: 1.5vh;
+  animation: spin 1s linear infinite;
+  margin: auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.login-area link {
+  color: #4285f4;
+  text-decoration: none;
+  transition: color 0.3s;
+  width: 100%;
+  font-size: 2vh;
+}
+
+.login-area link:hover {
+  color: #055cff;
+  text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.5);
+}
+
+

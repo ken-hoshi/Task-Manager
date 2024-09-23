@@ -1,0 +1,43 @@
+.title-area {
+  height: 100vh;
+  perspective: 1000px;
+}
+
+.backgroundImage1 {
+  position: absolute;
+  width: 75vh;
+  height: 75vh;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+.background-image1 {
+  opacity: 0.4;
+  border-radius: 3vh;
+  box-shadow: 5px 5px 10px rgba(0, 0, 0, 1);
+}
+
+.backgroundImage1 h1 {
+  font-family: "Advent Pro";
+  font-size: 10vh;
+  font-weight: 500;
+  text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.5);
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.backgroundImage1 h2 {
+  font-family: "Advent Pro";
+  font-size: 5vh;
+  font-weight: 500;
+  text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.5);
+  position: absolute;
+  top: 80%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}

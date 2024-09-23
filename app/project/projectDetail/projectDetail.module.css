@@ -1,0 +1,153 @@
+.project-area table {
+  border-collapse: collapse;
+  background-color: #ffffff;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.8);
+  text-align: center;
+  align-items: center;
+  vertical-align: middle;
+  width: 30vh;
+  margin: 10vh 0 5vh 5vh;
+}
+
+.project-area tr {
+  border: 1px solid #878788;
+}
+
+.project-area th {
+  background-color: #0aa9ec;
+  color: white;
+  font-weight: normal;
+  position: relative;
+  display: flex;
+  padding: 1vh;
+}
+
+.project-name {
+  max-width: 30vh;
+  margin: 0 auto;
+  padding: 0 1vh 0 1vh;
+  text-align: start;
+  box-sizing: border-box;
+  word-wrap: break-word;
+}
+
+.editButton-container {
+  display: flex;
+  align-items: center;
+}
+
+td.col-status-situation {
+  height: 15vh;
+}
+
+.status-icon-part {
+  display: flex;
+  justify-content: center;
+  margin: 1vh;
+  height: 3.5vh;
+  align-items: center;
+}
+
+.status-icon {
+  width: 10vh;
+  height: 3.5vh;
+  margin-right: 1vh;
+  color: #ffffff;
+  font-size: 1.5vh;
+  border-radius: 1vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.not-started {
+  background-color: #ff9090;
+}
+
+.processing {
+  background-color: #48d2e5;
+}
+
+.completed {
+  background-color: #48e57d;
+}
+
+.value {
+  border: 1px solid black;
+  border-radius: 1.2vh;
+  width: 3.5vh;
+  height: 3.5vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+td.col-project-detail {
+  height: 50vh;
+}
+
+.project-area dt {
+  text-align: left;
+  margin: 1vh auto 0 2vh;
+  font-weight: 600;
+}
+
+.project-area dd {
+  margin: 0 auto 3vh;
+  padding: 1.5vh 0;
+  border-bottom: 1.5px dotted black;
+  width: 80%;
+}
+
+.project-area .scrollable-content {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.detail-text {
+  text-align: start;
+}
+
+.detail-text p {
+  text-align: center;
+  margin: 0 auto;
+}
+
+.attachmentFile-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.file-info {
+  display: flex;
+  justify-content: center;
+}
+
+.display-attachmentFile-container {
+  margin: 0 1vh;
+  width: 9vh;
+  height: 9vh;
+}
+
+.downloadIcon {
+  font-size: 5vh !important;
+  margin: 0 auto;
+  cursor: pointer;
+  color: black;
+}
+.downloadIcon:hover {
+  color: #969696;
+}
+
+.display-attachmentFile-container p {
+  margin: 0 auto;
+  word-break: break-all;
+  font-size: 1.5vh;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}

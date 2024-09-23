@@ -1,0 +1,82 @@
+.container {
+  position: absolute;
+  right: 5.5vh;
+  top: 8vh;
+  width: 30vh;
+  max-height: 40vh;
+  overflow-y: auto;
+  margin: 0 auto;
+  background-color: rgb(255, 255, 255);
+  z-index: 1000;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+  border: 0.2vh solid #888;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+}
+
+.unReadList {
+  background-color: #d5dada;
+}
+
+.listItem {
+  padding: 1.5vh;
+  border-bottom: 1px solid #ddd;
+}
+
+.lastListItem {
+  border-bottom: none;
+  padding: 1.5vh;
+}
+
+.unreadDot {
+  display: inline-block;
+  width: 1vh;
+  height: 1vh;
+  background-color: rgb(0, 128, 255);
+  border-radius: 50%;
+  margin-right: 0.5vh;
+}
+
+.message {
+  font-size: 1.5vh;
+  margin: 0 0 1vh 0;
+}
+
+.unReadMessage {
+  display: inline;
+  font-size: 1.5vh;
+  font-weight: 600;
+  margin: 0 0 1vh 0;
+}
+
+.timestamp {
+  font-size: 1.2vh;
+  color: #888;
+  margin: 0;
+}
+
+.non-notification {
+  width: 30vh;
+  height: 10vh;
+  font-size: 2vh;
+  color: #cccfd0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
