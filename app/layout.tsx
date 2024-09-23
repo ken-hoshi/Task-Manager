@@ -6,7 +6,7 @@ import { PageUpdateProvider } from "./provider/pageUpdateProvider";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
+  : "https://task-manager-eta-eosin.vercel.app";
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
