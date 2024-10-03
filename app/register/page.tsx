@@ -10,9 +10,9 @@ import BackgroundImage2 from "../component/backgroundImage2/backgroundImage2";
 import { useNotificationContext } from "../provider/notificationProvider";
 import NotificationBanner from "../component/notificationBanner/notificationBanner";
 
-const Register: React.FC = () => {
-  const WORD_LINCRAFT = "lincraft";
+const WORD_LINCRAFT = "lincraft";
 
+const Register: React.FC = () => {
   const { setBackForm } = useFormContext();
   const { notificationValue } = useNotificationContext();
   const router = useRouter();
@@ -104,6 +104,7 @@ const Register: React.FC = () => {
                 type="text"
                 placeholder="Name"
                 name="name"
+                autoComplete="username"
                 required
                 value={formData.name}
                 onChange={handleChange}
@@ -116,6 +117,7 @@ const Register: React.FC = () => {
                 type="email"
                 placeholder="Email"
                 name="email"
+                autoComplete="email"
                 required
                 value={formData.email}
                 onChange={handleChange}
@@ -132,6 +134,7 @@ const Register: React.FC = () => {
                 type="password"
                 placeholder="Password"
                 name="password"
+                autoComplete="current-password"
                 required
                 value={formData.password}
                 onChange={handleChange}

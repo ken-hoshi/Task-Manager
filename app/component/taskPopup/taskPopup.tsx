@@ -321,7 +321,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           const { error: taskAttachmentsDeleteError } = await clientSupabase
             .from("task_attachments")
             .delete()
-            .eq("file_path", removedFilesPaths);
+            .in("file_path", removedFilesPaths);
 
           if (taskAttachmentsDeleteError) {
             throw taskAttachmentsDeleteError;
@@ -374,7 +374,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
         addItem({ target: 1, id: taskId });
         setNotificationValue({
-          message: "Task updated.",
+          message: "Task was updated.",
           color: 0,
         });
         setPostLoading(true);
@@ -429,7 +429,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
         addItem({ target: 1, id: taskId });
         setNotificationValue({
-          message: "Task added.",
+          message: "Task was added.",
           color: 0,
         });
         setPostLoading(true);

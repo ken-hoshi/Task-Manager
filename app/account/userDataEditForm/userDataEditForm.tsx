@@ -4,6 +4,8 @@ import { clientSupabase } from "@/app/lib/supabase/client";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 
+const WORD_LINCRAFT = "lincraft";
+
 type formData = {
   name: string;
   email: string;
@@ -33,8 +35,6 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
   handleFocus,
   setSwitchDisplay,
 }) => {
-  const WORD_LINCRAFT = "lincraft";
-
   const { setNotificationValue } = useNotificationContext();
   const { setPageUpdated } = usePageUpdateContext();
 
@@ -134,7 +134,7 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
     setUpdateLoading(false);
     setPageUpdated(true);
     setNotificationValue({
-      message: "User data updated .",
+      message: "User data was updated .",
       color: 0,
     });
     setSwitchDisplay({
@@ -163,6 +163,7 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
           type="email"
           placeholder="Email"
           name="email"
+          autoComplete="email" 
           required
           value={formData.email}
           onChange={handleChange}
@@ -179,6 +180,7 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
           type="password"
           placeholder="Password"
           name="password"
+          autoComplete="current-password" 
           required
           value={formData.password}
           onChange={handleChange}

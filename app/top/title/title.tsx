@@ -16,7 +16,8 @@ const Title: React.FC<TitleProps> = ({ onClick, className }) => {
         <Image
           src="/img/background-image1.jpeg"
           alt="background-image1"
-          layout="fill"
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className={styles[`background-image1`]}
           priority={true}
         />

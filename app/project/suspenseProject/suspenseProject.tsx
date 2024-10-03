@@ -17,6 +17,7 @@ import TaskBoard from "../taskBoard/taskBoard";
 import TaskCalender from "../taskCalender/taskCalender";
 import TaskList from "../taskList/taskList";
 import { useRouter, useSearchParams } from "next/navigation";
+import RobotButton from "@/app/component/robotButton/robotButton";
 
 interface StatusProps {
   id: number;
@@ -299,6 +300,9 @@ const SuspenseProject: React.FC = () => {
                   )}
                 </div>
               </div>
+            </div>
+            <div className={styles[`robot-button-container`]}>
+              <RobotButton />
             </div>
           </div>
         )}

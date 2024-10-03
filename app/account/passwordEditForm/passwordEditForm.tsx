@@ -106,7 +106,7 @@ const PasswordEditForm: React.FC<PasswordEditForm> = ({
     setUpdateLoading(false);
     setPageUpdated(true);
     setNotificationValue({
-      message: "Password updated .",
+      message: "Password was updated .",
       color: 0,
     });
     setSwitchDisplay({
@@ -123,6 +123,7 @@ const PasswordEditForm: React.FC<PasswordEditForm> = ({
           type="password"
           placeholder="New Password"
           name="newPassword"
+          autoComplete="new-password"
           required
           value={passwords.newPassword}
           onChange={handleChangePassword}
@@ -139,6 +140,7 @@ const PasswordEditForm: React.FC<PasswordEditForm> = ({
           type="password"
           placeholder="Confirm Password"
           name="confirmPassword"
+          autoComplete="new-password"
           required
           value={passwords.confirmPassword}
           onChange={handleChangePassword}
@@ -157,6 +159,7 @@ const PasswordEditForm: React.FC<PasswordEditForm> = ({
           type="password"
           placeholder="Current Password"
           name="currentPassword"
+          autoComplete="current-password"
           required
           value={passwords.currentPassword}
           onChange={handleChangePassword}

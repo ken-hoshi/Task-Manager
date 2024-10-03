@@ -119,34 +119,36 @@ const TaskItem = ({
             Attached-file
           </div>
           <div className={styles[`attached-file-flex-area`]}>
-            {attachmentFiles && attachmentFiles.length > 0
-              ? attachmentFiles.map((file: any, index: number) => (
-                  <div
-                    className={styles["display-attachmentFile-container"]}
-                    key={index}
-                  >
-                    <div className={styles["file-info"]}>
-                      <a
-                        href={downloadUrls[index] || "#"}
-                        onClick={() => handleNullCheck(index)}
-                        download={
-                          file.name.split("/").pop().split("-timestamp-")[0]
-                        }
+            {attachmentFiles && attachmentFiles.length > 0 ? (
+              attachmentFiles.map((file: any, index: number) => (
+                <div
+                  className={styles["display-attachmentFile-container"]}
+                  key={index}
+                >
+                  <div className={styles["file-info"]}>
+                    <a
+                      href={downloadUrls[index] || "#"}
+                      onClick={() => handleNullCheck(index)}
+                      download={
+                        file.name.split("/").pop().split("-timestamp-")[0]
+                      }
+                    >
+                      <span
+                        className={classNames(
+                          "material-symbols-outlined",
+                          styles.downloadIcon
+                        )}
                       >
-                        <span
-                          className={classNames(
-                            "material-symbols-outlined",
-                            styles.downloadIcon
-                          )}
-                        >
-                          download
-                        </span>
-                      </a>
-                    </div>
-                    <p>{file.name.split("/").pop().split("-timestamp-")[0]}</p>
+                        download
+                      </span>
+                    </a>
                   </div>
-                ))
-              : "No Attached File"}
+                  <p>{file.name.split("/").pop().split("-timestamp-")[0]}</p>
+                </div>
+              ))
+            ) : (
+              <div className={styles[`no-attached-file`]}>No Attached File</div>
+            )}
           </div>
         </div>
       </div>

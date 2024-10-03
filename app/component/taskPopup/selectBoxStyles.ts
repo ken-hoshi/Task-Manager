@@ -23,16 +23,22 @@ export const selectBoxStyles = {
   singleValue: (baseStyles: any) => ({
     ...baseStyles,
     fontSize: "2vh",
-  }),
-  dropdownIndicator: (baseStyles: any) => ({
-    ...baseStyles,
-    color: "black",
-    cursor: "pointer",
+    margin: "0 auto",
   }),
   indicatorSeparator: (baseStyles: any) => ({
     ...baseStyles,
     backgroundColor: "black",
   }),
+  dropdownIndicator: (baseStyles: any) => ({
+    ...baseStyles,
+    color: "black",
+    cursor: "pointer",
+    width: "4vh",
+    padding: 0,
+    display: "flex",
+    justifyContent: "center",
+  }),
+
   menu: (baseStyles: any) => ({
     ...baseStyles,
     zIndex: 10,
@@ -40,7 +46,7 @@ export const selectBoxStyles = {
     margin: "0.1vh auto 0",
     left: 0,
     right: 0,
-    border: "1px solid black",
+    border: "0.1vh solid black",
     borderRadius: "0",
   }),
   option: (baseStyles: any, state: { isSelected: any; isFocused: any }) => ({
@@ -51,5 +57,11 @@ export const selectBoxStyles = {
       ? "#007bff"
       : undefined,
     color: state.isSelected || state.isFocused ? "white" : undefined,
+    minHeight: "6.5vh",
+    height: "6.5vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    margin: "0 auto",
   }),
 };

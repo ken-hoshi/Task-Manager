@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import styles from "./form.module.css";
 import classNames from "classnames";
-import { useState } from "react";
+import { use, useEffect, useState } from "react";
 import { login } from "../../hooks/login";
 
 interface FormProps {
@@ -19,6 +19,12 @@ const Form: React.FC<FormProps> = ({ className }) => {
     password: "",
   });
 
+  useEffect(() => {
+    return () => {
+      setLoading(true);
+    };
+  }, []);
+
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     const { email, password } = formData;
@@ -27,7 +33,6 @@ const Form: React.FC<FormProps> = ({ className }) => {
     setLoading(false);
 
     await useLogin(email, password);
-    setLoading(true);
   };
 
   const handleFocus = (event: React.FocusEvent<HTMLInputElement>) => {
@@ -47,7 +52,8 @@ const Form: React.FC<FormProps> = ({ className }) => {
             className={styles[`background-image3`]}
             src="/img/background-image3.jpeg"
             alt="background-image3"
-            layout="fill"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             priority={true}
           />
         </div>
@@ -66,6 +72,7 @@ const Form: React.FC<FormProps> = ({ className }) => {
               value={formData.email}
               onChange={handleChange}
               onFocus={handleFocus}
+              autoComplete="current-password"
               required
             />
             <p className={styles.instruction}>Enter your Email Address</p>
@@ -77,6 +84,7 @@ const Form: React.FC<FormProps> = ({ className }) => {
               value={formData.password}
               onChange={handleChange}
               onFocus={handleFocus}
+              autoComplete="current-password"
               required
             />
             <p className={styles.instruction}>Enter Password</p>

@@ -22,6 +22,17 @@
   cursor: default;
 }
 
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .spinner-container {
   display: flex;
   flex-direction: column;
@@ -75,11 +86,12 @@
   border-bottom: 1px solid #000000;
   transition: border-color 0.3s;
   padding-left: 1vh;
-  height: 6vh;
-  width: 34vh;
+  height: 6.5vh;
+  width: 35vh;
   background-color: #d9d9d9;
   font-size: 2vh;
   font-family: "Roboto", sans-serif;
+  box-sizing: border-box;
 }
 
 .instruction {
@@ -106,9 +118,10 @@
 }
 
 .customCalendar {
-  transform: scale(0.9);
+  transform: scale(0.7);
   transform-origin: top;
   margin: 0;
+  padding: 0;
 }
 
 .taskName:-webkit-autofill,
@@ -231,7 +244,7 @@
 
 .attention {
   text-align: right;
-  margin: 0 auto 3vh;
+  margin: 0 auto;
   font-size: 1.5vh;
 }
 
@@ -239,12 +252,12 @@
   display: flex;
   justify-content: flex-end;
   gap: 1vh;
-  margin: 0 auto;
+  margin: 1vh auto 0.5vh;
 }
 
 .button-area button {
   border: none;
-  border-radius: 4px;
+  border-radius: 1vh;
   cursor: pointer;
   width: 10vh;
   height: 5vh;
@@ -271,17 +284,6 @@
 .button-area button:active {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateY(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }
 
 .button-spinner {

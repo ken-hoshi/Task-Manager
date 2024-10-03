@@ -7,27 +7,33 @@ export const selectBoxStyles = {
     border: "none",
     borderBottom: "1px solid #000000",
     borderRadius: 0,
-    overflow: 'hidden'
+    height: "6.5vh",
+    maxHeight: "6.5vh",
+    overflow: "hidden",
   }),
   valueContainer: (baseStyles: any) => ({
     ...baseStyles,
-    height: "6vh",
-    maxHeight: "6vh",
-    overflowY: "auto", 
+    height: "5vh",
+    maxHeight: "5vh",
+    overflowY: "auto",
   }),
   input: (baseStyles: any) => ({
     ...baseStyles,
     margin: 0,
     padding: 0,
   }),
+  indicatorSeparator: (baseStyles: any) => ({
+    ...baseStyles,
+    backgroundColor: "black",
+  }),
   dropdownIndicator: (baseStyles: any) => ({
     ...baseStyles,
     color: "black",
     cursor: "pointer",
-  }),
-  indicatorSeparator: (baseStyles: any) => ({
-    ...baseStyles,
-    backgroundColor: "black",
+    width: "7vh",
+    padding: 0,
+    display: "flex",
+    justifyContent: "center",
   }),
   menu: (baseStyles: any) => ({
     ...baseStyles,
@@ -38,8 +44,8 @@ export const selectBoxStyles = {
     right: 0,
     border: "1px solid black",
     borderRadius: "0",
-    maxHeight: "40vh", 
-    overflowY: "auto", 
+    maxHeight: "40vh",
+    overflowY: "auto",
   }),
   option: (baseStyles: any, state: { isSelected: any; isFocused: any }) => ({
     ...baseStyles,

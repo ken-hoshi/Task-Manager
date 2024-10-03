@@ -220,7 +220,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           const { error: projectAttachmentsDeleteError } = await clientSupabase
             .from("project_attachments")
             .delete()
-            .eq("file_path", removedFilesPaths);
+            .in("file_path", removedFilesPaths);
 
           if (projectAttachmentsDeleteError) {
             throw projectAttachmentsDeleteError;
@@ -310,7 +310,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
 
         addItem({ target: 0, id: projectId });
         setNotificationValue({
-          message: "Project updated.",
+          message: "Project was updated.",
           color: 0,
         });
         setPostLoading(true);
@@ -386,7 +386,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
 
         addItem({ target: 0, id: projectId });
         setNotificationValue({
-          message: "Project added.",
+          message: "Project was added.",
           color: 0,
         });
         setPostLoading(true);

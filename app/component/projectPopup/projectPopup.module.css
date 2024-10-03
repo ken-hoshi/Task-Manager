@@ -8,7 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 10000;
+  z-index: 1000;
 }
 
 .popupInner {
@@ -75,11 +75,7 @@
 
 .formGroup {
   margin-bottom: 3vh;
-}
-
-.formGroup input {
-  font-size: 2vh;
-  font-family: "Roboto", sans-serif;
+  width: 100%;
 }
 
 .formGroup input:-webkit-autofill {
@@ -93,13 +89,16 @@
 }
 
 .popupInner input {
+  font-size: 2vh;
+  font-family: "Roboto", sans-serif;
   width: 100%;
   border: none;
   border-bottom: 1px solid #000000;
   transition: border-color 0.3s;
-  height: 6vh;
+  height: 6.5vh;
   background-color: #d9d9d9;
   font-size: 2vh;
+  box-sizing: border-box;
 }
 
 .popupInner textarea {
@@ -111,6 +110,7 @@
   background-color: #d9d9d9;
   font-size: 2vh;
   font-family: "Roboto", sans-serif;
+  box-sizing: border-box;
 }
 
 .attached-file-area {
@@ -119,6 +119,7 @@
   height: 17vh;
   width: 100%;
   border: 1px dotted #000000;
+  box-sizing: border-box;
 }
 
 .attached-file-area.drag-over {
@@ -196,7 +197,7 @@
   background-color: #207dea;
   color: white;
   cursor: pointer;
-  border-radius: 5px;
+  border-radius: 1vh;
   box-shadow: 1px 1px 3px rgba(0, 0, 0, 10);
 }
 
@@ -210,7 +211,7 @@
 
 .attention {
   text-align: right;
-  margin: 0 auto 4vh;
+  margin: 0 auto;
   font-size: 1.5vh;
 }
 
@@ -218,12 +219,12 @@
   display: flex;
   justify-content: flex-end;
   gap: 1vh;
-  margin: 0 auto;
+  margin: 3vh auto;
 }
 
 .button-area button {
   border: none;
-  border-radius: 4px;
+  border-radius: 1vh;
   cursor: pointer;
   width: 10vh;
   height: 5vh;

@@ -1,3 +1,8 @@
+.task-container {
+  position: relative;
+  height: 90vh;
+}
+
 .task {
   position: relative;
   margin-top: 10vh;
@@ -7,4 +12,10 @@
   display: flex;
   justify-content: center;
   font-size: 1.7vh;
+}
+
+.robot-button-container {
+  position: absolute;
+  bottom: 3vh;
+  right: 3vh;
 }

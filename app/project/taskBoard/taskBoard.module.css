@@ -122,7 +122,6 @@
 
 .button-area span {
   color: white;
-  /* padding: 0.5vh; */
 }
 
 .deadline-area,
@@ -168,7 +167,8 @@
 .attached-file-flex-area {
   display: flex;
   justify-content: flex-start;
-  margin: 1vh;
+  flex-wrap: wrap;
+  gap: 0.2vh;
 }
 
 .file-info {
@@ -177,7 +177,7 @@
 }
 
 .display-attachmentFile-container {
-  margin: 0 1vh;
+  margin: 1vh 0.1vh;
   width: 9vh;
   height: 9vh;
 }
@@ -203,6 +203,10 @@
   text-overflow: ellipsis;
   -webkit-line-clamp: 2;
   line-clamp: 2;
+}
+
+.no-attached-file {
+  margin: 1vh;
 }
 
 .my-task-area.status-icon {

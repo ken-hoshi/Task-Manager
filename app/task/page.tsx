@@ -20,6 +20,7 @@ import ProjectsArea from "./projectsArea/projectsArea";
 import TasksNotYetCompletedArea from "./tasksNotYetCompletedArea/tasksNotYetCompletedArea";
 import { fetchAttachmentFiles } from "../lib/fetchAttachmentFiles";
 import BackgroundImage1 from "../component/backgroundImage1/backgroundImage1";
+import RobotButton from "../component/robotButton/robotButton";
 
 interface StatusProps {
   id: number;
@@ -172,7 +173,7 @@ const Task: React.FC = () => {
       {loading ? (
         <Loading />
       ) : (
-        <>
+        <div className={styles[`task-container`]}>
           <BackgroundImage1 />
           <Header userId={userId} />
           <div className={styles.task}>
@@ -202,7 +203,10 @@ const Task: React.FC = () => {
               />
             </div>
           </div>
-        </>
+          <div className={styles[`robot-button-container`]}>
+            <RobotButton />
+          </div>
+        </div>
       )}
     </>
   );

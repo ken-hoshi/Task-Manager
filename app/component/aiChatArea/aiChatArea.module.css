@@ -1,0 +1,192 @@
+.chat-area {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.cancel-button-container{
+  margin: 6vh 0.5vh auto;
+}
+.cancel {
+  font-size: 8vh !important;
+  cursor: pointer;
+  font-weight: 600 !important;
+}
+
+.cancel:hover {
+  color: rgb(203, 34, 34);
+}
+
+.content-area {
+  background-color: white;
+  width: 90vh;
+  height: 90vh;
+  border-radius: 2vh;
+  position: relative;
+  animation: slideIn 0.3s ease-out;
+}
+
+.content-area h1 {
+  text-align: center;
+  background-color: #0aa9ec;
+  color: white;
+  margin: 0;
+  padding: 2vh;
+  border-radius: 2vh 2vh 0 0;
+}
+
+.attention {
+  text-align: center;
+  font-size: 1.5vh;
+  margin: 0.5vh auto 2vh;
+}
+
+.message-area-container {
+  position: relative;
+}
+
+.background-container {
+  margin-left: 1vh;
+  position: relative;
+  height: 60vh;
+}
+
+.background-image1 {
+  opacity: 0.1;
+}
+
+.message-area {
+  position: absolute;
+  top: 0;
+  left: 50;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0 3vh;
+}
+
+.message-container {
+  display: flex !important;
+  justify-content: flex-start;
+}
+
+.robot-img-container {
+  margin: 2.5vh 1vh 1vh 0;
+  position: relative;
+  width: 5vh !important;
+  height: 5vh !important;
+}
+
+.robot-img {
+  width: 4vh !important;
+  height: 4vh !important;
+}
+
+.user-message {
+  margin: 1vh 0 1vh 0;
+  max-width: 80vh;
+  word-wrap: break-word;
+}
+
+.ai-message {
+  background-color: #a0dff9;
+  border-radius: 2vh;
+  padding: 0 1vh 0 1vh;
+  margin: 1vh 0 1vh 0;
+  max-width: 75vh;
+  word-wrap: break-word;
+}
+
+.form-area {
+  height: 15vh;
+  background-color: #c5c5c5;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 0 0 2vh 2vh;
+}
+
+.form-area form {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.form-area textarea {
+  flex: 1;
+  height: 10vh !important;
+  font-size: 2vh;
+  border: 0.1vh solid #dedede;
+  border-radius: 1vh;
+  margin: 1vh;
+  padding: 0.8vh;
+  resize: none;
+  font-family: "Roboto", sans-serif;
+}
+
+.form-area button {
+  padding: 0 2vh;
+  height: 5vh !important;
+  width: 10vh;
+  background-color: #007bff;
+  color: white;
+  font-size: 2vh;
+  border: none;
+  border-radius: 1vh;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  margin: 0 1vh 0 0;
+  transition: all 0.3s ease;
+}
+
+.form-area button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.form-area button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.button-spinner {
+  border: 0.5vh solid #f3f3f3;
+  border-top: 0.5vh solid #94bfce;
+  border-radius: 50%;
+  width: 1.5vh;
+  height: 1.5vh;
+  animation: buttonSpin 1s linear infinite;
+  margin: auto;
+}
+
+@keyframes buttonSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

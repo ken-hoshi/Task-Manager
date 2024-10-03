@@ -159,7 +159,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
       }
 
       setNotificationValue({
-        message: projectId ? "Project deleted." : "Task deleted.",
+        message: projectId ? "Project was deleted." : "Task was deleted.",
         color: 0,
       });
     } catch (error) {

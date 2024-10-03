@@ -7,10 +7,6 @@ const backgroundContainer: React.CSSProperties = {
   bottom: 0,
 };
 
-const backgroundImage: React.CSSProperties = {
-  opacity: 0.05,
-};
-
 const textArea: React.CSSProperties = {
   backgroundColor: " #ffffff",
   position: "absolute",
@@ -55,10 +51,9 @@ const NotFound = () => {
         <Image
           src="/img/background-image1.jpeg"
           alt="background-image1"
-          style={backgroundImage}
-          layout="fill"
-          objectFit="cover"
-          objectPosition="top"
+          style={{ objectFit: "cover", objectPosition: "top", opacity: 0.05 }}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           priority={true}
         />
       </div>
@@ -67,7 +62,13 @@ const NotFound = () => {
         <p style={p}>There is no page you are looking for!</p>
         <div style={dogArea}>
           <div style={dogImage}>
-            <Image src="/img/dog.png" alt="dog" layout="fill" priority={true} />
+            <Image
+              src="/img/dog.png"
+              alt="dog"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority={true}
+            />
           </div>
           <p style={p}>Sorry...</p>
         </div>

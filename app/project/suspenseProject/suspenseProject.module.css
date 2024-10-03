@@ -1,11 +1,13 @@
 .project {
   padding: 0;
   margin: 7vh 0 0 0;
+  height: 100%;
 }
 
 .project-container {
   display: flex;
   position: relative;
+
 }
 
 .task-area {
@@ -110,7 +112,7 @@
 .toggle:after {
   content: "";
   position: absolute;
-  top: 1.5px;
+  top: 0.3vh;
   left: 0.5vh;
   width: 2.5vh;
   height: 2.5vh;
@@ -136,4 +138,10 @@
 
 .tab-content {
   display: block;
+}
+
+.robot-button-container{
+  position: absolute;
+  bottom: 3vh; 
+  right: 3vh;  
 }

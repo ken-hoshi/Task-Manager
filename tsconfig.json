@@ -21,8 +21,9 @@
     ],
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "types": ["@testing-library/jest-dom"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/lib/export async function fetchTasks() {", "app/project/taskList"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.test.ts", "**/*.tsx", ".next/types/**/*.ts", "jest.setup.js", "jest.config.js"],
   "exclude": ["node_modules"]
 }

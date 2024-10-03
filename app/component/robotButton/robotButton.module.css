@@ -1,0 +1,15 @@
+.robot-img-container {
+    position: relative;
+    cursor: pointer; 
+    width: 5vh;
+    height: 5vh;
+}
+
+.robot-img {
+  transition: all 0.3s ease;
+}
+
+.robot-img:hover {
+  transform: translateY(-10px);
+}
+
