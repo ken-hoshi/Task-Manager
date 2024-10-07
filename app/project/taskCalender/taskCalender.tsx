@@ -28,6 +28,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [dates, setDates] = useState<Date[]>([]);
   const [holidays, setHolidays] = useState<Date[]>([]);
+  const [today] = useState(new Date());
   const [tasksPeriodList, setTasksPeriodList] = useState<TasksPeriodList[]>([]);
   const [clickCount, setClickCount] = useState<number>(0);
   const [onEditTaskId, setOnEditTaskId] = useState<number | null>(null);
@@ -247,12 +248,10 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                       (holiday) =>
                         holiday.toDateString() === date.toDateString()
                     );
-                    const today = currentMonth;
                     const isToday =
                       date.getDate() === today.getDate() &&
                       date.getMonth() === today.getMonth() &&
                       date.getFullYear() === today.getFullYear();
-
                     return (
                       <th
                         key={index}

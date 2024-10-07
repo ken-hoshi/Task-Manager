@@ -18,6 +18,7 @@ import TaskCalender from "../taskCalender/taskCalender";
 import TaskList from "../taskList/taskList";
 import { useRouter, useSearchParams } from "next/navigation";
 import RobotButton from "@/app/component/robotButton/robotButton";
+import { useSessionTimeout } from "@/app/hooks/sessionTimeout";
 
 interface StatusProps {
   id: number;
@@ -54,6 +55,7 @@ const SuspenseProject: React.FC = () => {
   ]);
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { notificationValue, setNotificationValue } = useNotificationContext();
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramsProjectId = searchParams.get("id");
@@ -146,6 +148,8 @@ const SuspenseProject: React.FC = () => {
     };
     fetchProjectDetail();
   }, [pageUpdated]);
+
+  useSessionTimeout();
 
   const handleToggle = () => {
     if (!isChecked) {

@@ -24,6 +24,7 @@ export const login = () => {
         message: "Password or Email address is wrong.",
         color: 1,
       });
+      return error;
     }
   };
   return { useLogin };

@@ -12,7 +12,6 @@ export const sendGeminiMessage = async (message: string) => {
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
       {
         contents: [{ parts: [{ text: message }] }],
-
       },
       {
         headers: {
@@ -38,6 +37,6 @@ export const sendGeminiMessage = async (message: string) => {
     return messageContent;
   } catch (error) {
     console.error("Gemini API Error:", error);
- throw error;
+    throw error;
   }
 };

@@ -6,14 +6,15 @@ import NotificationBanner from "@/app/component/notificationBanner/notificationB
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
-import styles from "./suspenseAccount.module.css";
 import classNames from "classnames";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import DeleteAccountConfirmModal from "../deleteAccountConfirmModal/deleteAccountConfirmModal";
 import PasswordEditForm from "../passwordEditForm/passwordEditForm";
 import Profile from "../profile/profile";
 import UserDataEditForm from "../userDataEditForm/userDataEditForm";
+import styles from "./susepenseAccount.module.css";
+import { useSessionTimeout } from "@/app/hooks/sessionTimeout";
 
 const SuspenseAccount: React.FC = () => {
   const router = useRouter();
@@ -43,14 +44,16 @@ const SuspenseAccount: React.FC = () => {
   });
 
   useEffect(() => {
-    setUserId(Number(paramsUserId));
+    const userId = Number(paramsUserId);
+    setUserId(userId);
+
     const getUserData = async () => {
       try {
         const { data: userData, error: userDataSelectError } =
           await clientSupabase
             .from("users")
             .select("*")
-            .eq("id", Number(paramsUserId))
+            .eq("id", userId)
             .single();
 
         if (userDataSelectError) {
@@ -84,6 +87,8 @@ const SuspenseAccount: React.FC = () => {
     getUserData();
     setPageUpdated(false);
   }, [pageUpdated]);
+
+  useSessionTimeout();
 
   const handleBackTop = () => {
     router.back();

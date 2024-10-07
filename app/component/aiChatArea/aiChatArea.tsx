@@ -130,6 +130,7 @@ const AiChatArea: React.FC<AiChatAreaProps> = ({ setIsOpen }) => {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="Ask me anything..."
+              required
             />
             <button type="submit">
               {loading ? (

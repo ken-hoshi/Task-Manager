@@ -7,7 +7,6 @@ import React from "react";
 import { fetchProjectsData } from "../lib/fetchProjectsData";
 import { usePageUpdateContext } from "../provider/pageUpdateProvider";
 import { getUserId } from "../lib/getUserId";
-import { clientSupabase } from "../lib/supabase/client";
 import { useFormContext } from "../provider/formProvider";
 import { useRouter } from "next/navigation";
 import { useNotificationContext } from "../provider/notificationProvider";
@@ -21,6 +20,8 @@ import TasksNotYetCompletedArea from "./tasksNotYetCompletedArea/tasksNotYetComp
 import { fetchAttachmentFiles } from "../lib/fetchAttachmentFiles";
 import BackgroundImage1 from "../component/backgroundImage1/backgroundImage1";
 import RobotButton from "../component/robotButton/robotButton";
+import { GetSession } from "../hooks/getSession";
+import { useSessionTimeout } from "../hooks/sessionTimeout";
 
 interface StatusProps {
   id: number;
@@ -51,18 +52,15 @@ const Task: React.FC = () => {
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { notificationValue } = useNotificationContext();
   const { setBackForm } = useFormContext();
+  const { useGetSession } = GetSession();
 
   const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const {
-          data: { session },
-          error,
-        } = await clientSupabase.auth.getSession();
-
-        if (!session || error) {
+        const session = await useGetSession();
+        if (!session || !session.user.id) {
           setBackForm(true);
           alert("データの取得に失敗しました。");
           router.push("/");
@@ -160,6 +158,8 @@ const Task: React.FC = () => {
     };
     fetchData();
   }, [pageUpdated]);
+
+  useSessionTimeout();
 
   return (
     <>

@@ -32,7 +32,10 @@ const Form: React.FC<FormProps> = ({ className }) => {
     if (!loading) return;
     setLoading(false);
 
-    await useLogin(email, password);
+    const loginError = await useLogin(email, password);
+    if (loginError) {
+      setLoading(true);
+    }
   };
 
   const handleFocus = (event: React.FocusEvent<HTMLInputElement>) => {
