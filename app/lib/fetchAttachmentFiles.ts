@@ -36,7 +36,7 @@ export async function fetchAttachmentFiles(target: number, id: number) {
         }
 
         if (projectAttachmentFileStorage) {
-          const fileName = attached.file_path || "unknown";
+          const fileName = attached.file_name || "unknown";
           const file = new File([projectAttachmentFileStorage], fileName, {
             type: projectAttachmentFileStorage.type,
           });
@@ -69,7 +69,7 @@ export async function fetchAttachmentFiles(target: number, id: number) {
         }
 
         if (taskAttachmentFileStorage) {
-          const fileName = attached.file_path || "unknown";
+          const fileName = attached.file_name || "unknown";
           const file = new File([taskAttachmentFileStorage], fileName, {
             type: taskAttachmentFileStorage.type,
           });
@@ -77,7 +77,7 @@ export async function fetchAttachmentFiles(target: number, id: number) {
         }
       }
     } else {
-      throw new Error("Task ID & Project ID are Null.");
+      throw new Error("Task ID & Project ID are null.");
     }
     return attachmentFilesData;
   } catch (error) {

@@ -26,7 +26,7 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
   >([]);
 
   const menuRef = useRef<HTMLDivElement>(null);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const textareaRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
@@ -68,12 +68,12 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
     setShowOptions(null);
 
     setTimeout(() => {
-      inputRefs.current[clickedNumber]?.focus();
+      textareaRefs.current[clickedNumber]?.focus();
     }, 0);
   };
 
   const onChangeEditComment = (
-    e: ChangeEvent<HTMLInputElement>,
+    e: ChangeEvent<HTMLTextAreaElement>,
     index: number
   ) => {
     setEditComment((prev) =>
@@ -106,7 +106,7 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
     try {
       const { error: commentUpdateError } = await clientSupabase
         .from("comments")
-        .update({ comment_text: editComment[index], created_at: new Date() })
+        .update({ comment_text: editComment[index] })
         .eq("id", commentId);
 
       if (commentUpdateError) {
@@ -192,18 +192,18 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
                       )}
                       ref={menuRef}
                     >
-                      <p
-                        className={styles.edit}
+                      <div
+                        className={styles[`edit-text-container`]}
                         onClick={() => handleOpenEditForm(index)}
                       >
-                        Edit
-                      </p>
-                      <p
-                        className={styles.delete}
+                        <p>Edit</p>
+                      </div>
+                      <div
+                        className={styles[`delete-text-container`]}
                         onClick={() => handleDelete(comment.id)}
                       >
-                        Delete
-                      </p>
+                        <p>Delete</p>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -235,22 +235,21 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
                   )}
                   {openEditFormJudgeArray[index] ? (
                     <form>
-                      <input
-                        type="text"
+                      <textarea
                         value={editComment[index]}
+                        required
                         onChange={(e) => onChangeEditComment(e, index)}
                         onBlur={() => handleUpdate(comment.id, index)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleUpdate(comment.id, index);
-                          }
+                        onInput={(e) => {
+                          const target = e.target as HTMLTextAreaElement;
+                          target.style.height = "auto";
+                          target.style.height = `${target.scrollHeight}px`;
                         }}
-                        ref={(el) => (inputRefs.current[index] = el)}
+                        ref={(el) => (textareaRefs.current[index] = el)}
                         className={
                           projectDetail
-                            ? styles[`project-detail-bubble-input`]
-                            : styles[`bubble-input`]
+                            ? styles[`project-detail-bubble-textarea`]
+                            : styles[`bubble-textarea`]
                         }
                       />
                     </form>
@@ -312,24 +311,34 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
         </div>
         <div className={styles[`comment-form-area`]}>
           <form onSubmit={(e) => handleSubmit(e, taskId)}>
-            <input
-              type="text"
+            <textarea
               placeholder="Enter your comment"
               value={sendComment}
               onChange={(e) => setSendComment(e.target.value)}
               required
               className={
-                projectDetail ? styles[`project-detail-input`] : styles.input
+                projectDetail
+                  ? styles[`project-detail-textarea`]
+                  : styles[`task-textarea`]
               }
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = "auto";
+                target.style.height = `${target.scrollHeight}px`;
+              }}
             />
-            <button
-              type="submit"
-              className={
-                projectDetail ? styles[`project-detail-button`] : styles.button
-              }
-            >
-              Comment
-            </button>
+            <div className={styles[`button-container`]}>
+              <button
+                type="submit"
+                className={
+                  projectDetail
+                    ? styles[`project-detail-button`]
+                    : styles[`task-button`]
+                }
+              >
+                Comment
+              </button>
+            </div>
           </form>
         </div>
       </dd>

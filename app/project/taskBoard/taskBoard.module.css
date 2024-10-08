@@ -160,6 +160,10 @@
   margin: 1vh;
 }
 
+.detail-area p{
+  white-space: pre-wrap;
+}
+
 .attached-file-label {
   width: 11vh;
 }

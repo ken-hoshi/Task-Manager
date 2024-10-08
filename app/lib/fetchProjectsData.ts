@@ -9,7 +9,7 @@ export const fetchProjectsData = async (userId?: number) => {
       : await getProjects();
 
     if (!projectsData) {
-      throw new Error("Projects data are Null");
+      throw new Error("Projects data are null");
     }
 
     const [projectMembersData, projectStatusData] = await Promise.all([
@@ -17,9 +17,9 @@ export const fetchProjectsData = async (userId?: number) => {
       Promise.all(projectsData.map((project) => getProjectStatus(project.id))),
     ]);
     if (!projectMembersData) {
-      throw new Error("Project Members Data are Null");
+      throw new Error("Project Members Data are null");
     } else if (!projectStatusData) {
-      throw new Error("project Status Data are Null");
+      throw new Error("project Status Data are null");
     }
 
     return { projectsData, projectMembersData, projectStatusData };

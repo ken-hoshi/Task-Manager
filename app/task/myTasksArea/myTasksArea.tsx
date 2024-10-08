@@ -243,7 +243,9 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
                           </div>
                         </div>
                         <dt>Detail</dt>
-                        <dd>{myTask.details ? myTask.details : "No Detail"}</dd>
+                        <dd className={styles[`detail-area`]}>
+                          {myTask.details ? myTask.details : "No Detail"}
+                        </dd>
                         <dt>Attached Files</dt>
                         <dd className={styles["attachmentFile-area"]}>
                           {attachmentFileList[index] &&
@@ -259,12 +261,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
                                     <a
                                       href={downloadUrlList[index][i] || "#"}
                                       onClick={() => handleNullCheck(index, i)}
-                                      download={
-                                        file.name
-                                          .split("/")
-                                          .pop()
-                                          .split("-timestamp-")[0]
-                                      }
+                                      download={file.name}
                                     >
                                       <span
                                         className={classNames(
@@ -276,14 +273,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
                                       </span>
                                     </a>
                                   </div>
-                                  <p>
-                                    {
-                                      file.name
-                                        .split("/")
-                                        .pop()
-                                        .split("-timestamp-")[0]
-                                    }
-                                  </p>
+                                  <p>{file.name}</p>
                                 </div>
                               ))
                             : "No Attached File"}

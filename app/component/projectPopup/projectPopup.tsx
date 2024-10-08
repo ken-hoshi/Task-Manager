@@ -207,7 +207,9 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         );
 
         if (removedFiles.length > 0) {
-          const removedFilesPaths = removedFiles.map((file) => `${file.name}`);
+          const removedFilesPaths = removedFiles.map(
+            (file) => `public/${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`
+          );
 
           const { error: removeError } = await clientSupabase.storage
             .from("project_attachments")
@@ -233,10 +235,11 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
 
         if (addedFiles.length > 0) {
           const insertPromises = addedFiles.map(async (file) => {
+            const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
             const { data: storageData, error: uploadStorageDataError } =
               await clientSupabase.storage
                 .from("project_attachments")
-                .upload(`public/${file.name}-timestamp-${Date.now()}`, file);
+                .upload(`public/${cleanFileName}`, file);
 
             if (uploadStorageDataError) {
               await clientSupabase
@@ -247,6 +250,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
             }
             return {
               project_id: projectId,
+              file_name: file.name,
               file_path: storageData?.path,
             };
           });
@@ -342,10 +346,11 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         );
 
         const insertPromises = selectedFiles.map(async (file) => {
+          const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
           const { data: storageData, error: uploadStorageDataError } =
             await clientSupabase.storage
               .from("project_attachments")
-              .upload(`public/${file.name}-timestamp-${Date.now()}`, file);
+              .upload(`public/${cleanFileName}`, file);
 
           if (uploadStorageDataError) {
             await clientSupabase.from("projects").delete().eq("id", projectId);
@@ -357,6 +362,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           }
           return {
             project_id: projectId,
+            file_name: file.name,
             file_path: storageData?.path,
           };
         });
@@ -497,9 +503,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                             cancel
                           </span>
                         </div>
-                        <p>
-                          {file.name.split("/").pop().split("-timestamp-")[0]}
-                        </p>
+                        <p>{file.name}</p>
                       </div>
                     ))}
                   </div>

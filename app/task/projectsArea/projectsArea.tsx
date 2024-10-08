@@ -179,11 +179,12 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
             projectsData.map((project, index) => (
               <React.Fragment key={project.id}>
                 <tr
-                  className={
+                  className={classNames(
                     project.id == newItem.id && newItem.target == 0
                       ? styles.blink
-                      : ""
-                  }
+                      : "",
+                    styles[`record-hover`]
+                  )}
                 >
                   <td className={styles[`col-project-name`]}>
                     <div className={styles[`arrow-container`]}>
@@ -279,8 +280,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                         <dt>Member</dt>
                         <dd>{projectMembersData[index]}</dd>
                         <dt>Detail</dt>
-                        <dd>
-                          {" "}
+                        <dd className={styles[`detail-area`]}>
                           {project.details ? project.details : "No Detail"}
                         </dd>
                         <dt>Attached Files</dt>
@@ -308,12 +308,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                                         onClick={() =>
                                           handleNullCheck(index, i)
                                         }
-                                        download={
-                                          file.name
-                                            .split("/")
-                                            .pop()
-                                            .split("-timestamp-")[0]
-                                        }
+                                        download={file.name}
                                       >
                                         <span
                                           className={classNames(
@@ -325,14 +320,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                                         </span>
                                       </a>
                                     </div>
-                                    <p>
-                                      {
-                                        file.name
-                                          .split("/")
-                                          .pop()
-                                          .split("-timestamp-")[0]
-                                      }
-                                    </p>
+                                    <p>{file.name}</p>
                                   </div>
                                 )
                               )

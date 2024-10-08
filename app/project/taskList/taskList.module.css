@@ -168,6 +168,10 @@
   width: 80%;
 }
 
+.detail-area {
+  white-space: pre-wrap;
+}
+
 dd.dd-last {
   border-bottom: none;
 }

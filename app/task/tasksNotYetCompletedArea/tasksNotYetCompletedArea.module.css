@@ -229,6 +229,10 @@
   word-wrap: break-word;
 }
 
+.detail-area {
+  white-space: pre-wrap;
+}
+
 .attachmentFile-area {
   display: flex;
   justify-content: center;

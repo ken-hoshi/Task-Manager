@@ -247,6 +247,10 @@
   border-bottom: none;
 }
 
+.detail-area {
+  white-space: pre-wrap;
+}
+
 .attachmentFile-area {
   display: flex;
   justify-content: center;

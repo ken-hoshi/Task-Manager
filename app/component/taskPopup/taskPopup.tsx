@@ -309,7 +309,9 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         );
 
         if (removedFiles.length > 0) {
-          const removedFilesPaths = removedFiles.map((file) => `${file.name}`);
+          const removedFilesPaths = removedFiles.map(
+            (file) => `public/${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`
+          );
           const { error: removeError } = await clientSupabase.storage
             .from("task_attachments")
             .remove(removedFilesPaths);
@@ -334,10 +336,11 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
         if (addedFiles.length > 0) {
           const insertPromises = addedFiles.map(async (file) => {
+            const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
             const { data: storageData, error: uploadStorageDataError } =
               await clientSupabase.storage
                 .from("task_attachments")
-                .upload(`public/${file.name}-timestamp-${Date.now()}`, file);
+                .upload(`public/${cleanFileName}`, file);
 
             if (uploadStorageDataError) {
               await clientSupabase.from("tasks").delete().eq("id", taskId);
@@ -345,6 +348,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             }
             return {
               task_id: taskId,
+              file_name: file.name,
               file_path: storageData?.path,
             };
           });
@@ -390,10 +394,11 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
         const taskId = taskInsertData![0].id;
         const insertPromises = selectedFiles.map(async (file) => {
+          const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
           const { data: storageData, error: uploadStorageDataError } =
             await clientSupabase.storage
               .from("task_attachments")
-              .upload(`public/${file.name}-timestamp-${Date.now()}`, file);
+              .upload(`public/${cleanFileName}`, file);
 
           if (uploadStorageDataError) {
             await clientSupabase.from("tasks").delete().eq("id", taskId);
@@ -401,6 +406,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           }
           return {
             task_id: taskId,
+            file_name: file.name,
             file_path: storageData?.path,
           };
         });
@@ -588,9 +594,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                             cancel
                           </span>
                         </div>
-                        <p>
-                          {file.name.split("/").pop().split("-timestamp-")[0]}
-                        </p>
+                        <p>{file.name}</p>
                       </div>
                     ))}
                   </div>

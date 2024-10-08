@@ -248,7 +248,7 @@ const TasksNotYetCompletedArea: React.FC<TasksNotYetCompletedAreaProps> = ({
                           </div>
                         </div>
                         <dt>Detail</dt>
-                        <dd>
+                        <dd className={styles[`detail-area`]}>
                           {taskNotYetCompleted.details
                             ? taskNotYetCompleted.details
                             : "No Detail"}
@@ -280,14 +280,7 @@ const TasksNotYetCompletedArea: React.FC<TasksNotYetCompletedAreaProps> = ({
                                       </span>
                                     </a>
                                   </div>
-                                  <p>
-                                    {
-                                      file.name
-                                        .split("/")
-                                        .pop()
-                                        .split("-timestamp-")[0]
-                                    }
-                                  </p>
+                                  <p>{file.name}</p>
                                 </div>
                               ))
                             : "No Attached File"}

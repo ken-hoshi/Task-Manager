@@ -61,7 +61,7 @@
   border: 1px solid #878788;
 }
 
-.project-area tbody tr:hover {
+.record-hover:hover {
   background-color: #e6e6e6;
 }
 
@@ -289,6 +289,10 @@
 
 .scrollable-content dd.dd-last {
   border-bottom: none;
+}
+
+.detail-area{
+  white-space: pre-wrap;
 }
 
 .attachmentFile-area {

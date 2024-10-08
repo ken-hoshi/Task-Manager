@@ -84,6 +84,7 @@ td.col-status-situation {
 
 td.col-project-detail {
   height: 50vh;
+  white-space: pre-wrap;
 }
 
 .project-area dt {

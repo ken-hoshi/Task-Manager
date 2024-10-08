@@ -247,7 +247,9 @@ const TaskList: React.FC<TaskListProps> = ({
                     <div className={styles[`scrollable-content`]}>
                       <dl>
                         <dt>Detail</dt>
-                        <dd>{task.details ? task.details : "No Detail"}</dd>
+                        <dd className={styles[`detail-area`]}>
+                          {task.details ? task.details : "No Detail"}
+                        </dd>
                         <dt>Attached Files</dt>
                         <dd className={styles["attachmentFile-area"]}>
                           {attachmentFileData![index] &&
@@ -266,12 +268,7 @@ const TaskList: React.FC<TaskListProps> = ({
                                         onClick={() =>
                                           handleNullCheck(index, i)
                                         }
-                                        download={
-                                          file.name
-                                            .split("/")
-                                            .pop()
-                                            .split("-timestamp-")[0]
-                                        }
+                                        download={file.name}
                                       >
                                         <span
                                           className={classNames(
@@ -283,14 +280,7 @@ const TaskList: React.FC<TaskListProps> = ({
                                         </span>
                                       </a>
                                     </div>
-                                    <p>
-                                      {
-                                        file.name
-                                          .split("/")
-                                          .pop()
-                                          .split("-timestamp-")[0]
-                                      }
-                                    </p>
+                                    <p>{file.name}</p>
                                   </div>
                                 )
                               )

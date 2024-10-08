@@ -129,9 +129,7 @@ const TaskItem = ({
                     <a
                       href={downloadUrls[index] || "#"}
                       onClick={() => handleNullCheck(index)}
-                      download={
-                        file.name.split("/").pop().split("-timestamp-")[0]
-                      }
+                      download={file.name}
                     >
                       <span
                         className={classNames(
@@ -143,7 +141,7 @@ const TaskItem = ({
                       </span>
                     </a>
                   </div>
-                  <p>{file.name.split("/").pop().split("-timestamp-")[0]}</p>
+                  <p>{file.name}</p>
                 </div>
               ))
             ) : (
