@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import styles from "./tasksNotYetCompletedArea.module.css";
+import styles from "./notYetCompletedTasksArea.module.css";
 import { Arrow } from "../../component/arrow/arrow";
 import React, { useEffect, useState } from "react";
 import Comment from "../../component/comment/comment";
@@ -16,10 +16,10 @@ interface StatusProps {
   status: string;
 }
 
-interface TasksNotYetCompletedAreaProps {
-  tasksNotYetCompleted: any[];
-  tasksNotYetCompletedArrows: boolean[];
-  setTasksNotYetCompletedArrows: React.Dispatch<
+interface NotYetCompletedTasksAreaProps {
+  notYetCompletedTasks: any[];
+  notYetCompletedTasksArrows: boolean[];
+  setNotYetCompletedTasksArrows: React.Dispatch<
     React.SetStateAction<boolean[]>
   >;
   userId: number;
@@ -31,10 +31,10 @@ interface Option {
   label: string;
 }
 
-const TasksNotYetCompletedArea: React.FC<TasksNotYetCompletedAreaProps> = ({
-  tasksNotYetCompleted,
-  tasksNotYetCompletedArrows,
-  setTasksNotYetCompletedArrows,
+const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
+  notYetCompletedTasks,
+  notYetCompletedTasksArrows,
+  setNotYetCompletedTasksArrows,
   userId,
   statuses,
 }) => {
@@ -51,7 +51,7 @@ const TasksNotYetCompletedArea: React.FC<TasksNotYetCompletedAreaProps> = ({
   useEffect(() => {
     setStatusList(statuses);
 
-    const taskNearDeadlineStatuses = tasksNotYetCompleted.map(
+    const taskNearDeadlineStatuses = notYetCompletedTasks.map(
       (taskNotYetCompleted) => {
         return {
           value: taskNotYetCompleted.status_id,
@@ -62,8 +62,8 @@ const TasksNotYetCompletedArea: React.FC<TasksNotYetCompletedAreaProps> = ({
     setSelectedStatuses(taskNearDeadlineStatuses);
 
     const fetchAttachmentFilesData = async () => {
-      if (tasksNotYetCompleted && tasksNotYetCompleted.length > 0) {
-        const attachmentFilesPromises = tasksNotYetCompleted.map(
+      if (notYetCompletedTasks && notYetCompletedTasks.length > 0) {
+        const attachmentFilesPromises = notYetCompletedTasks.map(
           async (taskNotYetCompleted) => {
             const taskId = taskNotYetCompleted.id;
             return await fetchAttachmentFiles(1, taskId);
@@ -144,10 +144,19 @@ const TasksNotYetCompletedArea: React.FC<TasksNotYetCompletedAreaProps> = ({
   };
 
   return (
-    <div className={styles[`task-not-yet-completed-area`]}>
+    <div className={styles[`not-yet-completed-tasks-area`]}>
       <div className={styles.title}>
-        <span className={styles["title-icon"]}>📁</span>
-        Tasks not yet completed
+        <div className={styles[`title-icon-container`]}>
+          <span
+            className={classNames(
+              "material-symbols-outlined",
+              styles["title-icon"]
+            )}
+          >
+            folder_check
+          </span>
+        </div>
+        NOT YET COMPLETED TASKS
       </div>
 
       <table>
@@ -172,17 +181,17 @@ const TasksNotYetCompletedArea: React.FC<TasksNotYetCompletedAreaProps> = ({
           </tr>
         </thead>
         <tbody>
-          {tasksNotYetCompleted.length > 0 ? (
-            tasksNotYetCompleted?.map((taskNotYetCompleted, index) => (
+          {notYetCompletedTasks.length > 0 ? (
+            notYetCompletedTasks?.map((taskNotYetCompleted, index) => (
               <React.Fragment key={taskNotYetCompleted.id}>
                 <tr>
                   <td className={styles[`col-task-name`]}>
                     <div className={styles[`arrow-container`]}>
                       <Arrow
-                        setTasksNotYetCompletedArrows={
-                          setTasksNotYetCompletedArrows
+                        setNotYetCompletedTasksArrows={
+                          setNotYetCompletedTasksArrows
                         }
-                        tasksNotYetCompletedArrows={tasksNotYetCompletedArrows}
+                        notYetCompletedTasksArrows={notYetCompletedTasksArrows}
                         index={index}
                         target={2}
                       />
@@ -224,7 +233,7 @@ const TasksNotYetCompletedArea: React.FC<TasksNotYetCompletedAreaProps> = ({
                 </tr>
                 <tr
                   className={
-                    tasksNotYetCompletedArrows[index]
+                    notYetCompletedTasksArrows[index]
                       ? styles.detailOpen
                       : styles.detailHidden
                   }
@@ -309,4 +318,4 @@ const TasksNotYetCompletedArea: React.FC<TasksNotYetCompletedAreaProps> = ({
   );
 };
 
-export default TasksNotYetCompletedArea;
+export default NotYetCompletedTasksArea;

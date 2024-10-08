@@ -172,7 +172,13 @@ const TaskList: React.FC<TaskListProps> = ({
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody
+          className={
+            taskData && taskData.length > 0
+              ? styles[`task-list-tbody`]
+              : styles[`non-task-tbody`]
+          }
+        >
           {taskData && taskData.length > 0 ? (
             taskData.map((task, index) => (
               <React.Fragment key={task.id}>

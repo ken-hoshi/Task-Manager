@@ -29,7 +29,7 @@
   display: block;
 }
 
-.task-list tbody {
+.task-list-tbody {
   max-height: 65.5vh;
   overflow-y: auto;
 }

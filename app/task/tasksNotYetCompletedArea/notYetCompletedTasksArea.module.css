@@ -1,4 +1,4 @@
-.task-not-yet-completed-area {
+.not-yet-completed-tasks-area {
   margin: 0 auto;
 }
 
@@ -10,12 +10,22 @@
 }
 
 .title {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45vh;
   font-weight: 700;
   font-family: "Roboto", sans-serif;
   color: #202124;
-  margin: 1.5vh auto;
+  margin: 1.5vh 0;
   position: relative;
+  font-size: 2vh;
+  letter-spacing: 0.2vh;
+  background: linear-gradient(45deg, #4285f4, #34a853);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  cursor: default;
 }
 
 .title::before {
@@ -24,17 +34,35 @@
   bottom: -0.5vh;
   left: 50%;
   width: 100%;
-  height: 2px;
+  height: 3px;
   background-color: #4285f4;
   transform: translateX(-50%);
+  transition: width 0.3s ease;
+}
+
+.title:hover::before {
+  width: 110%;
+}
+
+.title-icon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .title-icon {
-  margin-right: 0.5vh;
+  margin-right: 1vh;
+  bottom: 0;
   font-size: 2vh;
+  color: #4285f4;
+  transition: transform 0.3s ease;
 }
 
-.task-not-yet-completed-area table {
+.title:hover .title-icon {
+  transform: rotate(20deg);
+}
+
+.not-yet-completed-tasks-area table {
   width: 75vh;
   border-collapse: collapse;
   background-color: #ffffff;
@@ -45,27 +73,27 @@
   vertical-align: middle;
 }
 
-.task-not-yet-completed-area thead,
-.task-not-yet-completed-area tbody {
+.not-yet-completed-tasks-area thead,
+.not-yet-completed-tasks-area tbody {
   display: block;
 }
 
-.task-not-yet-completed-area tbody {
+.not-yet-completed-tasks-area tbody {
   max-height: 30vh;
   overflow-y: auto;
 }
 
-.task-not-yet-completed-area tr {
+.not-yet-completed-tasks-area tr {
   border: 1px solid #878788;
 }
 
-.task-not-yet-completed-area th.col-task-name {
+.not-yet-completed-tasks-area th.col-task-name {
   width: 34.5vh;
   padding: 0.5 1.5vh 0.5vh;
   box-sizing: border-box;
 }
 
-.task-not-yet-completed-area td.col-task-name {
+.not-yet-completed-tasks-area td.col-task-name {
   width: 34vh;
   display: flex;
   justify-content: flex-start;
@@ -77,28 +105,28 @@
   height: 100%;
 }
 
-.task-not-yet-completed-area th.col-project-name,
-.task-not-yet-completed-area td.col-project-name {
+.not-yet-completed-tasks-area th.col-project-name,
+.not-yet-completed-tasks-area td.col-project-name {
   width: 18vh;
   padding: 0.5vh;
   box-sizing: border-box;
 }
 
-.task-not-yet-completed-area th.col-status,
-.task-not-yet-completed-area td.col-status {
+.not-yet-completed-tasks-area th.col-status,
+.not-yet-completed-tasks-area td.col-status {
   width: 10vh;
   padding: 0;
 }
 
-.task-not-yet-completed-area th.col-deadline,
-.task-not-yet-completed-area td.col-deadline {
+.not-yet-completed-tasks-area th.col-deadline,
+.not-yet-completed-tasks-area td.col-deadline {
   width: 16vh;
   padding: 0.5vh;
   box-sizing: border-box;
 }
 
-.task-not-yet-completed-area th.col-assigned-person,
-.task-not-yet-completed-area td.col-assigned-person {
+.not-yet-completed-tasks-area th.col-assigned-person,
+.not-yet-completed-tasks-area td.col-assigned-person {
   width: 15vh;
   padding: 0.5vh;
   box-sizing: border-box;
@@ -138,7 +166,7 @@
   }
 }
 
-.task-not-yet-completed-area th {
+.not-yet-completed-tasks-area th {
   background-color: #0aa9ec;
   color: white;
   font-weight: normal;
@@ -272,7 +300,7 @@
   line-clamp: 2;
 }
 
-.task-not-yet-completed-area .status-icon {
+.not-yet-completed-tasks-area .status-icon {
   margin: 0 auto;
   width: 8vh;
   font-size: 1.3vh;

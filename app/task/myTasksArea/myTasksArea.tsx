@@ -131,8 +131,17 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
   return (
     <div className={styles[`my-task-area`]}>
       <div className={styles.title}>
-        <span className={styles["title-icon"]}>📁</span>
-        My Tasks
+        <div className={styles[`title-icon-container`]}>
+          <span
+            className={classNames(
+              "material-symbols-outlined",
+              styles["title-icon"]
+            )}
+          >
+            folder_check
+          </span>
+        </div>
+        MY TASKS
       </div>
 
       <table>

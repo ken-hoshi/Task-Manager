@@ -6,10 +6,10 @@ interface ArrowProps {
   projectArrows?: boolean[];
   setMyTasksArrows?: React.Dispatch<React.SetStateAction<boolean[]>>;
   myTasksArrows?: boolean[];
-  setTasksNotYetCompletedArrows?: React.Dispatch<
+  setNotYetCompletedTasksArrows?: React.Dispatch<
     React.SetStateAction<boolean[]>
   >;
-  tasksNotYetCompletedArrows?: boolean[];
+  notYetCompletedTasksArrows?: boolean[];
   setProjectDetailArrows?: React.Dispatch<React.SetStateAction<boolean[]>>;
   projectDetailArrows?: boolean[];
   index: number;
@@ -19,7 +19,7 @@ interface ArrowProps {
 enum Target {
   projects,
   myTasks,
-  tasksNotYetCompleted,
+  notYetCompletedTasks,
   projectDetail,
 }
 
@@ -28,8 +28,8 @@ export const Arrow: React.FC<ArrowProps> = ({
   projectArrows,
   setMyTasksArrows,
   myTasksArrows,
-  setTasksNotYetCompletedArrows,
-  tasksNotYetCompletedArrows,
+  setNotYetCompletedTasksArrows,
+  notYetCompletedTasksArrows,
   setProjectDetailArrows,
   projectDetailArrows,
   index,
@@ -55,13 +55,13 @@ export const Arrow: React.FC<ArrowProps> = ({
           );
         }
         break;
-      case Target.tasksNotYetCompleted:
-        if (setTasksNotYetCompletedArrows) {
-          setTasksNotYetCompletedArrows((prevTasksNotYetCompletedArrows) =>
-            prevTasksNotYetCompletedArrows.map((tasksNotYetCompletedArrow, i) =>
+      case Target.notYetCompletedTasks:
+        if (setNotYetCompletedTasksArrows) {
+          setNotYetCompletedTasksArrows((prevNotYetCompletedTasksArrows) =>
+            prevNotYetCompletedTasksArrows.map((notYetCompletedTasksArrow, i) =>
               i === clickedNumber
-                ? !tasksNotYetCompletedArrow
-                : tasksNotYetCompletedArrow
+                ? !notYetCompletedTasksArrow
+                : notYetCompletedTasksArrow
             )
           );
         }
@@ -88,8 +88,8 @@ export const Arrow: React.FC<ArrowProps> = ({
         (projectArrows[index] ? "arrow_drop_down" : "arrow_right")}{" "}
       {myTasksArrows &&
         (myTasksArrows[index] ? "arrow_drop_down" : "arrow_right")}{" "}
-      {tasksNotYetCompletedArrows &&
-        (tasksNotYetCompletedArrows[index]
+      {notYetCompletedTasksArrows &&
+        (notYetCompletedTasksArrows[index]
           ? "arrow_drop_down"
           : "arrow_right")}{" "}
       {projectDetailArrows &&

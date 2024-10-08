@@ -10,12 +10,22 @@
 }
 
 .title {
-  display: inline-block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20vh;
   font-weight: 700;
   font-family: "Roboto", sans-serif;
   color: #202124;
-  margin: 1.5vh auto;
+  margin: 1.5vh 0;
   position: relative;
+  font-size: 2vh;
+  letter-spacing: 0.2vh;
+  background: linear-gradient(45deg, #4285f4, #34a853);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  cursor: default;
 }
 
 .title::before {
@@ -24,14 +34,32 @@
   bottom: -0.5vh;
   left: 50%;
   width: 100%;
-  height: 2px;
+  height: 3px;
   background-color: #4285f4;
   transform: translateX(-50%);
+  transition: width 0.3s ease;
+}
+
+.title:hover::before {
+  width: 110%;
+}
+
+.title-icon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .title-icon {
-  margin-right: 0.5vh;
+  margin-right: 1vh;
+  bottom: 0;
   font-size: 2vh;
+  color: #4285f4;
+  transition: transform 0.3s ease;
+}
+
+.title:hover .title-icon {
+  transform: rotate(20deg);
 }
 
 .my-task-area table {

@@ -133,8 +133,17 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
   return (
     <div className={styles[`project-area`]}>
       <div className={styles["title"]}>
-        <span className={styles["title-icon"]}>📁</span>
-        Projects
+        <div className={styles[`title-icon-container`]}>
+          <span
+            className={classNames(
+              "material-symbols-outlined",
+              styles["title-icon"]
+            )}
+          >
+            folder_check
+          </span>
+        </div>
+        PROJECTS
       </div>
       <table>
         <thead>

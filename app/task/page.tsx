@@ -16,12 +16,12 @@ import { getStatus } from "../lib/getStatus";
 import Loading from "../component/loading/loading";
 import MyTasksArea from "./myTasksArea/myTasksArea";
 import ProjectsArea from "./projectsArea/projectsArea";
-import TasksNotYetCompletedArea from "./tasksNotYetCompletedArea/tasksNotYetCompletedArea";
 import { fetchAttachmentFiles } from "../lib/fetchAttachmentFiles";
 import BackgroundImage1 from "../component/backgroundImage1/backgroundImage1";
 import RobotButton from "../component/robotButton/robotButton";
 import { GetSession } from "../hooks/getSession";
 import { useSessionTimeout } from "../hooks/sessionTimeout";
+import NotYetCompletedTasksArea from "./tasksNotYetCompletedArea/notYetCompletedTasksArea";
 
 interface StatusProps {
   id: number;
@@ -44,8 +44,8 @@ const Task: React.FC = () => {
   const [myTasks, setMyTasks] = useState<any[]>([]);
   const [myTaskArrows, setMyTaskArrows] = useState<boolean[]>([]);
 
-  const [tasksNotYetCompleted, setTasksNotYetCompleted] = useState<any[]>([]);
-  const [tasksNotYetCompletedArrows, setTasksNotYetCompletedArrows] = useState<
+  const [notYetCompletedTasks, setNotYetCompletedTasks] = useState<any[]>([]);
+  const [notYetCompletedTasksArrows, setNotYetCompletedTasksArrows] = useState<
     boolean[]
   >([]);
 
@@ -129,14 +129,14 @@ const Task: React.FC = () => {
             (taskData) => taskData.task_status.status !== "Completed"
           );
 
-          const sortedTasksNotYetCompleted = notYetCompletedTasksData.sort(
+          const sortedNotYetCompletedTasks = notYetCompletedTasksData.sort(
             (a, b) =>
               new Date(a.deadline_date).getTime() -
               new Date(b.deadline_date).getTime()
           );
-          setTasksNotYetCompleted(sortedTasksNotYetCompleted);
-          setTasksNotYetCompletedArrows(
-            new Array(sortedTasksNotYetCompleted.length).fill(false)
+          setNotYetCompletedTasks(sortedNotYetCompletedTasks);
+          setNotYetCompletedTasksArrows(
+            new Array(sortedNotYetCompletedTasks.length).fill(false)
           );
         }
 
@@ -194,10 +194,10 @@ const Task: React.FC = () => {
                 userId={userId}
                 statuses={statuses}
               />
-              <TasksNotYetCompletedArea
-                tasksNotYetCompleted={tasksNotYetCompleted}
-                tasksNotYetCompletedArrows={tasksNotYetCompletedArrows}
-                setTasksNotYetCompletedArrows={setTasksNotYetCompletedArrows}
+              <NotYetCompletedTasksArea
+                notYetCompletedTasks={notYetCompletedTasks}
+                notYetCompletedTasksArrows={notYetCompletedTasksArrows}
+                setNotYetCompletedTasksArrows={setNotYetCompletedTasksArrows}
                 userId={userId}
                 statuses={statuses}
               />
