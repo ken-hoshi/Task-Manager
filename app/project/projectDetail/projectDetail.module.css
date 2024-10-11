@@ -118,8 +118,13 @@ td.col-project-detail {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  flex-wrap: wrap; 
-  gap: 1.5vh; 
+  flex-wrap: wrap;
+  gap: 1.5vh;
+}
+
+.attachmentFile-area p{
+  text-align: center;
+  margin: 0 auto;
 }
 
 .file-info {

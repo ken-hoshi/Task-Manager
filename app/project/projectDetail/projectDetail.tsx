@@ -122,34 +122,36 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                         styles[`dd-last`]
                       )}
                     >
-                      {attachmentFiles.length !== 0
-                        ? attachmentFiles.map((file: any, index) => (
-                            <div
-                              className={
-                                styles["display-attachmentFile-container"]
-                              }
-                              key={index}
-                            >
-                              <div className={styles["file-info"]}>
-                                <a
-                                  href={downloadUrls[index] || "#"}
-                                  onClick={() => handleNullCheck(index)}
-                                  download={file.name}
+                      {attachmentFiles.length !== 0 ? (
+                        attachmentFiles.map((file: any, index) => (
+                          <div
+                            className={
+                              styles["display-attachmentFile-container"]
+                            }
+                            key={index}
+                          >
+                            <div className={styles["file-info"]}>
+                              <a
+                                href={downloadUrls[index] || "#"}
+                                onClick={() => handleNullCheck(index)}
+                                download={file.name}
+                              >
+                                <span
+                                  className={classNames(
+                                    "material-symbols-outlined",
+                                    styles.downloadIcon
+                                  )}
                                 >
-                                  <span
-                                    className={classNames(
-                                      "material-symbols-outlined",
-                                      styles.downloadIcon
-                                    )}
-                                  >
-                                    download
-                                  </span>
-                                </a>
-                              </div>
-                              <p>{file.name}</p>
+                                  download
+                                </span>
+                              </a>
                             </div>
-                          ))
-                        : "No Attached File"}
+                            <p>{file.name}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p> No Attached File</p>
+                      )}
                     </dd>
                   </dl>
                 </div>
