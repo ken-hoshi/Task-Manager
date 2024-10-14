@@ -322,7 +322,8 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         userId,
         Number(id),
         null,
-        1
+        1,
+        []
       );
       if (postEmailNotificationsError) {
         console.error(

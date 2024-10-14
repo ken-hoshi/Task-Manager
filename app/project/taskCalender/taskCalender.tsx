@@ -151,7 +151,8 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
           userId,
           taskId,
           null,
-          1
+          1,
+          []
         );
         if (postEmailNotificationsError) {
           console.error(

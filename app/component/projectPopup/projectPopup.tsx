@@ -381,7 +381,8 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           userId,
           null,
           projectId,
-          0
+          0,
+          []
         );
         if (postEmailNotificationsError) {
           console.error(

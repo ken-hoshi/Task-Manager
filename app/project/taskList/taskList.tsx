@@ -114,7 +114,8 @@ const TaskList: React.FC<TaskListProps> = ({
         userId,
         taskId,
         null,
-        1
+        1,
+        []
       );
       if (postEmailNotificationsError) {
         console.error(

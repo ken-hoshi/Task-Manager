@@ -115,7 +115,8 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
         userId,
         taskId,
         null,
-        1
+        1,
+        []
       );
       if (postEmailNotificationsError) {
         console.error(

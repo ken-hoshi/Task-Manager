@@ -1,7 +1,7 @@
 "use client";
 
 import styles from "./task.module.css";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Header from "@/app/component/header/header";
 import React from "react";
 import { fetchProjectsData } from "../lib/fetchProjectsData";
@@ -22,6 +22,7 @@ import RobotButton from "../component/robotButton/robotButton";
 import { GetSession } from "../hooks/getSession";
 import { useSessionTimeout } from "../hooks/sessionTimeout";
 import NotYetCompletedTasksArea from "./tasksNotYetCompletedArea/notYetCompletedTasksArea";
+import { postMailNotifications } from "../lib/postMailNotifications";
 
 interface StatusProps {
   id: number;
@@ -55,6 +56,20 @@ const Task: React.FC = () => {
   const { useGetSession } = GetSession();
 
   const router = useRouter();
+
+  const today = new Date();
+
+  const tomorrow = useMemo(() => {
+    const memoTomorrow = new Date(today);
+    memoTomorrow.setDate(today.getDate() + 1);
+    return memoTomorrow;
+  }, [today]);
+
+  const dayAfterTomorrow = useMemo(() => {
+    const memoDayAfterTomorrow = new Date(today);
+    memoDayAfterTomorrow.setDate(today.getDate() + 2);
+    return memoDayAfterTomorrow;
+  }, [today]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -122,22 +137,55 @@ const Task: React.FC = () => {
           const myTasksData = tasksData.filter(
             (taskData) => taskData.assigned_user_id === userId
           );
-          setMyTasks(myTasksData);
-          setMyTaskArrows(new Array(myTasksData.length).fill(false));
+
+          if (myTasksData.length > 0) {
+            const checkDateMatch = (taskDeadline: Date, targetDate: Date) => {
+              return (
+                taskDeadline.getFullYear() === targetDate.getFullYear() &&
+                taskDeadline.getMonth() === targetDate.getMonth() &&
+                taskDeadline.getDate() === targetDate.getDate()
+              );
+            };
+
+            const postDeadlineNotifications = async () => {
+              const notificationPromises = myTasksData.map(
+                async (myTask: any) => {
+                  const taskDeadline = new Date(myTask.deadline_date);
+
+                  if (checkDateMatch(taskDeadline, dayAfterTomorrow)) {
+                    return postMailNotifications(null, myTask.id, null, 4, []);
+                  } else if (checkDateMatch(taskDeadline, tomorrow)) {
+                    return postMailNotifications(null, myTask.id, null, 5, []);
+                  } else if (checkDateMatch(taskDeadline, today)) {
+                    return postMailNotifications(null, myTask.id, null, 6, []);
+                  } else {
+                    return;
+                  }
+                }
+              );
+              await Promise.all(notificationPromises);
+            };
+            postDeadlineNotifications();
+
+            setMyTasks(myTasksData);
+            setMyTaskArrows(new Array(myTasksData.length).fill(false));
+          }
 
           const notYetCompletedTasksData = tasksData.filter(
             (taskData) => taskData.task_status.status !== "Completed"
           );
 
-          const sortedNotYetCompletedTasks = notYetCompletedTasksData.sort(
-            (a, b) =>
-              new Date(a.deadline_date).getTime() -
-              new Date(b.deadline_date).getTime()
-          );
-          setNotYetCompletedTasks(sortedNotYetCompletedTasks);
-          setNotYetCompletedTasksArrows(
-            new Array(sortedNotYetCompletedTasks.length).fill(false)
-          );
+          if (notYetCompletedTasksData.length > 0) {
+            const sortedNotYetCompletedTasks = notYetCompletedTasksData.sort(
+              (a, b) =>
+                new Date(a.deadline_date).getTime() -
+                new Date(b.deadline_date).getTime()
+            );
+            setNotYetCompletedTasks(sortedNotYetCompletedTasks);
+            setNotYetCompletedTasksArrows(
+              new Array(sortedNotYetCompletedTasks.length).fill(false)
+            );
+          }
         }
 
         const statusData = await getStatus();

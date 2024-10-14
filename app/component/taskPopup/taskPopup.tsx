@@ -283,10 +283,16 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
     if (!postLoading) return;
     setPostLoading(false);
 
+    const startDateWithTime = new Date(selectedStartDate!);
+    startDateWithTime.setHours(9, 0, 0, 0);
+
+    const deadlineDateWithTime = new Date(selectedDeadlineDate!);
+    deadlineDateWithTime.setHours(9, 0, 0, 0);
+
     const payloadValue = {
       task_name: taskName,
-      start_date: selectedStartDate,
-      deadline_date: selectedDeadlineDate,
+      start_date: startDateWithTime,
+      deadline_date: deadlineDateWithTime,
       details,
       status_id: selectedStatus!.value,
       assigned_user_id: selectedUser!.value,
@@ -367,7 +373,8 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           userId,
           taskId,
           null,
-          1
+          1,
+          []
         );
         if (postEmailNotificationsError) {
           console.error(
@@ -424,7 +431,8 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           userId,
           taskId,
           null,
-          0
+          0,
+          []
         );
         if (postEmailNotificationsError) {
           console.error(

@@ -143,7 +143,8 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
         userId,
         taskId,
         null,
-        3
+        3,
+        []
       );
       if (postEmailNotificationsError) {
         console.error(

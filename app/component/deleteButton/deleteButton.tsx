@@ -90,7 +90,8 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
           userId,
           null,
           projectId,
-          3
+          3,
+          []
         );
 
         if (postEmailNotificationsError) {
@@ -136,7 +137,8 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
           userId,
           taskId,
           null,
-          2
+          2,
+          []
         );
 
         if (postEmailNotificationsError) {
