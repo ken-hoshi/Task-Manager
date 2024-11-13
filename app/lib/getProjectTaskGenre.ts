@@ -17,7 +17,7 @@ export async function getProjectTaskGenre(projectIdList: number[]) {
       throw selectTaskGenreDataError;
     }
 
-    if (!taskGenreData) {
+    if (!taskGenreData || taskGenreData.length === 0) {
       return [];
     }
 
@@ -32,9 +32,12 @@ export async function getProjectTaskGenre(projectIdList: number[]) {
           return {
             id: taskGenre.id,
             taskGenreName: taskGenre.task_genre_name,
-            numberOfPersons: taskGenreIdList.filter(
-              (taskGenreId) => taskGenreId.task_genre_id === taskGenre.id
-            ).length,
+            numberOfPersons:
+              taskGenreIdList && taskGenreIdList.length > 0
+                ? taskGenreIdList.filter(
+                    (taskGenreId) => taskGenreId.task_genre_id === taskGenre.id
+                  ).length
+                : 0,
             startDate: taskGenre.start_date,
             deadlineDate: taskGenre.deadline_date,
             numberOfDays: Math.ceil(

@@ -135,14 +135,16 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
 
           setUsers(userList);
 
-          const taskGenreArray = taskGenreData.map((taskGenre) => ({
-            id: taskGenre.id,
-            taskGenreName: taskGenre.task_genre_name,
-            selectedStartDate: taskGenre.start_date,
-            selectedDeadlineDate: taskGenre.deadline_date,
-          }));
-          setTaskGenreDataArray(taskGenreArray);
-          setBeforeChangeTaskGenreDataArray(taskGenreArray);
+          if (taskGenreData && taskGenreData.length > 0) {
+            const taskGenreArray = taskGenreData.map((taskGenre) => ({
+              id: taskGenre.id,
+              taskGenreName: taskGenre.task_genre_name,
+              selectedStartDate: taskGenre.start_date,
+              selectedDeadlineDate: taskGenre.deadline_date,
+            }));
+            setTaskGenreDataArray(taskGenreArray);
+            setBeforeChangeTaskGenreDataArray(taskGenreArray);
+          }
 
           setSelectedFiles(projectAttachmentsData[0]);
           setBeforeChangeFiles(projectAttachmentsData[0]);

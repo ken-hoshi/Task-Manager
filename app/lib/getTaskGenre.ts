@@ -25,14 +25,14 @@ export async function getTaskGenre(taskGenreId: number) {
       throw selectTasksError;
     }
 
-    if (!taskGenreData) {
+    if (!taskGenreData || taskGenreData.length > 0) {
       return [];
     }
 
     return {
-      id:taskGenreData.id,
+      id: taskGenreData.id,
       taskGenreName: taskGenreData.task_genre_name,
-      numberOfPersons: tasks.length,
+      numberOfPersons: tasks && tasks.length > 0 ? tasks.length : 0,
       startDate: taskGenreData.start_date,
       deadlineDate: taskGenreData.deadline_date,
       numberOfDays: Math.ceil(
