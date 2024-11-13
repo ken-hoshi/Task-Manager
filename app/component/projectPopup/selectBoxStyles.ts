@@ -8,7 +8,7 @@ export const selectBoxStyles = {
     borderBottom: "1px solid #000000",
     borderRadius: 0,
     height: "6.5vh",
-    maxHeight: "6.5vh",
+    minHeight: "6.5vh",
     overflow: "hidden",
   }),
   valueContainer: (baseStyles: any) => ({

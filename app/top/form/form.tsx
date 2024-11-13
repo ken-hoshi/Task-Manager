@@ -50,7 +50,7 @@ const Form: React.FC<FormProps> = ({ className }) => {
   return (
     <div className={classNames(styles[`form-area`], className)}>
       <div className={styles[`form-board`]}>
-        <div className={styles.backgroundImage3}>
+        <div className={styles[`background-image-container`]}>
           <Image
             className={styles[`background-image3`]}
             src="/img/background-image3.jpeg"

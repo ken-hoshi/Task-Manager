@@ -1,4 +1,4 @@
-.modalBackdrop {
+.modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
@@ -11,7 +11,7 @@
   z-index: 1000;
 }
 
-.modalContent {
+.modal-content {
   background: white;
   border-radius: 8px;
   text-align: center;
@@ -22,12 +22,12 @@
   cursor: default;
 }
 
-.modalContent p {
+.modal-content p {
   margin: 6vh auto 3vh;
   font-size: 2vh;
 }
 
-.modalContent button {
+.modal-content button {
   border: none;
   border-radius: 4px;
   font-size: 3vh;
@@ -38,22 +38,22 @@
   transition: all 0.3s ease;
 }
 
-.modalContent button.cancel {
+.modal-content button.cancel {
   background-color: #f44336;
   color: white;
 }
 
-.modalContent button.yes {
+.modal-content button.yes {
   background-color: #007bff;
   color: white;
 }
 
-.modalContent button:hover {
+.modal-content button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.modalContent button:active {
+.modal-content button:active {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

@@ -10,12 +10,14 @@ import { useFlashDisplayContext } from "@/app/provider/flashDisplayProvider";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import { fetchProjectsData } from "@/app/lib/fetchProjectsData";
+import { formatDate } from "@/app/lib/formatDateTime";
 
 interface ProjectsAreaProps {
   projects: any[];
-  projectMembers: string[];
+  projectMembers: string[][];
   projectStatus: any[];
-  attachmentFileList: File[][];
+  projectTaskGenre: any[];
+  attachedFileList: File[][];
   downloadUrlList: (string | null)[][];
   userId: number;
 }
@@ -24,7 +26,8 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
   projects,
   projectMembers,
   projectStatus,
-  attachmentFileList,
+  projectTaskGenre,
+  attachedFileList,
   downloadUrlList,
   userId,
 }) => {
@@ -35,12 +38,13 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
   const router = useRouter();
 
   const [projectsData, setProjectsData] = useState<any[]>([]);
-  const [projectMembersData, setProjectMembersData] = useState<string[]>([]);
+  const [projectMembersData, setProjectMembersData] = useState<string[][]>([]);
   const [projectStatusData, setProjectStatusData] = useState<any[]>([]);
+  const [projectTaskGenreData, setProjectTaskGenreData] = useState<any[]>([]);
   const [projectArrowsData, setProjectArrowsData] = useState<boolean[]>([]);
-  const [attachmentFileListData, setAttachmentFileListData] = useState<
-    File[][]
-  >([[]]);
+  const [attachedFileListData, setAttachedFileListData] = useState<File[][]>([
+    [],
+  ]);
   const [downloadUrlListData, setDownloadUrlListData] = useState<
     (string | null)[][]
   >([[]]);
@@ -53,7 +57,8 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
       setProjectArrowsData(new Array(projects.length).fill(false));
       setProjectMembersData(projectMembers);
       setProjectStatusData(projectStatus);
-      setAttachmentFileListData(attachmentFileList);
+      setProjectTaskGenreData(projectTaskGenre);
+      setAttachedFileListData(attachedFileList);
       setDownloadUrlListData(downloadUrlList);
     }
   }, [pageUpdated]);
@@ -78,23 +83,23 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
             (filteredProject) => filteredProject.id
           );
 
-          const filteredAttachmentFilesData = projectsData.reduce(
+          const filteredAttachedFilesData = projectsData.reduce(
             (result, project, index) => {
               if (filteredProjectsIdList.includes(project.id)) {
-                result.attachmentFiles.push(attachmentFileListData[index]);
+                result.attachedFiles.push(attachedFileListData[index]);
                 result.downloadUrls.push(downloadUrlListData[index]);
               }
               return result;
             },
             {
-              attachmentFiles: [],
+              attachedFiles: [],
               downloadUrls: [],
             }
           );
 
           const filteredProjectMembersList =
             filteredProjects.projectMembersData.map((projectMember) =>
-              projectMember.map((member) => member.name).join("、")
+              projectMember.map((member) => member.name)
             );
 
           setProjectsData(filteredProjects.projectsData);
@@ -103,10 +108,8 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
           );
           setProjectMembersData(filteredProjectMembersList);
           setProjectStatusData(filteredProjects.projectStatusData);
-          setAttachmentFileListData(
-            filteredAttachmentFilesData.attachmentFiles
-          );
-          setDownloadUrlListData(filteredAttachmentFilesData.downloadUrls);
+          setAttachedFileListData(filteredAttachedFilesData.attachedFiles);
+          setDownloadUrlListData(filteredAttachedFilesData.downloadUrls);
         }
       };
       filterProjects();
@@ -116,17 +119,10 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
     setOnFiler(!onFilter);
   };
 
-  const handleNullCheck = (index: number, i: number) => {
-    if (!downloadUrlList[index][i]) {
-      console.error("Attached File is null.");
-      setNotificationValue({
-        message: "Couldn't download Attached File.",
-        color: 1,
-      });
-    }
-  };
-
-  const handleTransitionProjectDetail = (projectId: number, userId: number) => {
+  const handleTransitionProjectDetails = (
+    projectId: number,
+    userId: number
+  ) => {
     router.push(`/project?id=${projectId}&userId=${userId}`);
   };
 
@@ -145,7 +141,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
         </div>
         PROJECTS
       </div>
-      <table>
+      <table className={styles[`project-table`]}>
         <thead>
           <tr>
             <th className={styles[`col-project-name`]}>
@@ -161,8 +157,8 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                 className={classNames(
                   "material-symbols-outlined",
                   {
-                    [styles.onFilter]: onFilter,
-                    [styles.offFilter]: !onFilter,
+                    [styles[`on-filter`]]: onFilter,
+                    [styles[`off-filter`]]: !onFilter,
                   },
                   styles.tooltip
                 )}
@@ -170,7 +166,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
               >
                 {" "}
                 filter_alt{" "}
-                <span className={styles.tooltipText}>
+                <span className={styles[`tooltip-text`]}>
                   自分が含まれるプロジェクトに絞り込みます。
                 </span>
               </span>
@@ -207,7 +203,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                     <p
                       className={styles[`project-name`]}
                       onClick={() =>
-                        handleTransitionProjectDetail(project.id, userId)
+                        handleTransitionProjectDetails(project.id, userId)
                       }
                     >
                       {project.project_name}
@@ -216,7 +212,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                   <td
                     className={styles[`col-status-situation`]}
                     onClick={() =>
-                      handleTransitionProjectDetail(project.id, userId)
+                      handleTransitionProjectDetails(project.id, userId)
                     }
                   >
                     <div className={styles[`status-situation-part`]}>
@@ -279,33 +275,117 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                 <tr
                   className={
                     projectArrowsData[index]
-                      ? styles.detailOpen
-                      : styles.detailHidden
+                      ? styles[`details-open`]
+                      : styles[`details-hidden`]
                   }
                 >
                   <td colSpan={3}>
                     <div className={styles[`scrollable-content`]}>
                       <dl>
                         <dt>Member</dt>
-                        <dd>{projectMembersData[index]}</dd>
-                        <dt>Detail</dt>
-                        <dd className={styles[`detail-area`]}>
-                          {project.details ? project.details : "No Detail"}
+                        <dd className={styles[`member-area`]}>
+                          {projectMembersData[index].map(
+                            (projectMember, index) => (
+                              <div className={styles.member} key={index}>
+                                {projectMember}
+                              </div>
+                            )
+                          )}
                         </dd>
-                        <dt>Attached Files</dt>
+
+                        <dt>Task Genre</dt>
+                        <dd>
+                          {projectTaskGenreData[index].length > 0 ? (
+                            <div className={styles[`task-genre-area`]}>
+                              {projectTaskGenreData[index].map(
+                                (projectTaskGenre: any, index: number) => (
+                                  <div
+                                    className={styles[`task-genre-block`]}
+                                    key={index}
+                                  >
+                                    <div className={styles[`task-genre-name`]}>
+                                      {projectTaskGenre.taskGenreName}
+                                    </div>
+
+                                    <div
+                                      className={
+                                        styles[`task-genre-table-container`]
+                                      }
+                                    >
+                                      <table>
+                                        <tbody>
+                                          <tr>
+                                            <td>Period</td>
+                                            <td>
+                                              {formatDate(
+                                                projectTaskGenre.startDate
+                                              )}{" "}
+                                              ~
+                                              {formatDate(
+                                                projectTaskGenre.deadlineDate
+                                              )}
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td>Days</td>
+                                            <td>
+                                              {projectTaskGenre.numberOfDays.toFixed(
+                                                1
+                                              )}
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td>Persons</td>
+                                            <td>
+                                              {projectTaskGenre.numberOfPersons}
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td>Persons/Days</td>
+                                            <td>
+                                              {(
+                                                projectTaskGenre.numberOfDays *
+                                                projectTaskGenre.numberOfPersons
+                                              ).toFixed(1)}
+                                            </td>
+                                          </tr>
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          ) : (
+                            <div className={styles[`non-task-genre`]}>
+                              No Task Genre
+                            </div>
+                          )}
+                        </dd>
+                        <dt>Details</dt>
+                        <dd className={styles[`details-area`]}>
+                          {project.details ? (
+                            <div className={styles[`details-text`]}>
+                              {project.details}
+                            </div>
+                          ) : (
+                            "No Details"
+                          )}
+                        </dd>
+                        <dt>Attached File</dt>
                         <dd
                           className={classNames(
-                            styles["attachmentFile-area"],
+                            styles["attached-file-area"],
                             styles[`dd-last`]
                           )}
                         >
-                          {attachmentFileListData[index] &&
-                          attachmentFileListData[index].length > 0
-                            ? attachmentFileListData[index].map(
+                          {attachedFileListData[index] &&
+                          attachedFileListData[index].length > 0
+                            ? attachedFileListData[index].map(
                                 (file: any, i) => (
                                   <div
                                     className={
-                                      styles["display-attachmentFile-container"]
+                                      styles["display-attached-file-container"]
                                     }
                                     key={i}
                                   >
@@ -314,15 +394,12 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                                         href={
                                           downloadUrlListData[index][i] || "#"
                                         }
-                                        onClick={() =>
-                                          handleNullCheck(index, i)
-                                        }
                                         download={file.name}
                                       >
                                         <span
                                           className={classNames(
                                             "material-symbols-outlined",
-                                            styles.downloadIcon
+                                            styles[`download-icon`]
                                           )}
                                         >
                                           download

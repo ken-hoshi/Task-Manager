@@ -1,9 +1,9 @@
-import { fetchAttachmentFiles } from "./fetchAttachmentFiles";
+import { fetchAttachedFiles } from "./fetchAttachedFiles";
 import { getProjectMember } from "./getProjectMember";
 import { getProjectStatus } from "./getProjectStatus";
 import { clientSupabase } from "./supabase/client";
 
-export const fetchProjectDetailData = async (projectId: number) => {
+export const fetchProjectDetailsData = async (projectId: number) => {
   try {
     const [projectMembersData, projectStatusData] = await Promise.all([
       getProjectMember(projectId),
@@ -19,7 +19,7 @@ export const fetchProjectDetailData = async (projectId: number) => {
       throw new Error("Project Data is null");
     }
 
-    const attachmentFiles = await fetchAttachmentFiles(0, projectId);
+    const attachedFiles = await fetchAttachedFiles(0, [projectId]);
 
     const { data: tasksData, error: selectTasksDataError } =
       await clientSupabase
@@ -35,11 +35,11 @@ export const fetchProjectDetailData = async (projectId: number) => {
       projectData,
       projectMembersData,
       projectStatusData,
-      attachmentFiles,
+      attachedFiles,
       tasksData,
     };
   } catch (error) {
-    console.error("Error fetch project detail data:", error);
+    console.error("Error fetch Project Details Data:", error);
     return {};
   }
 };

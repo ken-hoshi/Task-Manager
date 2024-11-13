@@ -16,13 +16,14 @@ import { getStatus } from "../lib/getStatus";
 import Loading from "../component/loading/loading";
 import MyTasksArea from "./myTasksArea/myTasksArea";
 import ProjectsArea from "./projectsArea/projectsArea";
-import { fetchAttachmentFiles } from "../lib/fetchAttachmentFiles";
 import BackgroundImage1 from "../component/backgroundImage1/backgroundImage1";
 import RobotButton from "../component/robotButton/robotButton";
 import { GetSession } from "../hooks/getSession";
 import { useSessionTimeout } from "../hooks/sessionTimeout";
 import NotYetCompletedTasksArea from "./tasksNotYetCompletedArea/notYetCompletedTasksArea";
 import { postMailNotifications } from "../lib/postMailNotifications";
+import { getProjectTaskGenre } from "../lib/getProjectTaskGenre";
+import { fetchAttachedFiles } from "../lib/fetchAttachedFiles";
 
 interface StatusProps {
   id: number;
@@ -35,9 +36,10 @@ const Task: React.FC = () => {
   const [statuses, setStatuses] = useState<StatusProps[]>([]);
 
   const [projects, setProjects] = useState<any[]>([]);
-  const [projectMembers, setProjectMembers] = useState<string[]>([]);
+  const [projectMembers, setProjectMembers] = useState<string[][]>([]);
+  const [projectTaskGenre, setProjectTaskGenre] = useState<any[]>([]);
   const [projectStatus, setProjectStatus] = useState<any[]>([]);
-  const [attachmentFileList, setAttachmentFileList] = useState<File[][]>([[]]);
+  const [attachedFileList, setAttachedFileList] = useState<File[][]>([[]]);
   const [downloadUrlList, setDownloadUrlList] = useState<(string | null)[][]>([
     [],
   ]);
@@ -95,104 +97,121 @@ const Task: React.FC = () => {
           !projectData.projectsData
         ) {
           throw new Error("Fetch ProjectsData is null.");
-        } else {
-          const projectMembers = projectData.projectMembersData.map(
-            (projectMember) =>
-              projectMember.map((member) => member.name).join("、")
-          );
-          setProjectMembers(projectMembers);
+        }
+
+        const projectMembersList = projectData.projectMembersData.map(
+          (projectMember) => projectMember.map((member) => member.name)
+        );
+
+        if (projectData.projectsData.length > 0) {
+          setProjectMembers(projectMembersList);
           setProjectStatus(projectData.projectStatusData);
           setProjects(projectData.projectsData);
 
-          if (projectData.projectsData.length > 0) {
-            const attachmentFilesPromises = projectData.projectsData.map(
-              async (project) => {
-                const projectId = project.id;
-                return await fetchAttachmentFiles(0, projectId);
-              }
-            );
-            const attachmentFiles = await Promise.all(attachmentFilesPromises);
-            setAttachmentFileList(attachmentFiles);
+          const projectIdList = projectData.projectsData.map(
+            (project) => project.id
+          );
+          setProjectTaskGenre(await getProjectTaskGenre(projectIdList));
 
-            if (attachmentFiles.length > 0) {
-              const urlList = attachmentFiles.map((subList) =>
-                subList.map((file) => {
-                  try {
-                    return URL.createObjectURL(file);
-                  } catch (error) {
-                    console.error("Failed to create object URL:", error);
-                    return null;
+          const attachedFiles = await fetchAttachedFiles(0, projectIdList);
+          setAttachedFileList(attachedFiles);
+
+          if (attachedFiles.length > 0) {
+            const urlList = attachedFiles.map((subList) =>
+              subList.map((file) => {
+                try {
+                  return URL.createObjectURL(file);
+                } catch (error) {
+                  console.error("Failed to create object URL:", error);
+                  return null;
+                }
+              })
+            );
+            setDownloadUrlList(urlList);
+          }
+
+          const tasksData = await fetchTasksData();
+          if (!tasksData) {
+            throw new Error("Fetch TasksData is null.");
+          } else {
+            const myTasksData = tasksData.filter(
+              (taskData) => taskData.assigned_user_id === userId
+            );
+
+            if (myTasksData.length > 0) {
+              const checkDateMatch = (taskDeadline: Date, targetDate: Date) => {
+                return (
+                  taskDeadline.getFullYear() === targetDate.getFullYear() &&
+                  taskDeadline.getMonth() === targetDate.getMonth() &&
+                  taskDeadline.getDate() === targetDate.getDate()
+                );
+              };
+
+              const postDeadlineNotifications = async () => {
+                const notificationPromises = myTasksData.map(
+                  async (myTask: any) => {
+                    const taskDeadline = new Date(myTask.deadline_date);
+
+                    if (checkDateMatch(taskDeadline, dayAfterTomorrow)) {
+                      return postMailNotifications(
+                        null,
+                        myTask.id,
+                        null,
+                        4,
+                        []
+                      );
+                    } else if (checkDateMatch(taskDeadline, tomorrow)) {
+                      return postMailNotifications(
+                        null,
+                        myTask.id,
+                        null,
+                        5,
+                        []
+                      );
+                    } else if (checkDateMatch(taskDeadline, today)) {
+                      return postMailNotifications(
+                        null,
+                        myTask.id,
+                        null,
+                        6,
+                        []
+                      );
+                    } else {
+                      return;
+                    }
                   }
-                })
+                );
+                await Promise.all(notificationPromises);
+              };
+              postDeadlineNotifications();
+
+              setMyTasks(myTasksData);
+              setMyTaskArrows(new Array(myTasksData.length).fill(false));
+            }
+
+            const notYetCompletedTasksData = tasksData.filter(
+              (taskData) => taskData.task_status.status !== "Completed"
+            );
+
+            if (notYetCompletedTasksData.length > 0) {
+              const sortedNotYetCompletedTasks = notYetCompletedTasksData.sort(
+                (a, b) =>
+                  new Date(a.deadline_date).getTime() -
+                  new Date(b.deadline_date).getTime()
               );
-              setDownloadUrlList(urlList);
+              setNotYetCompletedTasks(sortedNotYetCompletedTasks);
+              setNotYetCompletedTasksArrows(
+                new Array(sortedNotYetCompletedTasks.length).fill(false)
+              );
             }
           }
-        }
 
-        const tasksData = await fetchTasksData();
-        if (!tasksData) {
-          throw new Error("Fetch TasksData is null.");
-        } else {
-          const myTasksData = tasksData.filter(
-            (taskData) => taskData.assigned_user_id === userId
-          );
-
-          if (myTasksData.length > 0) {
-            const checkDateMatch = (taskDeadline: Date, targetDate: Date) => {
-              return (
-                taskDeadline.getFullYear() === targetDate.getFullYear() &&
-                taskDeadline.getMonth() === targetDate.getMonth() &&
-                taskDeadline.getDate() === targetDate.getDate()
-              );
-            };
-
-            const postDeadlineNotifications = async () => {
-              const notificationPromises = myTasksData.map(
-                async (myTask: any) => {
-                  const taskDeadline = new Date(myTask.deadline_date);
-
-                  if (checkDateMatch(taskDeadline, dayAfterTomorrow)) {
-                    return postMailNotifications(null, myTask.id, null, 4, []);
-                  } else if (checkDateMatch(taskDeadline, tomorrow)) {
-                    return postMailNotifications(null, myTask.id, null, 5, []);
-                  } else if (checkDateMatch(taskDeadline, today)) {
-                    return postMailNotifications(null, myTask.id, null, 6, []);
-                  } else {
-                    return;
-                  }
-                }
-              );
-              await Promise.all(notificationPromises);
-            };
-            postDeadlineNotifications();
-
-            setMyTasks(myTasksData);
-            setMyTaskArrows(new Array(myTasksData.length).fill(false));
+          const statusData = await getStatus();
+          if (!statuses || statuses.length < 0) {
+            throw new Error("Fetch StatusData is null.");
+          } else {
+            setStatuses(statusData);
           }
-
-          const notYetCompletedTasksData = tasksData.filter(
-            (taskData) => taskData.task_status.status !== "Completed"
-          );
-
-          if (notYetCompletedTasksData.length > 0) {
-            const sortedNotYetCompletedTasks = notYetCompletedTasksData.sort(
-              (a, b) =>
-                new Date(a.deadline_date).getTime() -
-                new Date(b.deadline_date).getTime()
-            );
-            setNotYetCompletedTasks(sortedNotYetCompletedTasks);
-            setNotYetCompletedTasksArrows(
-              new Array(sortedNotYetCompletedTasks.length).fill(false)
-            );
-          }
-        }
-
-        const statusData = await getStatus();
-        if (!statuses || statuses.length < 0) {
-          throw new Error("Fetch StatusData is null.");
-        } else {
-          setStatuses(statusData);
         }
 
         setPageUpdated(false);
@@ -229,7 +248,8 @@ const Task: React.FC = () => {
               projects={projects}
               projectMembers={projectMembers}
               projectStatus={projectStatus}
-              attachmentFileList={attachmentFileList}
+              projectTaskGenre={projectTaskGenre}
+              attachedFileList={attachedFileList}
               downloadUrlList={downloadUrlList}
               userId={userId}
             />

@@ -161,7 +161,7 @@ const SuspenseAccount: React.FC = () => {
                 arrow_back
               </span>
 
-              <div className={styles[`detail-area`]}>
+              <div className={styles[`details-area`]}>
                 <span
                   className={classNames(
                     "material-symbols-outlined",

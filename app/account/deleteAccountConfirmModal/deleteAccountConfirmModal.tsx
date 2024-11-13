@@ -13,8 +13,8 @@ const DeleteAccountConfirmModal: React.FC<DeleteAccountConfirmModalProps> = ({
   closeModal,
 }) => {
   return (
-    <div className={styles.modalBackdrop}>
-      <div className={styles.modalContent}>
+    <div className={styles[`modal-back-drop`]}>
+      <div className={styles[`modal-content`]}>
         <p>Do you really want to delete your account?</p>
         <button className={styles.cancel} onClick={closeModal}>
           No

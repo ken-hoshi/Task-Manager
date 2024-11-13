@@ -31,7 +31,7 @@ export async function getProjectStatus(projectId: number) {
       completed: statusIdLength[3] || 0,
     };
   } catch (error) {
-    console.error("Error fetch project Status:", error);
+    console.error("Error fetch Project Status:", error);
     return {};
   }
 }

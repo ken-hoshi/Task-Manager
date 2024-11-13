@@ -7,9 +7,10 @@ import { selectBoxStyles } from "./selectBoxStyles";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import { useFlashDisplayContext } from "@/app/provider/flashDisplayProvider";
-import { fetchAttachmentFiles } from "@/app/lib/fetchAttachmentFiles";
 import classNames from "classnames";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
+import DatePicker from "react-datepicker";
+import { fetchAttachedFiles } from "@/app/lib/fetchAttachedFiles";
 
 interface ProjectPopupProps {
   onClose: () => void;
@@ -27,6 +28,13 @@ interface UserOption {
   label: string;
 }
 
+interface TaskGenreDataProps {
+  id: number | null;
+  taskGenreName: string;
+  selectedStartDate: Date | undefined;
+  selectedDeadlineDate: Date | undefined;
+}
+
 const ProjectPopup: React.FC<ProjectPopupProps> = ({
   onClose,
   projectId,
@@ -39,6 +47,14 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
   const [copiedSelectedUsers, setCopiedSelectedUsers] = useState<UserOption[]>(
     []
   );
+
+  const [taskGenreDataArray, setTaskGenreDataArray] = useState<
+    TaskGenreDataProps[]
+  >([]);
+
+  const [beforeChangeTaskGenreDataArray, setBeforeChangeTaskGenreDataArray] =
+    useState<TaskGenreDataProps[]>([]);
+
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [beforeChangeFiles, setBeforeChangeFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,15 +70,38 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
     if (projectId) {
       const fetchUpdateProjectData = async () => {
         try {
-          const { data: projectData, error: projectSelectError } =
-            await clientSupabase
-              .from("projects")
-              .select("id, project_name, details, project_users (user_id)")
-              .eq("id", projectId)
-              .single();
+          const projectPromise = clientSupabase
+            .from("projects")
+            .select("id, project_name, details, project_users (user_id)")
+            .eq("id", projectId)
+            .single();
 
-          if (projectSelectError || !projectData) {
-            throw new Error("Project Data is null.");
+          const usersPromise = getUsers();
+
+          const taskGenrePromise = clientSupabase
+            .from("task_genre")
+            .select("id, task_genre_name, start_date, deadline_date")
+            .eq("project_id", projectId);
+
+          const attachmentsPromise = fetchAttachedFiles(0, [projectId]);
+
+          const [
+            { data: projectData, error: selectProjectError },
+            userList,
+            { data: taskGenreData, error: selectTaskGenreError },
+            projectAttachmentsData,
+          ] = await Promise.all([
+            projectPromise,
+            usersPromise,
+            taskGenrePromise,
+            attachmentsPromise,
+          ]);
+
+          if (selectProjectError || !projectData) {
+            throw new Error("Project data is null.");
+          }
+          if (selectTaskGenreError) {
+            throw selectTaskGenreError;
           }
 
           setProjectName(projectData.project_name);
@@ -71,14 +110,18 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           const selectedUserIds = projectData.project_users.map(
             (user: { user_id: number }) => user.user_id
           );
-          const { data: selectedUsersData, error: selectUsersError } =
+          const { data: selectedUsersData, error: usersError } =
             await clientSupabase
               .from("users")
               .select("id, name")
               .in("id", selectedUserIds);
 
-          if (selectUsersError || !selectedUsersData) {
-            throw new Error("User is null.");
+          if (usersError) {
+            throw usersError;
+          }
+
+          if (!selectedUsersData || selectedUsersData.length === 0) {
+            throw new Error("User data is null.");
           }
 
           const selectedUserOptions = selectedUsersData.map(
@@ -90,19 +133,23 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           setSelectedUsers(selectedUserOptions);
           setCopiedSelectedUsers(selectedUserOptions);
 
-          const userList = await getUsers();
           setUsers(userList);
 
-          const projectAttachmentsData = await fetchAttachmentFiles(
-            0,
-            projectId
-          );
-          setSelectedFiles(projectAttachmentsData);
-          setBeforeChangeFiles(projectAttachmentsData);
+          const taskGenreArray = taskGenreData.map((taskGenre) => ({
+            id: taskGenre.id,
+            taskGenreName: taskGenre.task_genre_name,
+            selectedStartDate: taskGenre.start_date,
+            selectedDeadlineDate: taskGenre.deadline_date,
+          }));
+          setTaskGenreDataArray(taskGenreArray);
+          setBeforeChangeTaskGenreDataArray(taskGenreArray);
+
+          setSelectedFiles(projectAttachmentsData[0]);
+          setBeforeChangeFiles(projectAttachmentsData[0]);
 
           setGetLoading(false);
         } catch (error) {
-          console.error("Error fetch project details:", error);
+          console.error("Error fetching project details:", error);
           onClose();
           setNotificationValue({
             message: "Couldn't get the Project data.",
@@ -140,7 +187,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
     setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
   };
 
-  const deleteAttachmentFile = (index: number) => {
+  const deleteAttachedFile = (index: number) => {
     const remainFiles = selectedFiles.filter((file, i) => i !== index);
     setSelectedFiles(remainFiles);
   };
@@ -158,11 +205,61 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
     setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
   };
 
+  const addTaskGenreForm = () => {
+    setTaskGenreDataArray((prevTaskGenreData) => [
+      ...prevTaskGenreData,
+      {
+        id: null,
+        taskGenreName: "",
+        selectedStartDate: undefined,
+        selectedDeadlineDate: undefined,
+      },
+    ]);
+  };
+
+  const removeTaskGenreForm = (index: number) => {
+    setTaskGenreDataArray((prevTaskGenreData) =>
+      prevTaskGenreData.filter((_, i) => i !== index)
+    );
+  };
+
+  const setTaskGenreData = (value: any, index: number, name: string) => {
+    setTaskGenreDataArray((prevTaskGenreDataArray) =>
+      prevTaskGenreDataArray.map((taskGenre, i) =>
+        i === index ? { ...taskGenre, [name]: value } : taskGenre
+      )
+    );
+  };
+
+  const handleDateRangeChange = (
+    dates: [Date | null, Date | null],
+    index: number
+  ) => {
+    const [start, deadline] = dates;
+    setTaskGenreDataArray((prevTaskGenreDataArray) =>
+      prevTaskGenreDataArray.map((taskGenre, i) =>
+        i === index
+          ? {
+              ...taskGenre,
+              selectedStartDate: start ?? undefined,
+              selectedDeadlineDate: deadline ?? undefined,
+            }
+          : taskGenre
+      )
+    );
+  };
+
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
 
     if (!postLoading) return;
     setPostLoading(false);
+
+    const addTime = (date: Date | undefined): Date => {
+      const dateWithTime = new Date(date!);
+      dateWithTime.setHours(9, 0, 0, 0);
+      return dateWithTime;
+    };
 
     try {
       if (projectId) {
@@ -178,37 +275,95 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
               .delete()
               .eq("project_id", projectId),
           ]);
-        const { error: projectUpdateError } = projectUpdateResult;
-        const { error: projectUsersDeleteError } = projectUsersDeleteResult;
+        const { error: updateProjectError } = projectUpdateResult;
+        const { error: deleteProjectUsersError } = projectUsersDeleteResult;
 
-        if (projectUpdateError) {
-          throw projectUpdateError;
+        if (updateProjectError) {
+          throw updateProjectError;
         }
 
-        if (projectUsersDeleteError) {
-          throw projectUsersDeleteError;
+        if (deleteProjectUsersError) {
+          throw deleteProjectUsersError;
         }
 
-        await Promise.all(
-          selectedUsers.map(async (user) => {
-            const { data, error: projectUsersError } = await clientSupabase
-              .from("project_users")
-              .insert([{ project_id: projectId, user_id: user.value }]);
+        const selectedUsersInsertRows = selectedUsers.map((selectedUser) => ({
+          project_id: projectId,
+          user_id: selectedUser.value,
+        }));
 
-            if (projectUsersError) {
-              throw projectUsersError;
-            }
-            return data;
-          })
+        const { error: insertProjectUsersError } = await clientSupabase
+          .from("project_users")
+          .insert(selectedUsersInsertRows);
+
+        if (insertProjectUsersError) {
+          throw insertProjectUsersError;
+        }
+
+        const deletedTaskGenreDataArray = beforeChangeTaskGenreDataArray.filter(
+          (taskGenre) => !taskGenreDataArray.includes(taskGenre)
         );
+
+        if (deletedTaskGenreDataArray.length > 0) {
+          const deletedTaskGenreId = deletedTaskGenreDataArray.map(
+            (taskGenre) => taskGenre.id
+          );
+
+          const { error: deleteTaskGenreError } = await clientSupabase
+            .from("task_genre")
+            .delete()
+            .in("id", deletedTaskGenreId);
+
+          if (deleteTaskGenreError) {
+            throw deleteTaskGenreError;
+          }
+        }
+
+        const addedTaskGenreDataArray = taskGenreDataArray.filter(
+          (taskGenre) => !beforeChangeTaskGenreDataArray.includes(taskGenre)
+        );
+
+        if (addedTaskGenreDataArray.length > 0) {
+          const taskGenreInsertRows = addedTaskGenreDataArray.map(
+            (taskGenreData) => ({
+              task_genre_name: taskGenreData.taskGenreName,
+              project_id: projectId,
+              start_date: addTime(taskGenreData.selectedStartDate),
+              deadline_date: addTime(taskGenreData.selectedDeadlineDate),
+            })
+          );
+
+          const { error: insertTaskGenreError } = await clientSupabase
+            .from("task_genre")
+            .insert(taskGenreInsertRows);
+
+          if (insertTaskGenreError) {
+            throw insertTaskGenreError;
+          }
+        }
 
         const removedFiles = beforeChangeFiles.filter(
           (file) => !selectedFiles.includes(file)
         );
 
         if (removedFiles.length > 0) {
-          const removedFilesPaths = removedFiles.map(
-            (file) => `public/${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`
+          const removedFileNames = removedFiles.map(
+            (removedFile) => removedFile.name
+          );
+
+          const {
+            data: removedFilePathList,
+            error: selectRemovedFilePathListError,
+          } = await clientSupabase
+            .from("project_attachments")
+            .select("file_path")
+            .in("file_name", removedFileNames);
+
+          if (selectRemovedFilePathListError) {
+            throw selectRemovedFilePathListError;
+          }
+
+          const removedFilesPaths = removedFilePathList.map(
+            (removedFilePath) => removedFilePath.file_path
           );
 
           const { error: removeError } = await clientSupabase.storage
@@ -219,13 +374,13 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
             throw removeError;
           }
 
-          const { error: projectAttachmentsDeleteError } = await clientSupabase
+          const { error: deleteProjectAttachmentsError } = await clientSupabase
             .from("project_attachments")
             .delete()
             .in("file_path", removedFilesPaths);
 
-          if (projectAttachmentsDeleteError) {
-            throw projectAttachmentsDeleteError;
+          if (deleteProjectAttachmentsError) {
+            throw deleteProjectAttachmentsError;
           }
         }
 
@@ -235,7 +390,10 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
 
         if (addedFiles.length > 0) {
           const insertPromises = addedFiles.map(async (file) => {
-            const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+            const cleanFileName = `${file.name.replace(
+              /[^a-zA-Z0-9.-]/g,
+              "_"
+            )}_${new Date().toISOString().replace(/[-:.TZ]/g, "")}`;
             const { data: storageData, error: uploadStorageDataError } =
               await clientSupabase.storage
                 .from("project_attachments")
@@ -321,32 +479,52 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         setPageUpdated(true);
         onClose();
       } else {
-        const { data: projectInsertData, error: projectInsertError } =
+        const { data: projectData, error: insertProjectDataError } =
           await clientSupabase
             .from("projects")
             .insert({ project_name: projectName, details: details })
             .select();
 
-        if (projectInsertError) {
-          throw projectInsertError;
+        if (insertProjectDataError) {
+          throw insertProjectDataError;
         }
 
-        const projectId = projectInsertData[0].id;
-        await Promise.all(
-          selectedUsers.map(async (user) => {
-            const { data, error: projectUsersError } = await clientSupabase
-              .from("project_users")
-              .insert([{ project_id: projectId, user_id: user.value }]);
+        const projectId = projectData[0].id;
+        const projectUsersInsertRows = selectedUsers.map((user) => ({
+          project_id: projectId,
+          user_id: user.value,
+        }));
 
-            if (projectUsersError) {
-              throw projectUsersError;
-            }
-            return data;
-          })
-        );
+        const { error: insertProjectUsersError } = await clientSupabase
+          .from("project_users")
+          .insert(projectUsersInsertRows);
+
+        if (insertProjectUsersError) {
+          await clientSupabase.from("projects").delete().eq("id", projectId);
+          throw insertProjectUsersError;
+        }
+
+        const taskGenreInsertRows = taskGenreDataArray.map((taskGenreData) => ({
+          task_genre_name: taskGenreData.taskGenreName,
+          project_id: projectId,
+          start_date: addTime(taskGenreData.selectedStartDate),
+          deadline_date: addTime(taskGenreData.selectedDeadlineDate),
+        }));
+
+        const { error: insertTaskGenreError } = await clientSupabase
+          .from("task_genre")
+          .insert(taskGenreInsertRows);
+
+        if (insertTaskGenreError) {
+          await clientSupabase.from("projects").delete().eq("id", projectId);
+          throw insertTaskGenreError;
+        }
 
         const insertPromises = selectedFiles.map(async (file) => {
-          const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+          const cleanFileName = `${file.name.replace(
+            /[^a-zA-Z0-9.-]/g,
+            "_"
+          )}_${new Date().toISOString().replace(/[-:.TZ]/g, "")}`;
           const { data: storageData, error: uploadStorageDataError } =
             await clientSupabase.storage
               .from("project_attachments")
@@ -354,10 +532,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
 
           if (uploadStorageDataError) {
             await clientSupabase.from("projects").delete().eq("id", projectId);
-            await clientSupabase
-              .from("project_users")
-              .delete()
-              .eq("project_id", projectId);
+
             throw uploadStorageDataError;
           }
           return {
@@ -374,6 +549,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
             .insert(insertProjectAttachments);
 
         if (insertProjectAttachmentsDataError) {
+          await clientSupabase.from("projects").delete().eq("id", projectId);
           throw insertProjectAttachmentsDataError;
         }
 
@@ -418,41 +594,137 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
 
   return (
     <div className={styles.popup}>
-      <div className={styles.popupInner}>
+      <div className={styles[`popup-inner`]}>
         {getLoading ? (
           <div className={styles["spinner-container"]}>
             <div className={styles.spinner}></div>
             <div className={styles.loading}>Loading...</div>
           </div>
         ) : (
-          <div className={styles.popupInnerArea}>
-            <h1>{projectId ? "Edit Project" : "Add Project"}</h1>
+          <div className={styles[`popup-inner-area`]}>
+            <div className={styles[`title-area`]}>
+              <h1>{projectId ? "Edit Project" : "Add Project"}</h1>
+              <div className={styles["required-form"]}>※ → Required Form</div>
+            </div>
             <form onSubmit={handleSubmit}>
-              <div className={styles.formGroup}>
-                <input
-                  type="text"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  placeholder="Project Name"
-                  required
-                />
-                <p className={styles.instruction}>Enter Project Name</p>
+              <div className={styles[`project-name-members-area`]}>
+                <div
+                  className={classNames(
+                    styles[`form-group`],
+                    styles[`exist-margin-right`]
+                  )}
+                >
+                  <input
+                    type="text"
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    placeholder="Project Name"
+                    required
+                  />
+                  <p className={styles.instruction}>※Enter Project Name</p>
+                </div>
+
+                <div
+                  className={classNames(
+                    styles[`form-group`],
+                    styles[`exist-margin-left`]
+                  )}
+                >
+                  <Select
+                    isMulti
+                    options={userOptions}
+                    value={selectedUsers}
+                    onChange={handleUserChange}
+                    placeholder="-- Members --"
+                    required
+                    styles={selectBoxStyles}
+                  />
+                  <p className={styles.instruction}>※Select Project Members</p>
+                </div>
               </div>
 
-              <div className={styles.formGroup}>
-                <Select
-                  isMulti
-                  options={userOptions}
-                  value={selectedUsers}
-                  onChange={handleUserChange}
-                  placeholder="-- Members --"
-                  required
-                  styles={selectBoxStyles}
-                />
-                <p className={styles.instruction}>Select Project Members</p>
+              <div className={styles[`form-group`]}>
+                <div className={styles[`production-costs-area`]}>
+                  <span
+                    className={classNames(
+                      "material-symbols-outlined",
+                      styles.plus
+                    )}
+                    onClick={() => addTaskGenreForm()}
+                  >
+                    add
+                  </span>
+
+                  <div className={styles[`form-area`]}>
+                    {taskGenreDataArray && taskGenreDataArray.length > 0 ? (
+                      taskGenreDataArray.map((taskGenreData, index) => {
+                        const taskGenreNamePlaceholder =
+                          "Task Genre Name" + (index + 1);
+                        return (
+                          <div
+                            className={styles[`task-genre-area`]}
+                            key={index}
+                          >
+                            <div className={styles[`task-genre-form-area`]}>
+                              <div
+                                className={styles[`task-genre-input-container`]}
+                              >
+                                <input
+                                  type="text"
+                                  name="taskGenreName"
+                                  value={taskGenreData.taskGenreName}
+                                  onChange={(e) =>
+                                    setTaskGenreData(
+                                      e.target.value,
+                                      index,
+                                      e.target.name
+                                    )
+                                  }
+                                  placeholder={taskGenreNamePlaceholder}
+                                  required
+                                />
+                              </div>
+                              <DatePicker
+                                selected={taskGenreData.selectedStartDate}
+                                onChange={(dates) =>
+                                  handleDateRangeChange(dates, index)
+                                }
+                                startDate={taskGenreData.selectedStartDate}
+                                endDate={taskGenreData.selectedDeadlineDate}
+                                selectsRange
+                                dateFormat="yyyy/MM/dd"
+                                placeholderText="Period"
+                                className={styles[`data-picker`]}
+                                calendarClassName={styles[`custom-calendar`]}
+                                showIcon
+                                required
+                              />
+                            </div>
+                            <div className={styles["minus-button-area"]}>
+                              <span
+                                className={classNames(
+                                  "material-symbols-outlined",
+                                  styles.minus
+                                )}
+                                onClick={() => removeTaskGenreForm(index)}
+                              >
+                                remove
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className={styles[`non-task-genre`]}>
+                        No Task Genre
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <p className={styles.instruction}>Enter Estimated Task Genre</p>
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={styles[`form-group`]}>
                 <textarea
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
@@ -472,7 +744,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                     <span
                       className={classNames(
                         "material-symbols-outlined",
-                        styles.clipIcon
+                        styles[`clip-icon `]
                       )}
                     >
                       attach_file
@@ -489,7 +761,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                           <span
                             className={classNames(
                               "material-symbols-outlined",
-                              styles.attachedFileIcon
+                              styles[`attached-file-icon`]
                             )}
                           >
                             upload_file
@@ -497,9 +769,9 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                           <span
                             className={classNames(
                               "material-symbols-outlined",
-                              styles.cancelIcon
+                              styles[`cancel-icon`]
                             )}
-                            onClick={() => deleteAttachmentFile(index)}
+                            onClick={() => deleteAttachedFile(index)}
                           >
                             cancel
                           </span>
@@ -525,7 +797,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                   />
                 </div>
               </div>
-              <p className={styles.attention}>※Maximum file size is 3MB</p>
+              <p className={styles.attention}>Maximum file size is 3MB</p>
 
               <div className={styles[`button-area`]}>
                 <button className={styles.cancel} onClick={onClose}>

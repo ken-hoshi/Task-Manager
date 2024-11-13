@@ -13,8 +13,8 @@ const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   closeModal,
 }) => {
   return (
-    <div className={styles.modalBackdrop}>
-      <div className={styles.modalContent}>
+    <div className={styles[`modal-backdrop`]}>
+      <div className={styles[`modal-content`]}>
         <p>delete it OK?</p>
         <button className={styles.cancel} onClick={closeModal}>
           No

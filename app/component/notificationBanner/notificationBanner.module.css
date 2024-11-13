@@ -1,4 +1,4 @@
-.notificationBanner {
+.notification-banner {
   position: fixed;
   text-align: center;
   top: 9vh;
@@ -13,11 +13,11 @@
   font-size: 1.8vh;
 }
 
-.notificationBanner.show {
+.notification-banner.show {
   transform: translateX(35.5vh);
 }
 
-.notificationBanner.hide {
+.notification-banner.hide {
   transform: translateX(-35vh);
 }
 

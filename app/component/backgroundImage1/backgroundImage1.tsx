@@ -3,7 +3,7 @@ import styles from "./backgroundImage1.module.css";
 
 const BackgroundImage1: React.FC = () => {
   return (
-    <div className={styles.backgroundContainer}>
+    <div className={styles[`background-container`]}>
       <Image
         src="/img/background-image1.jpeg"
         alt="background-image1"

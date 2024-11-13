@@ -15,7 +15,7 @@ export async function getMailNotifications(userId: number) {
 
     return mailNotifications;
   } catch (error) {
-    console.error("Error fetch mail notifications:", error);
+    console.error("Error fetch Mail Notifications:", error);
     return [];
   }
 }

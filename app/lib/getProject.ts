@@ -34,7 +34,7 @@ export async function getProjects(userId?: number) {
 
     return projects;
   } catch (error) {
-    console.error("Error fetch projects:", error);
+    console.error("Error fetch Projects:", error);
     return [];
   }
 }

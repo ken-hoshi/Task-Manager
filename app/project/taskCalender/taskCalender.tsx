@@ -9,19 +9,27 @@ import { postMailNotifications } from "@/app/lib/postMailNotifications";
 
 interface TasksPeriodList {
   id: number;
-  startDay: Date | null;
-  deadlineDay: Date | null;
+  startDate: Date | null;
+  deadlineDate: Date | null;
 }
 
 interface TaskCalenderProps {
   userId: number;
   tasks: any[];
+  projectTaskGenreList: any[];
   isChecked: boolean;
+}
+
+enum Target {
+  task,
+  taskResult,
+  taskGenre,
 }
 
 const TaskCalender: React.FC<TaskCalenderProps> = ({
   userId,
   tasks,
+  projectTaskGenreList,
   isChecked,
 }) => {
   const [taskData, setTaskData] = useState<any[]>();
@@ -29,11 +37,37 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
   const [dates, setDates] = useState<Date[]>([]);
   const [holidays, setHolidays] = useState<Date[]>([]);
   const [today] = useState(new Date());
+
   const [tasksPeriodList, setTasksPeriodList] = useState<TasksPeriodList[]>([]);
-  const [clickCount, setClickCount] = useState<number>(0);
   const [onEditTaskId, setOnEditTaskId] = useState<number | null>(null);
-  const [updateStartDate, setUpdateStartDate] = useState<Date | null>(null);
-  const [updateEndDate, setUpdateEndDate] = useState<Date | null>(null);
+  const [updateTaskStartDate, setUpdateTaskStartDate] = useState<Date | null>(
+    null
+  );
+  const [updateTaskEndDate, setUpdateTaskEndDate] = useState<Date | null>(null);
+  const [clickCount, setClickCount] = useState<number>(0);
+
+  const [tasksResultPeriodList, setTasksResultPeriodList] = useState<
+    TasksPeriodList[]
+  >([]);
+  const [onEditResultTaskId, setOnEditResultTaskId] = useState<number | null>(
+    null
+  );
+  const [updateTaskResultStartDate, setUpdateTaskResultStartDate] =
+    useState<Date | null>(null);
+  const [updateTaskResultEndDate, setUpdateTaskResultEndDate] =
+    useState<Date | null>(null);
+
+  const [taskGenreData, setTaskGenreData] = useState<any[]>();
+  const [tasksGenrePeriodList, setTasksGenrePeriodList] = useState<
+    TasksPeriodList[]
+  >([]);
+  const [onEditTaskGenreId, setOnEditTaskGenreId] = useState<number | null>(
+    null
+  );
+  const [updateTaskGenreStartDate, setUpdateTaskGenreStartDate] =
+    useState<Date | null>(null);
+  const [updateTaskGenreEndDate, setUpdateTaskGenreEndDate] =
+    useState<Date | null>(null);
 
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { setNotificationValue } = useNotificationContext();
@@ -45,21 +79,55 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
         : tasks;
       setTaskData(taskList);
 
-      const tasksPeriod = taskList.map((task) => {
-        const startDay = new Date(task.start_date);
-        startDay.setHours(0, 0, 0, 0);
+      const formatTaskPeriod = (
+        list: any[],
+        startField: string,
+        deadlineField: string
+      ) => {
+        return list.map((item) => {
+          const startDate = new Date(item[startField]);
+          startDate.setHours(0, 0, 0, 0);
 
-        const deadlineDay = new Date(task.deadline_date);
-        deadlineDay.setHours(0, 0, 0, 0);
+          const deadlineDate = new Date(item[deadlineField]);
+          deadlineDate.setHours(0, 0, 0, 0);
 
-        return {
-          id: task.id,
-          startDay: startDay,
-          deadlineDay: deadlineDay,
-        };
-      });
-      setTasksPeriodList(tasksPeriod);
+          return {
+            id: item.id,
+            startDate: startDate,
+            deadlineDate: deadlineDate,
+          };
+        });
+      };
 
+      if (taskList.length > 0) {
+        const tasksPeriod = formatTaskPeriod(
+          taskList,
+          "start_date",
+          "deadline_date"
+        );
+        setTasksPeriodList(tasksPeriod);
+
+        const tasksResultPeriod = formatTaskPeriod(
+          taskList,
+          "result_start_date",
+          "result_deadline_date"
+        );
+        setTasksResultPeriodList(tasksResultPeriod);
+      }
+
+      if (projectTaskGenreList.length > 0) {
+        setTaskGenreData(projectTaskGenreList);
+
+        const tasksGenrePeriod = formatTaskPeriod(
+          projectTaskGenreList,
+          "startDate",
+          "deadlineDate"
+        );
+        setTasksGenrePeriodList(tasksGenrePeriod);
+      }
+    }
+
+    if (tasks.length > 0 || projectTaskGenreList.length > 0) {
       const currentYear = currentMonth.getFullYear();
       const currentHolidays = holidayJp.between(
         new Date(currentYear, 0, 1),
@@ -102,44 +170,126 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
     );
   };
 
-  const cancelTaskPeriod = () => {
-    setUpdateStartDate(null);
-    setUpdateEndDate(null);
-    setClickCount(0);
-    setOnEditTaskId(null);
+  const cancelTaskPeriod = (target: Target) => {
+    switch (target) {
+      case Target.task:
+        setUpdateTaskStartDate(null);
+        setUpdateTaskEndDate(null);
+        setClickCount(0);
+        setOnEditTaskId(null);
+        break;
+
+      case Target.taskResult:
+        setUpdateTaskResultStartDate(null);
+        setUpdateTaskResultEndDate(null);
+        setClickCount(0);
+        setOnEditResultTaskId(null);
+        break;
+
+      case Target.taskGenre:
+        setUpdateTaskGenreStartDate(null);
+        setUpdateTaskGenreEndDate(null);
+        setClickCount(0);
+        setOnEditTaskGenreId(null);
+        break;
+    }
   };
 
-  const handleDateClick = (date: Date, taskId: number) => {
+  const handleTaskDateClick = (date: Date) => {
     if (clickCount === 0) {
-      setUpdateStartDate(date);
-      setUpdateEndDate(null);
+      setUpdateTaskStartDate(date);
+      setUpdateTaskEndDate(null);
       setClickCount((prevCount) => prevCount + 1);
     } else if (
-      (date == updateStartDate && !updateEndDate) ||
-      updateStartDate == updateEndDate
+      (date == updateTaskStartDate && !updateTaskEndDate) ||
+      updateTaskStartDate == updateTaskEndDate
     ) {
-      setUpdateStartDate(null);
-      setUpdateEndDate(null);
+      setUpdateTaskStartDate(null);
+      setUpdateTaskEndDate(null);
       setClickCount(0);
     } else {
-      setUpdateEndDate(date);
+      setUpdateTaskEndDate(date);
       setClickCount((prevCount) => prevCount + 1);
     }
   };
 
-  const updateTaskPeriod = async (taskId: number) => {
+  const handleTaskResultDateClick = (date: Date) => {
+    if (clickCount === 0) {
+      setUpdateTaskResultStartDate(date);
+      setUpdateTaskResultEndDate(null);
+      setClickCount((prevCount) => prevCount + 1);
+    } else if (
+      (date == updateTaskResultStartDate && !updateTaskResultEndDate) ||
+      updateTaskResultStartDate == updateTaskResultEndDate
+    ) {
+      setUpdateTaskResultStartDate(null);
+      setUpdateTaskResultEndDate(null);
+      setClickCount(0);
+    } else {
+      setUpdateTaskResultEndDate(date);
+      setClickCount((prevCount) => prevCount + 1);
+    }
+  };
+
+  const handleTaskGenreDateClick = (date: Date) => {
+    if (clickCount === 0) {
+      setUpdateTaskGenreStartDate(date);
+      setUpdateTaskGenreEndDate(null);
+      setClickCount((prevCount) => prevCount + 1);
+    } else if (
+      (date == updateTaskGenreStartDate && !updateTaskGenreEndDate) ||
+      updateTaskGenreStartDate == updateTaskGenreEndDate
+    ) {
+      setUpdateTaskGenreStartDate(null);
+      setUpdateTaskGenreEndDate(null);
+      setClickCount(0);
+    } else {
+      setUpdateTaskGenreEndDate(date);
+      setClickCount((prevCount) => prevCount + 1);
+    }
+  };
+
+  const updateTaskPeriod = async (taskId: number, target: Target) => {
     try {
-      if (updateStartDate) {
+      let startDate, endDate, startField, endField, tableName;
+
+      switch (target) {
+        case Target.task:
+          startDate = updateTaskStartDate;
+          endDate = updateTaskEndDate;
+          startField = "start_date";
+          endField = "deadline_date";
+          tableName = "tasks";
+          break;
+
+        case Target.taskResult:
+          startDate = updateTaskResultStartDate;
+          endDate = updateTaskResultEndDate;
+          startField = "result_start_date";
+          endField = "result_deadline_date";
+          tableName = "tasks";
+          break;
+
+        case Target.taskGenre:
+          startDate = updateTaskGenreStartDate;
+          endDate = updateTaskGenreEndDate;
+          startField = "start_date";
+          endField = "deadline_date";
+          tableName = "task_genre";
+          break;
+
+        default:
+          throw new Error("Invalid target");
+      }
+
+      if (startDate) {
         const { error: taskUpdateError } = await clientSupabase
-          .from("tasks")
+          .from(tableName)
           .update({
-            start_date: new Date(
-              updateStartDate.setDate(updateStartDate.getDate() + 1)
-            ),
-            deadline_date:
-              updateStartDate && updateEndDate
-                ? new Date(updateEndDate.setDate(updateEndDate.getDate() + 1))
-                : updateStartDate,
+            [startField]: new Date(startDate.setDate(startDate.getDate() + 1)),
+            [endField]: endDate
+              ? new Date(endDate.setDate(endDate.getDate() + 1))
+              : startDate,
           })
           .eq("id", taskId);
 
@@ -147,18 +297,20 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
           throw taskUpdateError;
         }
 
-        const postEmailNotificationsError = await postMailNotifications(
-          userId,
-          taskId,
-          null,
-          1,
-          []
-        );
-        if (postEmailNotificationsError) {
-          console.error(
-            "Error post mail notifications:",
-            postEmailNotificationsError
+        if (target == Target.task || target == Target.taskResult) {
+          const postEmailNotificationsError = await postMailNotifications(
+            userId,
+            taskId,
+            null,
+            1,
+            []
           );
+          if (postEmailNotificationsError) {
+            console.error(
+              "Error post mail notifications:",
+              postEmailNotificationsError
+            );
+          }
         }
       } else {
         return;
@@ -166,22 +318,42 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
 
       setPageUpdated(true);
       setClickCount(0);
-      setUpdateStartDate(null);
-      setUpdateEndDate(null);
-      setOnEditTaskId(null);
+      if (target === Target.task) {
+        setUpdateTaskStartDate(null);
+        setUpdateTaskEndDate(null);
+        setOnEditTaskId(null);
+      } else if (target === Target.taskResult) {
+        setUpdateTaskResultStartDate(null);
+        setUpdateTaskResultEndDate(null);
+        setOnEditResultTaskId(null);
+      } else if (target === Target.taskGenre) {
+        setUpdateTaskGenreStartDate(null);
+        setUpdateTaskGenreEndDate(null);
+        setOnEditTaskGenreId(null);
+      }
 
       setNotificationValue({
         message: "Task was updated.",
         color: 0,
       });
     } catch (error) {
-      console.error("Error update task :", error);
+      console.error("Error updating task:", error);
 
       setPageUpdated(true);
       setClickCount(0);
-      setUpdateStartDate(null);
-      setUpdateEndDate(null);
-      setOnEditTaskId(null);
+      if (target === Target.task) {
+        setUpdateTaskStartDate(null);
+        setUpdateTaskEndDate(null);
+        setOnEditTaskId(null);
+      } else if (target === Target.taskResult) {
+        setUpdateTaskResultStartDate(null);
+        setUpdateTaskResultEndDate(null);
+        setOnEditResultTaskId(null);
+      } else if (target === Target.taskGenre) {
+        setUpdateTaskGenreStartDate(null);
+        setUpdateTaskGenreEndDate(null);
+        setOnEditTaskGenreId(null);
+      }
 
       setNotificationValue({
         message: "Task was not updated.",
@@ -190,22 +362,38 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
     }
   };
 
-  const getCellClassName = (date: Date) => {
-    if (updateStartDate && updateEndDate) {
-      return date >= updateStartDate && date <= updateEndDate
-        ? styles.editHighlight
-        : "";
-    } else if (updateStartDate) {
-      return date.getTime() === updateStartDate.getTime()
-        ? styles.editHighlight
-        : "";
+  const getCellClassName = (date: Date, target: Target) => {
+    let startDate, endDate;
+    const highlightClass = styles[`edit-highlight`];
+
+    switch (target) {
+      case Target.task:
+        startDate = updateTaskStartDate;
+        endDate = updateTaskEndDate;
+        break;
+      case Target.taskResult:
+        startDate = updateTaskResultStartDate;
+        endDate = updateTaskResultEndDate;
+        break;
+      case Target.taskGenre:
+        startDate = updateTaskGenreStartDate;
+        endDate = updateTaskGenreEndDate;
+        break;
     }
+
+    if (startDate && endDate) {
+      return date >= startDate && date <= endDate ? highlightClass : "";
+    } else if (startDate) {
+      return date.getTime() === startDate.getTime() ? highlightClass : "";
+    }
+
     return "";
   };
 
   return (
     <>
-      {taskData && taskData.length > 0 ? (
+      {(taskData && taskData.length > 0) ||
+      (taskGenreData && taskGenreData.length > 0) ? (
         <div className={styles[`calender-area`]}>
           <div className={styles.navigation}>
             <button onClick={goToPreviousMonth}>
@@ -236,8 +424,26 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
               </span>
             </button>
           </div>
+
+          <div className={styles[`description-area`]}>
+            <div className={styles[`task-genre-description-area`]}>
+              <div className={styles.square}></div>
+              <div>Task Genre Period</div>
+            </div>
+
+            <div className={styles[`task-description-area`]}>
+              <div className={styles.square}></div>
+              <div>Estimated Task Period</div>
+            </div>
+
+            <div className={styles[`task-result-description-area`]}>
+              <div className={styles.square}></div>
+              <div>Task Result Period</div>
+            </div>
+          </div>
+
           <div className={styles[`calender-container`]}>
-            <table className={styles.calendarTable}>
+            <table className={styles[`calender-table`]}>
               <thead>
                 <tr>
                   <th className={styles[`task-name`]}>Task Name</th>
@@ -269,87 +475,477 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {taskData.map((task, index) => (
-                  <tr key={index}>
-                    <td className={styles[`task-name`]}>
-                      <div className={styles[`task-name-area`]}>
-                        <p>{task.task_name}</p>
-                        <div className={styles[`button-area`]}>
-                          {task.id == onEditTaskId ? (
-                            <div className={styles[`button-container`]}>
-                              <button
-                                className={styles[`check-button`]}
-                                onClick={() => updateTaskPeriod(task.id)}
+                {taskGenreData?.map((taskGenre, index) => (
+                  <React.Fragment key={index}>
+                    <tr>
+                      <td className={styles[`task-genre-name`]}>
+                        <div className={styles[`task-genre-name-area`]}>
+                          <p>{taskGenre.taskGenreName}</p>
+                          <div className={styles[`button-area`]}>
+                            {taskGenre.id !== onEditTaskGenreId && (
+                              <span
+                                className={classNames(
+                                  "material-symbols-outlined",
+                                  styles.edit
+                                )}
+                                onClick={() =>
+                                  setOnEditTaskGenreId(taskGenre.id)
+                                }
                               >
-                                <span
-                                  className={classNames(
-                                    "material-symbols-outlined",
-                                    styles.check
-                                  )}
-                                >
-                                  check_small
-                                </span>
-                              </button>
-
-                              <button
-                                className={styles[`cancel-button`]}
-                                onClick={() => cancelTaskPeriod()}
-                              >
-                                <span
-                                  className={classNames(
-                                    "material-symbols-outlined",
-                                    styles.cancel
-                                  )}
-                                >
-                                  close_small
-                                </span>
-                              </button>
-                            </div>
-                          ) : (
-                            <span
-                              className={classNames(
-                                "material-symbols-outlined",
-                                styles.edit
-                              )}
-                              onClick={() => setOnEditTaskId(task.id)}
-                            >
-                              edit
-                            </span>
-                          )}
+                                edit
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    {dates.map((date, index) => {
-                      const taskPeriod = tasksPeriodList.find(
-                        (tasksPeriod) => tasksPeriod.id === task.id
-                      );
-                      if (task.id == onEditTaskId) {
-                        return (
-                          <td
-                            key={index}
-                            onClick={() => handleDateClick(date, task.id)}
-                            className={getCellClassName(date)}
-                          />
+                        {taskGenre.id == onEditTaskGenreId && (
+                          <div className={styles[`button-container`]}>
+                            <button
+                              className={styles[`check-button`]}
+                              onClick={() => updateTaskPeriod(taskGenre.id, 2)}
+                            >
+                              <span
+                                className={classNames(
+                                  "material-symbols-outlined",
+                                  styles.check
+                                )}
+                              >
+                                check_small
+                              </span>
+                            </button>
+
+                            <button
+                              className={styles[`cancel-button`]}
+                              onClick={() => cancelTaskPeriod(2)}
+                            >
+                              <span
+                                className={classNames(
+                                  "material-symbols-outlined",
+                                  styles.cancel
+                                )}
+                              >
+                                close_small
+                              </span>
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                      {dates.map((date, index) => {
+                        const taskPeriod = tasksGenrePeriodList.find(
+                          (tasksPeriod) => tasksPeriod.id === taskGenre.id
                         );
-                      } else {
-                        return (
-                          <td
-                            key={index}
-                            className={
-                              taskPeriod &&
-                              taskPeriod.startDay &&
-                              taskPeriod.deadlineDay &&
-                              date >= taskPeriod.startDay &&
-                              date <= taskPeriod.deadlineDay
-                                ? styles.highlight
-                                : ""
-                            }
-                          />
-                        );
-                      }
-                    })}
-                  </tr>
+                        if (taskGenre.id == onEditTaskGenreId) {
+                          return (
+                            <td
+                              key={index}
+                              onClick={() => handleTaskGenreDateClick(date)}
+                              className={getCellClassName(
+                                date,
+                                Target.taskGenre
+                              )}
+                            />
+                          );
+                        } else {
+                          return (
+                            <td
+                              key={index}
+                              className={
+                                taskPeriod &&
+                                taskPeriod.startDate &&
+                                taskPeriod.deadlineDate &&
+                                date >= taskPeriod.startDate &&
+                                date <= taskPeriod.deadlineDate
+                                  ? styles[`task-genre-highlight`]
+                                  : ""
+                              }
+                            />
+                          );
+                        }
+                      })}
+                    </tr>
+                    {taskData
+                      ?.filter((task) => task.task_genre_id === taskGenre.id)
+                      .map((task, index) => (
+                        <React.Fragment key={index}>
+                          <tr>
+                            <td className={styles[`task-name`]}>
+                              <div className={styles[`task-name-area`]}>
+                                <p>{task.task_name}</p>
+                                <div className={styles[`button-area`]}>
+                                  {task.id !== onEditTaskId && (
+                                    <span
+                                      className={classNames(
+                                        "material-symbols-outlined",
+                                        styles.edit
+                                      )}
+                                      onClick={() => setOnEditTaskId(task.id)}
+                                    >
+                                      edit
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              {task.id == onEditTaskId && (
+                                <div className={styles[`button-container`]}>
+                                  <button
+                                    className={styles[`check-button`]}
+                                    onClick={() => updateTaskPeriod(task.id, 0)}
+                                  >
+                                    <span
+                                      className={classNames(
+                                        "material-symbols-outlined",
+                                        styles.check
+                                      )}
+                                    >
+                                      check_small
+                                    </span>
+                                  </button>
+
+                                  <button
+                                    className={styles[`cancel-button`]}
+                                    onClick={() => cancelTaskPeriod(0)}
+                                  >
+                                    <span
+                                      className={classNames(
+                                        "material-symbols-outlined",
+                                        styles.cancel
+                                      )}
+                                    >
+                                      close_small
+                                    </span>
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                            {dates.map((date, index) => {
+                              const taskPeriod = tasksPeriodList.find(
+                                (tasksPeriod) => tasksPeriod.id === task.id
+                              );
+                              if (task.id == onEditTaskId) {
+                                return (
+                                  <td
+                                    key={index}
+                                    onClick={() => handleTaskDateClick(date)}
+                                    className={getCellClassName(
+                                      date,
+                                      Target.task
+                                    )}
+                                  />
+                                );
+                              } else {
+                                return (
+                                  <td
+                                    key={index}
+                                    className={
+                                      taskPeriod &&
+                                      taskPeriod.startDate &&
+                                      taskPeriod.deadlineDate &&
+                                      date >= taskPeriod.startDate &&
+                                      date <= taskPeriod.deadlineDate
+                                        ? styles[`task-highlight`]
+                                        : ""
+                                    }
+                                  />
+                                );
+                              }
+                            })}
+                          </tr>
+
+                          <tr>
+                            <td className={styles[`result-task-name`]}>
+                              <div className={styles[`result-area`]}>
+                                <p>Assigned : {task.users.name}</p>
+                                <div className={styles[`button-area`]}>
+                                  {task.id !== onEditResultTaskId && (
+                                    <span
+                                      className={classNames(
+                                        "material-symbols-outlined",
+                                        styles.edit
+                                      )}
+                                      onClick={() =>
+                                        setOnEditResultTaskId(task.id)
+                                      }
+                                    >
+                                      edit
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              {task.id == onEditResultTaskId && (
+                                <div className={styles[`button-container`]}>
+                                  <button
+                                    className={styles[`check-button`]}
+                                    onClick={() => updateTaskPeriod(task.id, 1)}
+                                  >
+                                    <span
+                                      className={classNames(
+                                        "material-symbols-outlined",
+                                        styles.check
+                                      )}
+                                    >
+                                      check_small
+                                    </span>
+                                  </button>
+
+                                  <button
+                                    className={styles[`cancel-button`]}
+                                    onClick={() => cancelTaskPeriod(1)}
+                                  >
+                                    <span
+                                      className={classNames(
+                                        "material-symbols-outlined",
+                                        styles.cancel
+                                      )}
+                                    >
+                                      close_small
+                                    </span>
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+
+                            {dates.map((date, index) => {
+                              const taskResultPeriod =
+                                tasksResultPeriodList.find(
+                                  (tasksResultPeriod) =>
+                                    tasksResultPeriod.id === task.id
+                                );
+                              if (task.id == onEditResultTaskId) {
+                                return (
+                                  <td
+                                    key={index}
+                                    onClick={() =>
+                                      handleTaskResultDateClick(date)
+                                    }
+                                    className={getCellClassName(
+                                      date,
+                                      Target.taskResult
+                                    )}
+                                  />
+                                );
+                              } else {
+                                return (
+                                  <td
+                                    key={index}
+                                    className={
+                                      taskResultPeriod &&
+                                      taskResultPeriod.startDate &&
+                                      taskResultPeriod.deadlineDate &&
+                                      date >= taskResultPeriod.startDate &&
+                                      date <= taskResultPeriod.deadlineDate
+                                        ? styles[`result-highlight`]
+                                        : ""
+                                    }
+                                  />
+                                );
+                              }
+                            })}
+                          </tr>
+                        </React.Fragment>
+                      ))}
+                  </React.Fragment>
                 ))}
+
+                {taskData &&
+                  taskData?.filter((task) => !task.task_genre_id).length >
+                    0 && (
+                    <>
+                      <tr>
+                        <td className={styles[`task-genre-name`]}>
+                          <div className={styles[`task-genre-name-area`]}>
+                            <p>Other</p>
+                          </div>
+                        </td>
+                        {dates.map((_, index) => (
+                          <td key={index} />
+                        ))}
+                      </tr>
+
+                      {taskData
+                        ?.filter((task) => !task.task_genre_id)
+                        .map((task, index) => (
+                          <React.Fragment key={index}>
+                            <tr>
+                              <td className={styles[`task-name`]}>
+                                <div className={styles[`task-name-area`]}>
+                                  <p>{task.task_name}</p>
+                                  <div className={styles[`button-area`]}>
+                                    {task.id !== onEditTaskId && (
+                                      <span
+                                        className={classNames(
+                                          "material-symbols-outlined",
+                                          styles.edit
+                                        )}
+                                        onClick={() => setOnEditTaskId(task.id)}
+                                      >
+                                        edit
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {task.id == onEditTaskId && (
+                                  <div className={styles[`button-container`]}>
+                                    <button
+                                      className={styles[`check-button`]}
+                                      onClick={() =>
+                                        updateTaskPeriod(task.id, 0)
+                                      }
+                                    >
+                                      <span
+                                        className={classNames(
+                                          "material-symbols-outlined",
+                                          styles.check
+                                        )}
+                                      >
+                                        check_small
+                                      </span>
+                                    </button>
+
+                                    <button
+                                      className={styles[`cancel-button`]}
+                                      onClick={() => cancelTaskPeriod(0)}
+                                    >
+                                      <span
+                                        className={classNames(
+                                          "material-symbols-outlined",
+                                          styles.cancel
+                                        )}
+                                      >
+                                        close_small
+                                      </span>
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                              {dates.map((date, index) => {
+                                const taskPeriod = tasksPeriodList.find(
+                                  (tasksPeriod) => tasksPeriod.id === task.id
+                                );
+                                if (task.id == onEditTaskId) {
+                                  return (
+                                    <td
+                                      key={index}
+                                      onClick={() => handleTaskDateClick(date)}
+                                      className={getCellClassName(
+                                        date,
+                                        Target.task
+                                      )}
+                                    />
+                                  );
+                                } else {
+                                  return (
+                                    <td
+                                      key={index}
+                                      className={
+                                        taskPeriod &&
+                                        taskPeriod.startDate &&
+                                        taskPeriod.deadlineDate &&
+                                        date >= taskPeriod.startDate &&
+                                        date <= taskPeriod.deadlineDate
+                                          ? styles[`task-highlight`]
+                                          : ""
+                                      }
+                                    />
+                                  );
+                                }
+                              })}
+                            </tr>
+
+                            <tr>
+                              <td className={styles[`result-task-name`]}>
+                                <div className={styles[`result-area`]}>
+                                  <p>Assigned : {task.users.name}</p>
+                                  <div className={styles[`button-area`]}>
+                                    {task.id !== onEditResultTaskId && (
+                                      <span
+                                        className={classNames(
+                                          "material-symbols-outlined",
+                                          styles.edit
+                                        )}
+                                        onClick={() =>
+                                          setOnEditResultTaskId(task.id)
+                                        }
+                                      >
+                                        edit
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {task.id == onEditResultTaskId && (
+                                  <div className={styles[`button-container`]}>
+                                    <button
+                                      className={styles[`check-button`]}
+                                      onClick={() =>
+                                        updateTaskPeriod(task.id, 1)
+                                      }
+                                    >
+                                      <span
+                                        className={classNames(
+                                          "material-symbols-outlined",
+                                          styles.check
+                                        )}
+                                      >
+                                        check_small
+                                      </span>
+                                    </button>
+
+                                    <button
+                                      className={styles[`cancel-button`]}
+                                      onClick={() => cancelTaskPeriod(1)}
+                                    >
+                                      <span
+                                        className={classNames(
+                                          "material-symbols-outlined",
+                                          styles.cancel
+                                        )}
+                                      >
+                                        close_small
+                                      </span>
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+
+                              {dates.map((date, index) => {
+                                const taskResultPeriod =
+                                  tasksResultPeriodList.find(
+                                    (tasksResultPeriod) =>
+                                      tasksResultPeriod.id === task.id
+                                  );
+                                if (task.id == onEditResultTaskId) {
+                                  return (
+                                    <td
+                                      key={index}
+                                      onClick={() =>
+                                        handleTaskResultDateClick(date)
+                                      }
+                                      className={getCellClassName(
+                                        date,
+                                        Target.taskResult
+                                      )}
+                                    />
+                                  );
+                                } else {
+                                  return (
+                                    <td
+                                      key={index}
+                                      className={
+                                        taskResultPeriod &&
+                                        taskResultPeriod.startDate &&
+                                        taskResultPeriod.deadlineDate &&
+                                        date >= taskResultPeriod.startDate &&
+                                        date <= taskResultPeriod.deadlineDate
+                                          ? styles[`result-highlight`]
+                                          : ""
+                                      }
+                                    />
+                                  );
+                                }
+                              })}
+                            </tr>
+                          </React.Fragment>
+                        ))}
+                    </>
+                  )}
               </tbody>
             </table>
           </div>

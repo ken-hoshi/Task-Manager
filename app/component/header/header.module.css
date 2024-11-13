@@ -86,7 +86,7 @@
 
 .account,
 .mail,
-.logoutButton {
+.logout-button {
   opacity: 0;
   transform: translateX(7vh);
   transition: opacity 0.5s ease, transform 0.5s ease;
@@ -141,17 +141,17 @@
   background-color: red;
   color: white;
   border-radius: 50%;
-  width: 2.8vh; 
-  height: 2.8vh; 
+  width: 2.8vh;
+  height: 2.8vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 1.6vh; 
+  font-size: 1.6vh;
   font-family: "Roboto", sans-serif;
 }
 
 
-.logoutButton {
+.logout-button {
   background-color: #ffffff;
   border-radius: 1vh;
   border: solid 1px black;
@@ -165,7 +165,7 @@
   align-items: center;
 }
 
-.logoutButton:hover {
+.logout-button:hover {
   color: #357ae8;
   border-color: #357ae8;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);

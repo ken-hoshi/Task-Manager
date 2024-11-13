@@ -30,21 +30,21 @@
   margin: 0 auto;
 }
 
-.unReadList {
+.un-read-list {
   background-color: #d5dada;
 }
 
-.listItem {
+.list-item {
   padding: 1.5vh;
   border-bottom: 1px solid #ddd;
 }
 
-.lastListItem {
+.last-list-item {
   border-bottom: none;
   padding: 1.5vh;
 }
 
-.unreadDot {
+.un-read-dot {
   display: inline-block;
   width: 1vh;
   height: 1vh;
@@ -58,7 +58,7 @@
   margin: 0 0 1vh 0;
 }
 
-.unReadMessage {
+.un-read-message {
   display: inline;
   font-size: 1.5vh;
   font-weight: 600;

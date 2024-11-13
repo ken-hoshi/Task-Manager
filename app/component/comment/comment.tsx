@@ -10,10 +10,10 @@ import { postMailNotifications } from "@/app/lib/postMailNotifications";
 interface CommentProps {
   userId: number;
   taskId: number;
-  projectDetail?: boolean;
+  projectDetails?: boolean;
 }
 
-const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
+const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetails }) => {
   const { setNotificationValue } = useNotificationContext();
 
   const [reRendering, setReRendering] = useState<boolean>(false);
@@ -169,8 +169,8 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
       <dd className={classNames(styles[`dd-comment`], styles[`dd-last`])}>
         <div
           className={
-            projectDetail
-              ? styles[`project-detail-comment-section`]
+            projectDetails
+              ? styles[`project-details-comment-section`]
               : styles[`comment-section`]
           }
         >
@@ -211,8 +211,8 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
                 <div
                   className={classNames(
                     comment.user_id !== userId && styles.none,
-                    projectDetail
-                      ? styles[`project-detail-comment-bubble`]
+                    projectDetails
+                      ? styles[`project-details-comment-bubble`]
                       : styles[`comment-bubble`],
                     comment.isDeleted
                       ? styles[`deleted-color`]
@@ -224,8 +224,8 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
                       <span
                         className={classNames(
                           "material-symbols-outlined",
-                          projectDetail
-                            ? styles[`project-detail-vert`]
+                          projectDetails
+                            ? styles[`project-details-vert`]
                             : styles.vert
                         )}
                         onClick={() => handleOptionClick(comment.id)}
@@ -248,8 +248,8 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
                         }}
                         ref={(el) => (textareaRefs.current[index] = el)}
                         className={
-                          projectDetail
-                            ? styles[`project-detail-bubble-textarea`]
+                          projectDetails
+                            ? styles[`project-details-bubble-textarea`]
                             : styles[`bubble-textarea`]
                         }
                       />
@@ -257,8 +257,8 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
                   ) : (
                     <div
                       className={
-                        projectDetail
-                          ? styles[`project-detail-comment-text`]
+                        projectDetails
+                          ? styles[`project-details-comment-text`]
                           : styles[`comment-text`]
                       }
                     >
@@ -274,8 +274,8 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
 
                   <div
                     className={
-                      projectDetail
-                        ? styles[`project-detail-comment-date`]
+                      projectDetails
+                        ? styles[`project-details-comment-date`]
                         : styles[`comment-date`]
                     }
                   >
@@ -286,8 +286,8 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
                 <div
                   className={classNames(
                     comment.user_id == userId && styles.none,
-                    projectDetail
-                      ? styles[`project-detail-comment-bubble`]
+                    projectDetails
+                      ? styles[`project-details-comment-bubble`]
                       : styles[`comment-bubble`],
                     comment.isDeleted
                       ? styles[`deleted-color`]
@@ -296,8 +296,8 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
                 >
                   <div
                     className={
-                      projectDetail
-                        ? styles[`project-detail-comment-text`]
+                      projectDetails
+                        ? styles[`project-details-comment-text`]
                         : styles[`comment-text`]
                     }
                   >
@@ -318,8 +318,8 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
               onChange={(e) => setSendComment(e.target.value)}
               required
               className={
-                projectDetail
-                  ? styles[`project-detail-textarea`]
+                projectDetails
+                  ? styles[`project-details-textarea`]
                   : styles[`task-textarea`]
               }
               onInput={(e) => {
@@ -332,8 +332,8 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetail }) => {
               <button
                 type="submit"
                 className={
-                  projectDetail
-                    ? styles[`project-detail-button`]
+                  projectDetails
+                    ? styles[`project-details-button`]
                     : styles[`task-button`]
                 }
               >

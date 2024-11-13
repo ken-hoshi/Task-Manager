@@ -5,20 +5,22 @@ import BackgroundImage1 from "@/app/component/backgroundImage1/backgroundImage1"
 import Header from "@/app/component/header/header";
 import Loading from "@/app/component/loading/loading";
 import NotificationBanner from "@/app/component/notificationBanner/notificationBanner";
-import { fetchAttachmentFiles } from "@/app/lib/fetchAttachmentFiles";
-import { fetchProjectDetailData } from "@/app/lib/fetchProjectDetailData";
 import { getStatus } from "@/app/lib/getStatus";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import classNames from "classnames";
 import { useEffect, useState } from "react";
-import ProjectDetail from "../projectDetail/projectDetail";
+import ProjectDetails from "../projectDetails/projectDetails";
 import TaskBoard from "../taskBoard/taskBoard";
 import TaskCalender from "../taskCalender/taskCalender";
 import TaskList from "../taskList/taskList";
 import { useRouter, useSearchParams } from "next/navigation";
 import RobotButton from "@/app/component/robotButton/robotButton";
 import { useSessionTimeout } from "@/app/hooks/sessionTimeout";
+import { fetchAttachedFiles } from "@/app/lib/fetchAttachedFiles";
+import { fetchProjectDetailsData } from "@/app/lib/fetchProjectDetailsData";
+import { getProjectTaskGenre } from "@/app/lib/getProjectTaskGenre";
+import { getTaskGenre } from "@/app/lib/getTaskGenre";
 
 interface StatusProps {
   id: number;
@@ -43,13 +45,17 @@ const SuspenseProject: React.FC = () => {
 
   const [projectData, setProjectData] = useState<any>({});
   const [projectStatus, setProjectStatus] = useState<any>({});
-  const [projectMembers, setProjectMembers] = useState("");
-  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
+  const [projectTaskGenreList, setProjectTaskGenreList] = useState<any>([]);
+  const [taskGenreList, setTaskGenreList] = useState<any[]>([]);
+  const [projectMembers, setProjectMembers] = useState<string[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [downloadUrls, setDownloadUrls] = useState<(string | null)[]>([]);
 
   const [tasks, setTasks] = useState<any[]>([]);
-  const [projectDetailArrows, setProjectDetailArrows] = useState<boolean[]>([]);
-  const [attachmentFileList, setAttachmentFileList] = useState<File[][]>([[]]);
+  const [projectDetailsArrows, setProjectDetailsArrows] = useState<boolean[]>(
+    []
+  );
+  const [attachedFileList, setAttachedFileList] = useState<File[][]>([[]]);
   const [downloadUrlList, setDownloadUrlList] = useState<(string | null)[][]>([
     [],
   ]);
@@ -66,30 +72,51 @@ const SuspenseProject: React.FC = () => {
     const userId = Number(paramsUserId);
     setParams({ projectId: projectId, userId: userId });
 
-    const fetchProjectDetail = async () => {
+    const fetchProjectDetails = async () => {
       try {
-        const projectDetailData = await fetchProjectDetailData(projectId);
+        const [projectDetailsData, projectTaskGenreData] = await Promise.all([
+          fetchProjectDetailsData(projectId),
+          getProjectTaskGenre([projectId]),
+        ]);
         if (
-          !projectDetailData.projectData ||
-          !projectDetailData.projectMembersData ||
-          !projectDetailData.projectStatusData
+          !projectDetailsData.projectData ||
+          !projectDetailsData.projectMembersData ||
+          !projectDetailsData.projectStatusData
         ) {
-          throw new Error("Project Detail Data are null");
+          throw new Error("Project Details Data are null");
         } else {
-          const projectMembers = projectDetailData.projectMembersData
-            .map((projectMember) => projectMember.name)
-            .join("、");
-          setProjectMembers(projectMembers);
-          setProjectData(projectDetailData.projectData[0]);
-          setProjectStatus(projectDetailData.projectStatusData);
-          setAttachmentFiles(projectDetailData.attachmentFiles);
-          setProjectDetailArrows(
-            new Array(projectDetailData.tasksData.length).fill(false)
-          );
-          setTasks(projectDetailData.tasksData);
+          setProjectTaskGenreList(projectTaskGenreData[0]);
 
-          if (projectDetailData.attachmentFiles.length > 0) {
-            const urlList = projectDetailData.attachmentFiles.map((file) => {
+          const projectMembers = projectDetailsData.projectMembersData.map(
+            (projectMember) => projectMember.name
+          );
+          setProjectMembers(projectMembers);
+          setProjectData(projectDetailsData.projectData[0]);
+          setProjectStatus(projectDetailsData.projectStatusData);
+          setAttachedFiles(projectDetailsData.attachedFiles[0]);
+          setProjectDetailsArrows(
+            new Array(projectDetailsData.tasksData.length).fill(false)
+          );
+          setTasks(projectDetailsData.tasksData);
+
+          if (projectDetailsData.tasksData) {
+            const taskGenreIdList = projectDetailsData.tasksData.map(
+              (task) => task.task_genre_id
+            );
+            const taskGenreDataArray = await Promise.all(
+              taskGenreIdList.map(async (taskGenreId) => {
+                if (!taskGenreId) {
+                  return {};
+                } else {
+                  return await getTaskGenre(taskGenreId);
+                }
+              })
+            );
+            setTaskGenreList(taskGenreDataArray);
+          }
+
+          if (projectDetailsData.attachedFiles.length > 0) {
+            const urlList = projectDetailsData.attachedFiles[0].map((file) => {
               try {
                 return URL.createObjectURL(file);
               } catch (error) {
@@ -108,20 +135,17 @@ const SuspenseProject: React.FC = () => {
           }
 
           if (
-            projectDetailData.tasksData &&
-            projectDetailData.tasksData.length > 0
+            projectDetailsData.tasksData &&
+            projectDetailsData.tasksData.length > 0
           ) {
-            const attachmentFilesPromises = projectDetailData.tasksData.map(
-              async (task) => {
-                const taskId = task.id;
-                return await fetchAttachmentFiles(1, taskId);
-              }
+            const taskIdList = projectDetailsData.tasksData.map(
+              (task) => task.id
             );
-            const attachmentFiles = await Promise.all(attachmentFilesPromises);
-            setAttachmentFileList(attachmentFiles);
+            const attachedFiles = await fetchAttachedFiles(1, taskIdList);
+            setAttachedFileList(attachedFiles);
 
-            if (attachmentFiles.length > 0) {
-              const urlList = attachmentFiles.map((subList) =>
+            if (attachedFiles.length > 0) {
+              const urlList = attachedFiles.map((subList) =>
                 subList.map((file) => {
                   try {
                     return URL.createObjectURL(file);
@@ -138,7 +162,7 @@ const SuspenseProject: React.FC = () => {
         setPageUpdated(false);
         setLoading(false);
       } catch (error) {
-        console.error("Error fetch Project Detail Data:", error);
+        console.error("Error fetch Project Details Data:", error);
         setNotificationValue({
           message: "Couldn't get Project Data.",
           color: 1,
@@ -146,7 +170,7 @@ const SuspenseProject: React.FC = () => {
         router.push("/task");
       }
     };
-    fetchProjectDetail();
+    fetchProjectDetails();
   }, [pageUpdated]);
 
   useSessionTimeout();
@@ -207,13 +231,14 @@ const SuspenseProject: React.FC = () => {
             <BackgroundImage1 />
             <Header isBackButton={true} userId={params.userId} />
             <div className={styles[`project-container`]}>
-              <ProjectDetail
+              <ProjectDetails
                 userId={params.userId}
                 projectId={params.projectId}
                 projectData={projectData}
                 projectStatus={projectStatus}
                 projectMembers={projectMembers}
-                attachmentFiles={attachmentFiles}
+                projectTaskGenreList={projectTaskGenreList}
+                attachedFiles={attachedFiles}
                 downloadUrls={downloadUrls}
               />
 
@@ -275,10 +300,11 @@ const SuspenseProject: React.FC = () => {
                       userId={params.userId}
                       projectId={params.projectId}
                       tasks={tasks}
+                      taskGenreList={taskGenreList}
                       statuses={statuses}
-                      projectDetailArrows={projectDetailArrows}
-                      setProjectDetailArrows={setProjectDetailArrows}
-                      attachmentFileList={attachmentFileList}
+                      projectDetailsArrows={projectDetailsArrows}
+                      setProjectDetailsArrows={setProjectDetailsArrows}
+                      attachedFileList={attachedFileList}
                       downloadUrlList={downloadUrlList}
                       isChecked={isChecked}
                     />
@@ -289,7 +315,7 @@ const SuspenseProject: React.FC = () => {
                       userId={params.userId}
                       tasks={tasks}
                       statuses={statuses}
-                      attachmentFileList={attachmentFileList}
+                      attachedFileList={attachedFileList}
                       downloadUrlList={downloadUrlList}
                       isChecked={isChecked}
                     />
@@ -299,6 +325,7 @@ const SuspenseProject: React.FC = () => {
                     <TaskCalender
                       userId={params.userId}
                       tasks={tasks}
+                      projectTaskGenreList={projectTaskGenreList}
                       isChecked={isChecked}
                     />
                   )}

@@ -18,7 +18,7 @@ export async function fetchCommentData(taskId: number) {
 
     return commentData;
   } catch (error) {
-    console.error("Error fetch comments:", error);
+    console.error("Error fetch Comments:", error);
     return [];
   }
 }

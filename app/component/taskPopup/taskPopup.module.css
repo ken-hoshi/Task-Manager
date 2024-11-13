@@ -11,12 +11,12 @@
   z-index: 1000;
 }
 
-.popupInner {
+.popup-inner {
   background: white;
   color: black;
   border-radius: 8px;
-  width: 95vh;
-  height: 91vh;
+  width: 96vh;
+  height: 96vh;
   position: relative;
   animation: slideIn 0.3s ease-out;
   cursor: default;
@@ -65,14 +65,25 @@
   color: #555;
 }
 
-.popupInnerArea {
+.popup-inner-area {
   width: 80%;
   margin: 0 auto;
 }
 
-.popupInner h1 {
-  margin: 4vh;
-  text-align: center;
+.title-area {
+  position: relative;
+}
+
+.title-area h1 {
+  margin: 2.5vh;
+}
+
+.required-form {
+  position: absolute;
+  width: 20%;
+  left: 80%;
+  top: 50%;
+  font-size: 1.5vh;
 }
 
 .form-container {
@@ -81,7 +92,7 @@
   align-items: center;
 }
 
-.taskName {
+.task-name {
   border: none;
   border-bottom: 1px solid #000000;
   transition: border-color 0.3s;
@@ -95,16 +106,12 @@
 }
 
 .instruction {
-  margin: 0 0 4vh 0;
+  margin: 0 0 1.5vh 0;
   font-size: 1.5vh;
   text-align: left;
 }
 
-.form-container.datePicker-container {
-  align-items: start;
-}
-
-.datePicker {
+.date-picker {
   border: none;
   border-bottom: 1px solid #000000;
   transition: border-color 0.3s;
@@ -117,23 +124,41 @@
   top: 0;
 }
 
-.customCalendar {
+.custom-calendar {
   transform: scale(0.7);
   transform-origin: top;
   margin: 0;
   padding: 0;
 }
 
-.taskName:-webkit-autofill,
-.datePicker:-webkit-autofill {
+.task-name:-webkit-autofill,
+.date-picker:-webkit-autofill {
   -webkit-box-shadow: 0 0 0px 1000px #d9d9d9 inset;
 }
 
-.popupInner textarea {
+.number-of-days-form {
+  border: none;
+  border-bottom: 1px solid #000000;
+  transition: border-color 0.3s;
+  padding-left: 1vh;
+  height: 6.5vh;
+  width: 35vh;
+  background-color: #d9d9d9;
+  font-size: 2vh;
+  font-family: "Roboto", sans-serif;
+  box-sizing: border-box;
+}
+
+.textarea-container {
+  width: 100%;
+}
+
+.popup-inner textarea {
   resize: none;
   padding-left: 1vh;
-  width: 34vh;
-  height: 15vh;
+  width: 100%;
+  box-sizing: border-box;
+  height: 10vh;
   border: none;
   border-bottom: 1px solid #000000;
   background-color: #d9d9d9;
@@ -199,25 +224,25 @@
   line-clamp: 2;
 }
 
-.clipIcon {
+.clip-icon {
   font-size: 5vh !important;
   margin: 1vh auto;
   color: #000000 !important;
 }
 
-.attachedFileIcon {
+.attached-file-icon {
   font-size: 5vh !important;
   margin: 1vh 0 0 2vh;
   color: #000000 !important;
 }
 
-.cancelIcon {
+.cancel-icon {
   font-size: 2vh !important;
   color: #ff1100 !important;
   cursor: pointer;
 }
 
-.cancelIcon:hover {
+.cancel-icon:hover {
   color: #f1746b !important;
 }
 
@@ -252,7 +277,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 1vh;
-  margin: 1vh auto 0.5vh;
+  margin: 2vh auto 0.5vh;
 }
 
 .button-area button {

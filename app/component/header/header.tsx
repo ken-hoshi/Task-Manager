@@ -168,7 +168,7 @@ const Header: React.FC<HeaderProps> = ({ isBackButton, userId }) => {
 
               <button
                 onClick={logout}
-                className={classNames(styles.logoutButton, {
+                className={classNames(styles[`logout-button`], {
                   [styles.fadeIn3]: showButtons,
                 })}
               >

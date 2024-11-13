@@ -10,8 +10,8 @@ interface ArrowProps {
     React.SetStateAction<boolean[]>
   >;
   notYetCompletedTasksArrows?: boolean[];
-  setProjectDetailArrows?: React.Dispatch<React.SetStateAction<boolean[]>>;
-  projectDetailArrows?: boolean[];
+  setProjectDetailsArrows?: React.Dispatch<React.SetStateAction<boolean[]>>;
+  projectDetailsArrows?: boolean[];
   index: number;
   target: number;
 }
@@ -20,7 +20,7 @@ enum Target {
   projects,
   myTasks,
   notYetCompletedTasks,
-  projectDetail,
+  projectDetails,
 }
 
 export const Arrow: React.FC<ArrowProps> = ({
@@ -30,8 +30,8 @@ export const Arrow: React.FC<ArrowProps> = ({
   myTasksArrows,
   setNotYetCompletedTasksArrows,
   notYetCompletedTasksArrows,
-  setProjectDetailArrows,
-  projectDetailArrows,
+  setProjectDetailsArrows,
+  projectDetailsArrows,
   index,
   target,
 }) => {
@@ -66,11 +66,11 @@ export const Arrow: React.FC<ArrowProps> = ({
           );
         }
         break;
-      case Target.projectDetail:
-        if (setProjectDetailArrows) {
-          setProjectDetailArrows((prevProjectDetailArrows) =>
-            prevProjectDetailArrows.map((projectDetailArrow, i) =>
-              i === clickedNumber ? !projectDetailArrow : projectDetailArrow
+      case Target.projectDetails:
+        if (setProjectDetailsArrows) {
+          setProjectDetailsArrows((prevProjectDetailsArrows) =>
+            prevProjectDetailsArrows.map((projectDetailsArrow, i) =>
+              i === clickedNumber ? !projectDetailsArrow : projectDetailsArrow
             )
           );
         }
@@ -92,8 +92,8 @@ export const Arrow: React.FC<ArrowProps> = ({
         (notYetCompletedTasksArrows[index]
           ? "arrow_drop_down"
           : "arrow_right")}{" "}
-      {projectDetailArrows &&
-        (projectDetailArrows[index] ? "arrow_drop_down" : "arrow_right")}{" "}
+      {projectDetailsArrows &&
+        (projectDetailsArrows[index] ? "arrow_drop_down" : "arrow_right")}{" "}
     </span>
   );
 };

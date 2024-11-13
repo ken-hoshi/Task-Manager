@@ -12,7 +12,9 @@ import { useNotificationContext } from "../../provider/notificationProvider";
 import { usePageUpdateContext } from "../../provider/pageUpdateProvider";
 import Select, { SingleValue } from "react-select";
 import { selectBoxStyles } from "../selectBoxStyles";
-import { fetchAttachmentFiles } from "../../lib/fetchAttachmentFiles";
+import { formatDate } from "@/app/lib/formatDateTime";
+import { fetchAttachedFiles } from "@/app/lib/fetchAttachedFiles";
+import { getTaskGenre } from "@/app/lib/getTaskGenre";
 
 interface StatusProps {
   id: number;
@@ -45,7 +47,8 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
 
   const [statusList, setStatusList] = useState<StatusProps[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<Option[]>([]);
-  const [attachmentFileList, setAttachmentFileList] = useState<File[][]>([[]]);
+  const [taskGenreList, setTaskGenreList] = useState<any[]>([]);
+  const [attachedFileList, setAttachedFileList] = useState<File[][]>([[]]);
   const [downloadUrlList, setDownloadUrlList] = useState<(string | null)[][]>([
     [],
   ]);
@@ -61,17 +64,29 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
     });
     setSelectedStatuses(myTaskStatuses);
 
-    const fetchAttachmentFilesData = async () => {
-      if (myTasks && myTasks.length > 0) {
-        const attachmentFilesPromises = myTasks.map(async (myTask) => {
-          const taskId = myTask.id;
-          return await fetchAttachmentFiles(1, taskId);
-        });
-        const attachmentFiles = await Promise.all(attachmentFilesPromises);
-        setAttachmentFileList(attachmentFiles);
+    const fetchTaskGenreData = async () => {
+      const taskGenreIdList = myTasks.map((myTask) => myTask.task_genre_id);
+      const taskGenreDataArray = await Promise.all(
+        taskGenreIdList.map(async (taskGenreId) => {
+          if (!taskGenreId) {
+            return {};
+          } else {
+            return await getTaskGenre(taskGenreId);
+          }
+        })
+      );
+      setTaskGenreList(taskGenreDataArray);
+    };
+    fetchTaskGenreData();
 
-        if (attachmentFiles.length > 0) {
-          const urlList = attachmentFiles.map((subList) =>
+    const fetchAttachedFilesData = async () => {
+      if (myTasks && myTasks.length > 0) {
+        const taskIdList = myTasks.map((myTask) => myTask.id);
+        const attachedFiles = await fetchAttachedFiles(1, taskIdList);
+        setAttachedFileList(attachedFiles);
+
+        if (attachedFiles.length > 0) {
+          const urlList = attachedFiles.map((subList) =>
             subList.map((file) => {
               try {
                 return URL.createObjectURL(file);
@@ -85,7 +100,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
         }
       }
     };
-    fetchAttachmentFilesData();
+    fetchAttachedFilesData();
   }, [pageUpdated]);
 
   const getStatusOptions = (selectedStatusId: number): Option[] => {
@@ -116,16 +131,6 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
       });
     }
     setPageUpdated(true);
-  };
-
-  const handleNullCheck = (index: number, i: number) => {
-    if (!downloadUrlList[index][i]) {
-      console.error("Attached File is null.");
-      setNotificationValue({
-        message: "Couldn't download Attached File.",
-        color: 1,
-      });
-    }
   };
 
   return (
@@ -209,7 +214,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
                     />
                   </td>
                   <td className={styles[`col-deadline`]}>
-                    {myTask.deadline_date}
+                    {formatDate(myTask.deadline_date)}
                   </td>
                   <td className={styles[`col-assigned-person`]}>
                     {myTask.users.name}
@@ -230,46 +235,141 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
                 <tr
                   className={
                     myTaskArrows[index]
-                      ? styles.detailOpen
-                      : styles.detailHidden
+                    ? styles[`details-open`]
+                    : styles[`details-hidden`]
                   }
                 >
                   <td colSpan={5}>
                     <div className={styles[`scrollable-content`]}>
                       <dl>
                         <div className={styles[`scrollable-content-container`]}>
-                          <div className={styles[`project-part`]}>
+                          <div className={styles[`left-part`]}>
                             <dt>Project</dt>
                             <dd className={styles[`project-name`]}>
-                              {myTask.projects.project_name}
+                              <div className={styles[`white-text`]}>
+                                {myTask.projects.project_name}
+                              </div>
                             </dd>
-                          </div>
-                          <div className={styles[`period-part`]}>
+
                             <dt>Period</dt>
                             <dd>
-                              {myTask.start_date}　〜　{myTask.deadline_date}
+                              <div>
+                                <div className={styles[`white-text`]}>
+                                  {formatDate(myTask.start_date)}
+                                </div>
+                                〜
+                                <div className={styles[`white-text`]}>
+                                  {formatDate(myTask.deadline_date)}
+                                </div>
+                              </div>
+                            </dd>
+
+                            <dt>Days</dt>
+                            <dd>
+                              <div className={styles[`white-text`]}>
+                                {myTask.number_of_days.toFixed(1)}
+                              </div>
+                            </dd>
+                          </div>
+
+                          <div className={styles[`right-part`]}>
+                            <dt>Task Genre</dt>
+                            <dd>
+                              {taskGenreList[index] &&
+                              Object.keys(taskGenreList[index]).length > 0 ? (
+                                <div className={styles[`task-genre-area`]}>
+                                  <div className={styles[`task-genre-block`]}>
+                                    <div className={styles[`task-genre-name`]}>
+                                      {taskGenreList[index].taskGenreName}
+                                    </div>
+
+                                    <div
+                                      className={
+                                        styles[`task-genre-table-container`]
+                                      }
+                                    >
+                                      <table>
+                                        <tbody>
+                                          <tr>
+                                            <td>Period</td>
+                                            <td>
+                                              {formatDate(
+                                                taskGenreList[index].startDate
+                                              )}{" "}
+                                              ~
+                                              {formatDate(
+                                                taskGenreList[index]
+                                                  .deadlineDate
+                                              )}
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td>Days</td>
+                                            <td>
+                                              {(
+                                                taskGenreList[index]
+                                                  .numberOfDays ?? 0
+                                              ).toFixed(1)}
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td>Persons</td>
+                                            <td>
+                                              {
+                                                taskGenreList[index]
+                                                  .numberOfPersons
+                                              }
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td>Persons/Days</td>
+                                            <td>
+                                              {(
+                                                (taskGenreList[index]
+                                                  .numberOfDays ?? 0) *
+                                                (taskGenreList[index]
+                                                  .numberOfPersons ?? 0)
+                                              ).toFixed(1)}
+                                            </td>
+                                          </tr>
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className={styles[`non-task-genre`]}>
+                                  No Task Genre
+                                </div>
+                              )}
                             </dd>
                           </div>
                         </div>
-                        <dt>Detail</dt>
-                        <dd className={styles[`detail-area`]}>
-                          {myTask.details ? myTask.details : "No Detail"}
+
+                        <dt>Details</dt>
+                        <dd className={styles[`details-area`]}>
+                          {myTask.details ? (
+                            <div className={styles[`details-text`]}>
+                              {myTask.details}
+                            </div>
+                          ) : (
+                            "No Details"
+                          )}
                         </dd>
-                        <dt>Attached Files</dt>
-                        <dd className={styles["attachmentFile-area"]}>
-                          {attachmentFileList[index] &&
-                          attachmentFileList[index].length > 0
-                            ? attachmentFileList[index].map((file: any, i) => (
+                        <dt>Attached File</dt>
+                        <dd className={styles["attachedFile-area"]}>
+                          {attachedFileList[index] &&
+                          attachedFileList[index].length > 0
+                            ? attachedFileList[index].map((file: File, i) => (
                                 <div
                                   className={
-                                    styles["display-attachmentFile-container"]
+                                    styles["display-attachedFile-container"]
                                   }
                                   key={i}
                                 >
                                   <div className={styles["file-info"]}>
                                     <a
                                       href={downloadUrlList[index][i] || "#"}
-                                      onClick={() => handleNullCheck(index, i)}
                                       download={file.name}
                                     >
                                       <span

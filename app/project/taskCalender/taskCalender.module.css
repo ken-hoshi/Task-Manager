@@ -7,6 +7,7 @@
   width: 130vh;
   height: 80vh;
   border: 1px solid #878788;
+  position: relative;
 }
 
 .non-tasks {
@@ -57,6 +58,39 @@
   font-weight: bold;
 }
 
+.description-area {
+  position: absolute;
+  color: white;
+  font-size: 1.5vh;
+  right: 1vh;
+  top: 3vh;
+}
+
+.task-genre-description-area,
+.task-description-area,
+.task-result-description-area {
+  display: flex;
+  align-items: center;
+}
+
+.square {
+  width: 2vh;
+  height: 2vh;
+  margin: 0.5vh;
+}
+
+.task-genre-description-area .square {
+  background-color: #5764f9;
+}
+
+.task-description-area .square {
+  background-color: #ffae00;
+}
+
+.task-result-description-area .square {
+  background-color: #ffd988;
+}
+
 .calender-container {
   max-height: 55vh;
   overflow-y: auto;
@@ -65,50 +99,61 @@
   margin: 0 auto;
 }
 
-.calendarTable {
+.calender-table {
   width: 127vh;
   border-collapse: collapse;
   font-family: Arial, sans-serif;
   background-color: white;
 }
 
-.calendarTable thead {
+.calender-table thead {
   position: sticky;
   top: 0;
   z-index: 1;
 }
 
-.calendarTable th,
-.calendarTable td {
+.calender-table th,
+.calender-table td {
   border: 1px solid #ddd;
   text-align: center;
 }
 
-.calendarTable th {
+.calender-table th {
   background-color: #eaeaea;
 }
 
-.calendarTable td {
-  height: 4vh;
+.calender-table td {
   width: 3vh;
 }
 
-.task-name {
-  background-color: #eaeaea;
+.task-genre-name {
+  background-color: #5764f9;
+  color: white;
   width: 20vh;
+  height: 3vh !important;
+  position: relative;
 }
 
+.task-genre-name-area,
 .task-name-area {
-  background-color: #eaeaea;
   width: 20vh;
   display: flex;
   justify-content: space-between;
 }
 
+.task-name {
+  background-color: #eaeaea;
+  width: 20vh;
+  height: 3vh !important;
+  position: relative;
+}
+
+.task-genre-name-area p,
 .task-name-area p {
   text-align: center;
   width: 18vh;
   padding: 0 0.5vh 0 0.5vh;
+  margin: 0;
   box-sizing: border-box;
   word-break: break-all;
   display: -webkit-box;
@@ -127,11 +172,29 @@
 
 .button-area button {
   padding: 0;
-  margin-top: 1vh;
+  margin-top: 0.5vh;
   background-color: white;
   border-radius: 0.2vh;
-  height: 2vh;
   width: 2vh;
+  height: 2vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.button-container {
+  position: absolute;
+  display: flex;
+  top: 0.5vh;
+  right: 0;
+  z-index: 1000;
+}
+
+.button-container button {
+  padding: 0;
+  width: 2.5vh;
+  height: 2.5vh;
+  margin: auto 0.2vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -182,6 +245,34 @@
   color: #357ae8;
 }
 
+.result-task-name {
+  width: 20vh;
+  height: 3vh !important;
+  position: relative;
+}
+
+.result-area {
+  display: flex;
+  justify-content: space-between;
+  width: 20vh;
+}
+
+.result-area p {
+  font-size: 1.5vh;
+  text-align: center;
+  width: 18vh;
+  padding: 0 0.5vh 0 0.5vh;
+  margin: 0;
+  box-sizing: border-box;
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
 .saturday {
   color: blue;
 }
@@ -194,10 +285,18 @@
   background-color: #78787d !important;
 }
 
-.highlight {
-  background-color: #f0a500;
+.task-genre-highlight {
+  background-color: #5764f9;
 }
 
-.editHighlight {
+.task-highlight {
+  background-color: #ffae00;
+}
+
+.result-highlight {
+  background-color: #ffd988;
+}
+
+.edit-highlight {
   background-color: #a2f38b;
 }

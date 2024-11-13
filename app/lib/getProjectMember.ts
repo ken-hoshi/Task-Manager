@@ -28,7 +28,7 @@ export async function getProjectMember(projectId: number) {
     }
     return users;
   } catch (error) {
-    console.error("Error fetch project members:", error);
+    console.error("Error fetch Project Members:", error);
     return [];
   }
 }

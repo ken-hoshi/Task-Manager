@@ -38,7 +38,6 @@ export const selectBoxStyles = {
     display: "flex",
     justifyContent: "center",
   }),
-
   menu: (baseStyles: any) => ({
     ...baseStyles,
     zIndex: 10,

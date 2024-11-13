@@ -19,7 +19,7 @@ interface TaskBoardProps {
   userId: number;
   tasks: any[];
   statuses: StatusProps[];
-  attachmentFileList: File[][];
+  attachedFileList: File[][];
   downloadUrlList: (string | null)[][];
   isChecked: boolean;
 }
@@ -31,7 +31,7 @@ const ItemTypes = {
 const TaskItem = ({
   userId,
   task,
-  attachmentFiles,
+  attachedFiles,
   downloadUrls,
   index,
   moveTask,
@@ -39,7 +39,7 @@ const TaskItem = ({
   userId: number;
   task: any;
   index: number;
-  attachmentFiles: File[];
+  attachedFiles: File[];
   downloadUrls: (string | null)[];
   moveTask: (id: string, status: string) => void;
 }) => {
@@ -56,16 +56,6 @@ const TaskItem = ({
 
   const toggleArrow = () => {
     setIsOpen(!isOpen);
-  };
-
-  const handleNullCheck = (index: number) => {
-    if (!downloadUrls[index]) {
-      console.error("Attached File is null.");
-      setNotificationValue({
-        message: "Couldn't download Attached File.",
-        color: 1,
-      });
-    }
   };
 
   return (
@@ -108,9 +98,9 @@ const TaskItem = ({
       <div
         className={classNames(styles[`block-open-area`], isOpen && styles.open)}
       >
-        <div className={styles[`detail-area`]}>
-          <div className={styles.label}>Detail</div>
-          <p>{task.details ? task.details : "No Detail"}</p>
+        <div className={styles[`details-area`]}>
+          <div className={styles.label}>Details</div>
+          <p>{task.details ? task.details : "No Details"}</p>
         </div>
         <div className={styles[`attached-file-area`]}>
           <div
@@ -119,18 +109,14 @@ const TaskItem = ({
             Attached-file
           </div>
           <div className={styles[`attached-file-flex-area`]}>
-            {attachmentFiles && attachmentFiles.length > 0 ? (
-              attachmentFiles.map((file: any, index: number) => (
+            {attachedFiles && attachedFiles.length > 0 ? (
+              attachedFiles.map((file: any, index: number) => (
                 <div
-                  className={styles["display-attachmentFile-container"]}
+                  className={styles["display-attachedFile-container"]}
                   key={index}
                 >
                   <div className={styles["file-info"]}>
-                    <a
-                      href={downloadUrls[index] || "#"}
-                      onClick={() => handleNullCheck(index)}
-                      download={file.name}
-                    >
+                    <a href={downloadUrls[index] || "#"} download={file.name}>
                       <span
                         className={classNames(
                           "material-symbols-outlined",
@@ -225,7 +211,7 @@ const TaskList = ({
               userId={userId}
               key={task.id}
               task={task}
-              attachmentFiles={taskData.attachmentFilesByStatus[index]}
+              attachedFiles={taskData.attachedFilesByStatus[index]}
               downloadUrls={taskData.downloadUrlsByStatus[index]}
               index={index}
               moveTask={moveTask}
@@ -240,12 +226,12 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
   userId,
   tasks,
   statuses,
-  attachmentFileList,
+  attachedFileList,
   downloadUrlList,
   isChecked,
 }) => {
   const [taskData, setTaskData] = useState<any[]>();
-  const [attachmentFileData, setAttachmentFileData] = useState<any[]>();
+  const [attachedFileData, setAttachedFileData] = useState<any[]>();
   const [downloadUrlData, setDownloadUrlData] = useState<any[]>();
 
   const { setNotificationValue } = useNotificationContext();
@@ -258,23 +244,23 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
           (result, task, index) => {
             if (task.assigned_user_id == userId) {
               result.tasks.push(task);
-              result.attachmentFiles.push(attachmentFileList[index]);
+              result.attachedFiles.push(attachedFileList[index]);
               result.downloadUrls.push(downloadUrlList[index]);
             }
             return result;
           },
           {
             tasks: [],
-            attachmentFiles: [],
+            attachedFiles: [],
             downloadUrls: [],
           }
         );
         setTaskData(filteredTaskData.tasks);
-        setAttachmentFileData(filteredTaskData.attachmentFiles);
+        setAttachedFileData(filteredTaskData.attachedFiles);
         setDownloadUrlData(filteredTaskData.downloadUrls);
       } else {
         setTaskData(tasks);
-        setAttachmentFileData(attachmentFileList);
+        setAttachedFileData(attachedFileList);
         setDownloadUrlData(downloadUrlList);
       }
     }
@@ -345,7 +331,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
   const getTaskDataByStatus = (
     statusId: number,
     tasks: any[],
-    attachmentFileList: File[][],
+    attachedFileList: File[][],
     downloadUrlList: (string | null)[][]
   ) => {
     if (tasks && tasks.length > 0) {
@@ -353,14 +339,14 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         (result, task, index) => {
           if (task.status_id === statusId) {
             result.tasksByStatus.push(task);
-            result.attachmentFilesByStatus.push(attachmentFileList[index]);
+            result.attachedFilesByStatus.push(attachedFileList[index]);
             result.downloadUrlsByStatus.push(downloadUrlList[index]);
           }
           return result;
         },
         {
           tasksByStatus: [],
-          attachmentFilesByStatus: [],
+          attachedFilesByStatus: [],
           downloadUrlsByStatus: [],
         }
       );
@@ -396,7 +382,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
               taskData={getTaskDataByStatus(
                 status.id,
                 taskData!,
-                attachmentFileData!,
+                attachedFileData!,
                 downloadUrlData!
               )}
               moveTask={moveTask}

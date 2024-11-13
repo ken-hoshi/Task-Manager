@@ -12,7 +12,7 @@ export async function getUsers() {
 
     return users;
   } catch (error) {
-    console.error("Error fetch users:", error);
+    console.error("Error fetch Users:", error);
     return [];
   }
 }

@@ -17,7 +17,7 @@
   transform: translate(-50%, -50%);
 }
 
-.backgroundImage3 {
+.background-image-container {
   position: relative;
   width: 50%;
   height: 75vh;
@@ -128,5 +128,3 @@
   color: #055cff;
   text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.5);
 }
-
-

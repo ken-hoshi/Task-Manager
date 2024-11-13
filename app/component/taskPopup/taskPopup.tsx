@@ -12,8 +12,8 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { getProjectMember } from "@/app/lib/getProjectMember";
 import classNames from "classnames";
-import { fetchAttachmentFiles } from "@/app/lib/fetchAttachmentFiles";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
+import { fetchAttachedFiles } from "@/app/lib/fetchAttachedFiles";
 
 interface TaskPopupProps {
   onClose: () => void;
@@ -31,6 +31,13 @@ interface ProjectProps {
   id: number;
   project_name: string;
   details: string;
+}
+
+interface TaskGenreDataProps {
+  id: number;
+  taskGenreName: string;
+  selectedStartDate: Date | undefined;
+  selectedDeadlineDate: Date | undefined;
 }
 
 interface StatusProps {
@@ -52,16 +59,26 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   const [taskName, setTaskName] = useState("");
   const [details, setDetails] = useState("");
   const [projects, setProjects] = useState<ProjectProps[]>([]);
+  const [taskGenreDataArray, setTaskGenreDataArray] = useState<
+    TaskGenreDataProps[]
+  >([]);
   const [projectMember, setProjectMember] = useState<UserProps[]>([]);
   const [statuses, setStatuses] = useState<StatusProps[]>([]);
   const [selectedUser, setSelectedUser] = useState<Option>();
   const [selectedProject, setSelectedProject] = useState<Option>();
-  const [selectedStatus, setSelectedStatus] = useState<Option>();
+  const [selectedTaskGenre, setSelectedTaskGenre] = useState<Option | null>();
+  const [selectedStatus, setSelectedStatus] = useState<Option>({
+    value: 1,
+    label: "Not Status",
+  });
   const [selectedDeadlineDate, setSelectedDeadlineDate] = useState<
     Date | undefined
   >(undefined);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | undefined>(
     undefined
+  );
+  const [numberOfDays, setNumberOfDays] = useState<number | string | undefined>(
+    ""
   );
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [beforeChangeFiles, setBeforeChangeFiles] = useState<File[]>([]);
@@ -78,45 +95,47 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
     if (taskId) {
       const fetchUpdateTaskData = async () => {
         try {
-          const { data: taskData, error: taskSelectError } =
-            await clientSupabase
-              .from("tasks")
-              .select("*")
-              .eq("id", taskId)
-              .single();
+          const [
+            { data: taskData, error: selectTaskError },
+            projects,
+            statuses,
+            { data: taskGenreData, error: selectTaskGenreDataError },
+            taskAttachmentsData,
+          ] = await Promise.all([
+            clientSupabase.from("tasks").select("*").eq("id", taskId).single(),
+            getProjects(),
+            getStatus(),
+            clientSupabase.from("task_genre").select("*"),
+            fetchAttachedFiles(1, [taskId]),
+          ]);
 
-          if (taskSelectError || !taskData) {
+          if (selectTaskError) {
+            throw selectTaskError;
+          }
+
+          if (!taskData || taskData.length === 0)
             throw new Error("Task Data is null.");
+
+          if (selectTaskGenreDataError) {
+            throw selectTaskGenreDataError;
           }
 
           setTaskName(taskData.task_name);
-          setDetails(taskData.details);
           setSelectedDeadlineDate(taskData.deadline_date);
           setSelectedStartDate(taskData.start_date);
+          setNumberOfDays(taskData.number_of_days);
+          setDetails(taskData.details);
 
-          const projects = await getProjects();
-          const selectedProjectName = projects.filter(
+          const selectedProjectName = projects.find(
             (project) => project.id === taskData.project_id
           );
-          setSelectedProject({
-            value: taskData.project_id,
-            label: selectedProjectName[0].project_name,
-          });
-
-          const projectList = await getProjects(taskData.assigned_user_id);
-          setProjects(projectList);
-
-          const statuses = await getStatus();
-          const selectedStatus = statuses.filter(
-            (status) => status.id === taskData.status_id
-          );
-
-          setSelectedStatus({
-            value: taskData.status_id,
-            label: selectedStatus[0].status,
-          });
-
-          setStatuses(statuses);
+          if (selectedProjectName) {
+            setSelectedProject({
+              value: taskData.project_id,
+              label: selectedProjectName.project_name,
+            });
+          }
+          setProjects(await getProjects(taskData.assigned_user_id));
 
           const { data: userName, error: selectUserNameError } =
             await clientSupabase
@@ -125,18 +144,39 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
               .eq("id", taskData.assigned_user_id)
               .single();
 
-          if (selectUserNameError || !userName) {
-            throw new Error("User is null.");
-          }
+          if (selectUserNameError) throw selectUserNameError;
+
+          if (!userName) throw new Error("User is null.");
 
           setSelectedUser({
             value: taskData.assigned_user_id,
             label: userName.name,
           });
 
-          const taskAttachmentsData = await fetchAttachmentFiles(1, taskId);
-          setSelectedFiles(taskAttachmentsData);
-          setBeforeChangeFiles(taskAttachmentsData);
+          const selectedTaskGenre = taskGenreData.find(
+            (taskGenre) => taskGenre.id === taskData.task_genre_id
+          );
+          if (selectedTaskGenre) {
+            setSelectedTaskGenre({
+              value: taskData.task_genre_id,
+              label: selectedTaskGenre.task_genre_name,
+            });
+          }
+          setProjects(await getProjects(taskData.assigned_user_id));
+
+          const selectedStatus = statuses.find(
+            (status) => status.id === taskData.status_id
+          );
+          if (selectedStatus) {
+            setSelectedStatus({
+              value: taskData.status_id,
+              label: selectedStatus.status,
+            });
+          }
+          setStatuses(statuses);
+
+          setSelectedFiles(taskAttachmentsData[0]);
+          setBeforeChangeFiles(taskAttachmentsData[0]);
 
           setGetLoading(false);
         } catch (error) {
@@ -153,7 +193,27 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
       const fetchData = async () => {
         try {
           let projectList;
+
           if (!projectId) {
+            const { data: userName, error: selectUserNameError } =
+              await clientSupabase
+                .from("users")
+                .select("name")
+                .eq("id", userId)
+                .single();
+
+            if (selectUserNameError) {
+              throw selectUserNameError;
+            }
+
+            if (!userName) {
+              throw new Error("User is null.");
+            }
+
+            setSelectedUser({
+              value: userId,
+              label: userName.name,
+            });
             projectList = await getProjects(userId);
           } else {
             projectList = (await getProjects()).filter(
@@ -165,24 +225,6 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             });
           }
           setProjects(projectList);
-
-          if (!projectId) {
-            const { data: userName, error: selectUserNameError } =
-              await clientSupabase
-                .from("users")
-                .select("name")
-                .eq("id", userId)
-                .single();
-
-            if (selectUserNameError || !userName) {
-              throw new Error("User is null.");
-            }
-
-            setSelectedUser({
-              value: userId,
-              label: userName.name,
-            });
-          }
 
           const statusList = await getStatus();
           setStatuses(statusList);
@@ -202,16 +244,51 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   }, []);
 
   useEffect(() => {
-    const fetchProjectMembers = async () => {
+    const fetchProjectMembersAndTaskGenre = async () => {
       if (selectedProject) {
         const projectMembersList = await getProjectMember(
           selectedProject.value
         );
         setProjectMember(projectMembersList);
+
+        const { data: taskGenreData, error: selectTaskGenreError } =
+          await clientSupabase
+            .from("task_genre")
+            .select("id,task_genre_name, start_date, deadline_date")
+            .eq("project_id", selectedProject.value);
+
+        if (selectTaskGenreError) {
+          throw selectTaskGenreError;
+        }
+
+        const taskGenreArray = taskGenreData.map((taskGenre) => ({
+          id: taskGenre.id,
+          taskGenreName: taskGenre.task_genre_name,
+          selectedStartDate: taskGenre.start_date,
+          selectedDeadlineDate: taskGenre.deadline_date,
+        }));
+        setTaskGenreDataArray(taskGenreArray);
       }
     };
-    fetchProjectMembers();
+    fetchProjectMembersAndTaskGenre();
   }, [selectedProject]);
+
+  const handleProjectChange = (selectedOptions: SingleValue<Option>) => {
+    setSelectedProject(selectedOptions as Option);
+    setSelectedTaskGenre(null);
+    setSelectedStartDate(undefined);
+    setSelectedDeadlineDate(undefined);
+    setNumberOfDays("");
+  };
+
+  const projectOptions = projects
+    .filter(
+      (project) => !selectedProject || selectedProject.value !== project.id
+    )
+    .map((project) => ({
+      value: project.id,
+      label: project.project_name,
+    }));
 
   const handleUserChange = (selectedOptions: SingleValue<Option>) => {
     setSelectedUser(selectedOptions as Option);
@@ -224,6 +301,53 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
       label: user.name,
     }));
 
+  const handleTaskGenreChange = (selectedOptions: SingleValue<Option>) => {
+    setSelectedTaskGenre(selectedOptions as Option);
+
+    const selectedTaskGenre = taskGenreDataArray.find(
+      (taskGenreData) => taskGenreData.id === selectedOptions?.value
+    );
+
+    setSelectedStartDate(selectedTaskGenre?.selectedStartDate);
+    setSelectedDeadlineDate(selectedTaskGenre?.selectedDeadlineDate);
+
+    if (
+      selectedTaskGenre?.selectedStartDate &&
+      selectedTaskGenre?.selectedDeadlineDate
+    ) {
+      const numberOfDays = Math.ceil(
+        (new Date(selectedTaskGenre.selectedDeadlineDate).getTime() -
+          new Date(selectedTaskGenre.selectedStartDate).getTime()) /
+          (1000 * 60 * 60 * 24) +
+          1
+      );
+      setNumberOfDays(numberOfDays);
+    }
+  };
+
+  const taskGenreOptions = taskGenreDataArray
+    .filter(
+      (taskGenre) =>
+        !selectedTaskGenre || selectedTaskGenre.value !== taskGenre.id
+    )
+    .map((taskGenre) => ({
+      value: taskGenre.id,
+      label: taskGenre.taskGenreName,
+    }));
+
+  const handleDateRangeChange = (dates: [Date | null, Date | null]) => {
+    const [start, deadline] = dates;
+    setSelectedStartDate(start ?? undefined);
+    setSelectedDeadlineDate(deadline ?? undefined);
+
+    if (start && deadline) {
+      const numberOfDays = Math.ceil(
+        (deadline.getTime() - start.getTime()) / (1000 * 60 * 60 * 24) + 1
+      );
+      setNumberOfDays(numberOfDays);
+    }
+  };
+
   const handleStatusChange = (selectedOptions: SingleValue<Option>) => {
     setSelectedStatus(selectedOptions as Option);
   };
@@ -235,31 +359,12 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
       label: status.status,
     }));
 
-  const handleProjectChange = (selectedOptions: SingleValue<Option>) => {
-    setSelectedProject(selectedOptions as Option);
-  };
-
-  const projectOptions = projects
-    .filter(
-      (project) => !selectedProject || selectedProject.value !== project.id
-    )
-    .map((project) => ({
-      value: project.id,
-      label: project.project_name,
-    }));
-
-  const handleDateRangeChange = (dates: [Date | null, Date | null]) => {
-    const [start, deadline] = dates;
-    setSelectedStartDate(start ?? undefined);
-    setSelectedDeadlineDate(deadline ?? undefined);
-  };
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
   };
 
-  const deleteAttachmentFile = (index: number) => {
+  const deleteAttachedFile = (index: number) => {
     const remainFiles = selectedFiles.filter((file, i) => i !== index);
     setSelectedFiles(remainFiles);
   };
@@ -291,12 +396,14 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
     const payloadValue = {
       task_name: taskName,
+      project_id: selectedProject!.value,
+      assigned_user_id: selectedUser!.value,
+      task_genre_id: selectedTaskGenre?.value,
       start_date: startDateWithTime,
       deadline_date: deadlineDateWithTime,
-      details,
+      number_of_days: numberOfDays,
       status_id: selectedStatus!.value,
-      assigned_user_id: selectedUser!.value,
-      project_id: selectedProject!.value,
+      details: details,
     };
 
     try {
@@ -315,8 +422,24 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         );
 
         if (removedFiles.length > 0) {
-          const removedFilesPaths = removedFiles.map(
-            (file) => `public/${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`
+          const removedFileNames = removedFiles.map(
+            (removedFile) => removedFile.name
+          );
+
+          const {
+            data: removedFilePathList,
+            error: selectRemovedFilePathListError,
+          } = await clientSupabase
+            .from("task_attachments")
+            .select("file_path")
+            .in("file_name", removedFileNames);
+
+          if (selectRemovedFilePathListError) {
+            throw selectRemovedFilePathListError;
+          }
+
+          const removedFilesPaths = removedFilePathList.map(
+            (removedFilePath) => removedFilePath.file_path
           );
           const { error: removeError } = await clientSupabase.storage
             .from("task_attachments")
@@ -342,14 +465,16 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
         if (addedFiles.length > 0) {
           const insertPromises = addedFiles.map(async (file) => {
-            const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+            const cleanFileName = `${file.name.replace(
+              /[^a-zA-Z0-9.-]/g,
+              "_"
+            )}_${new Date().toISOString().replace(/[-:.TZ]/g, "")}`;
             const { data: storageData, error: uploadStorageDataError } =
               await clientSupabase.storage
                 .from("task_attachments")
                 .upload(`public/${cleanFileName}`, file);
 
             if (uploadStorageDataError) {
-              await clientSupabase.from("tasks").delete().eq("id", taskId);
               throw uploadStorageDataError;
             }
             return {
@@ -401,7 +526,10 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
         const taskId = taskInsertData![0].id;
         const insertPromises = selectedFiles.map(async (file) => {
-          const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+          const cleanFileName = `${file.name.replace(
+            /[^a-zA-Z0-9.-]/g,
+            "_"
+          )}_${new Date().toISOString().replace(/[-:.TZ]/g, "")}`;
           const { data: storageData, error: uploadStorageDataError } =
             await clientSupabase.storage
               .from("task_attachments")
@@ -424,6 +552,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           .insert(insertTaskAttachments);
 
         if (insertTaskAttachmentsDataError) {
+          await clientSupabase.from("tasks").delete().eq("id", taskId);
           throw insertTaskAttachmentsDataError;
         }
 
@@ -463,15 +592,19 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
   return (
     <div className={styles.popup}>
-      <div className={styles.popupInner}>
+      <div className={styles[`popup-inner`]}>
         {getLoading ? (
           <div className={styles["spinner-container"]}>
             <div className={styles.spinner}></div>
             <div className={styles.loading}>Loading...</div>
           </div>
         ) : (
-          <div className={styles.popupInnerArea}>
-            <h1>{taskId ? "Edit Task" : "Add Task"}</h1>
+          <div className={styles[`popup-inner-area`]}>
+            <div className={styles[`title-area`]}>
+              <h1>{taskId ? "Edit Task" : "Add Task"}</h1>
+              <div className={styles["required-form"]}>※ → Required Form</div>
+            </div>
+
             <form onSubmit={handleSubmit}>
               <div className={styles["form-container"]}>
                 <div>
@@ -481,9 +614,9 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                     onChange={(e) => setTaskName(e.target.value)}
                     placeholder="Task Name"
                     required
-                    className={styles.taskName}
+                    className={styles[`task-name`]}
                   />
-                  <p className={styles.instruction}>Enter Task Name</p>
+                  <p className={styles.instruction}>※Enter Task Name</p>
                 </div>
 
                 <div>
@@ -495,7 +628,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                     required
                     styles={selectBoxStyles}
                   />
-                  <p className={styles.instruction}>Select Project</p>
+                  <p className={styles.instruction}>※Select Project</p>
                 </div>
               </div>
 
@@ -509,27 +642,21 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                     required
                     styles={selectBoxStyles}
                   />
-                  <p className={styles.instruction}>Select Assigned User</p>
+                  <p className={styles.instruction}>※Select Assigned User</p>
                 </div>
 
                 <div>
                   <Select
-                    options={statusOptions}
-                    value={selectedStatus}
-                    onChange={handleStatusChange}
-                    placeholder="-- Status --"
-                    required
+                    options={taskGenreOptions}
+                    value={selectedTaskGenre}
+                    onChange={handleTaskGenreChange}
+                    placeholder="-- Task Genre --"
                     styles={selectBoxStyles}
                   />
-                  <p className={styles.instruction}>Select Status</p>
+                  <p className={styles.instruction}>Select Task Genre</p>
                 </div>
               </div>
-              <div
-                className={classNames(
-                  styles["form-container"],
-                  styles["datePicker-container"]
-                )}
-              >
+              <div className={styles["form-container"]}>
                 <div>
                   <DatePicker
                     selected={selectedStartDate}
@@ -539,24 +666,57 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                     selectsRange
                     dateFormat="yyyy/MM/dd"
                     placeholderText="Period"
-                    className={styles.datePicker}
-                    calendarClassName={styles.customCalendar}
+                    className={styles[`date-picker`]}
+                    calendarClassName={styles[`custom-calendar`]}
                     showIcon
                     required
                   />
                   <p className={styles.instruction}>
-                    Select Start Day & Deadline Day
+                    ※Select Start Date & Deadline Date
                   </p>
                 </div>
-
                 <div>
-                  <textarea
-                    value={details}
-                    onChange={(e) => setDetails(e.target.value)}
-                    placeholder="Details"
-                  ></textarea>
-                  <p className={styles.instruction}>Enter Task Details</p>
+                  <input
+                    type="number"
+                    name="numberOfDays"
+                    step="0.1"
+                    min="0"
+                    placeholder="Number of Days"
+                    className={styles[`number-of-days-form`]}
+                    value={numberOfDays !== undefined ? numberOfDays : ""}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      setNumberOfDays(
+                        inputValue ? Number(inputValue) : undefined
+                      );
+                    }}
+                    required
+                  />
+                  <p className={styles.instruction}>※Enter Number of Days</p>
                 </div>
+              </div>
+
+              <div className={styles["form-container"]}>
+                <div>
+                  <Select
+                    options={statusOptions}
+                    value={selectedStatus}
+                    onChange={handleStatusChange}
+                    placeholder="-- Status --"
+                    required
+                    styles={selectBoxStyles}
+                  />
+                  <p className={styles.instruction}>※Select Status</p>
+                </div>
+              </div>
+
+              <div>
+                <textarea
+                  value={details}
+                  onChange={(e) => setDetails(e.target.value)}
+                  placeholder="Details"
+                ></textarea>
+                <p className={styles.instruction}>Enter Task Details</p>
               </div>
 
               <div
@@ -570,7 +730,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                     <span
                       className={classNames(
                         "material-symbols-outlined",
-                        styles.clipIcon
+                        styles[`clip-icon`]
                       )}
                     >
                       attach_file
@@ -587,7 +747,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                           <span
                             className={classNames(
                               "material-symbols-outlined",
-                              styles.attachedFileIcon
+                              styles[`attached-file-icon`]
                             )}
                           >
                             upload_file
@@ -595,9 +755,9 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                           <span
                             className={classNames(
                               "material-symbols-outlined",
-                              styles.cancelIcon
+                              styles[`cancel-icon`]
                             )}
-                            onClick={() => deleteAttachmentFile(index)}
+                            onClick={() => deleteAttachedFile(index)}
                           >
                             cancel
                           </span>
@@ -623,7 +783,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                   />
                 </div>
               </div>
-              <p className={styles.attention}>※Maximum file size is 3MB</p>
+              <p className={styles.attention}>Maximum file size is 3MB</p>
 
               <div className={styles[`button-area`]}>
                 <button className={styles.cancel} onClick={onClose}>

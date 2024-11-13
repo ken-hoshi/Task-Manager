@@ -3,7 +3,7 @@
   perspective: 1000px;
 }
 
-.backgroundImage1 {
+.background-image-container {
   position: absolute;
   width: 75vh;
   height: 75vh;
@@ -19,7 +19,7 @@
   box-shadow: 5px 5px 10px rgba(0, 0, 0, 1);
 }
 
-.backgroundImage1 h1 {
+.background-image-container h1 {
   font-family: "Advent Pro";
   font-size: 10vh;
   font-weight: 500;
@@ -31,7 +31,7 @@
   text-align: center;
 }
 
-.backgroundImage1 h2 {
+.background-image-container h2 {
   font-family: "Advent Pro";
   font-size: 5vh;
   font-weight: 500;

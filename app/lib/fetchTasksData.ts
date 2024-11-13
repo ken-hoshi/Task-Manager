@@ -35,7 +35,7 @@ export async function fetchTasksData(userId?: number) {
     }
     return tasks;
   } catch (error) {
-    console.error("Error fetch tasks:", error);
+    console.error("Error fetch Tasks:", error);
     return [];
   }
 }

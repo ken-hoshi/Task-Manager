@@ -13,6 +13,7 @@ import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import Comment from "@/app/component/comment/comment";
 import AddButton from "@/app/component/addButton/addButton";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
+import { formatDate } from "@/app/lib/formatDateTime";
 
 interface Option {
   value: number;
@@ -28,10 +29,11 @@ interface TaskListProps {
   userId: number;
   projectId: number;
   tasks: any[];
+  taskGenreList: any[];
   statuses: StatusProps[];
-  projectDetailArrows: boolean[];
-  setProjectDetailArrows: React.Dispatch<React.SetStateAction<boolean[]>>;
-  attachmentFileList: File[][];
+  projectDetailsArrows: boolean[];
+  setProjectDetailsArrows: React.Dispatch<React.SetStateAction<boolean[]>>;
+  attachedFileList: File[][];
   downloadUrlList: (string | null)[][];
   isChecked: boolean;
 }
@@ -41,14 +43,16 @@ const TaskList: React.FC<TaskListProps> = ({
   projectId,
   tasks,
   statuses,
-  projectDetailArrows,
-  setProjectDetailArrows,
-  attachmentFileList,
+  taskGenreList,
+  projectDetailsArrows,
+  setProjectDetailsArrows,
+  attachedFileList,
   downloadUrlList,
   isChecked,
 }) => {
   const [taskData, setTaskData] = useState<any[]>();
-  const [attachmentFileData, setAttachmentFileData] = useState<any[]>();
+  const [taskGenreData, setTaskGenreData] = useState<any[]>();
+  const [attachedFileData, setAttachedFileData] = useState<any[]>();
   const [downloadUrlData, setDownloadUrlData] = useState<any[]>();
 
   const { newItem } = useFlashDisplayContext();
@@ -62,29 +66,33 @@ const TaskList: React.FC<TaskListProps> = ({
           (result, task, index) => {
             if (task.assigned_user_id == userId) {
               result.tasks.push(task);
-              result.projectDetailArrows.push(projectDetailArrows[index]);
-              result.attachmentFiles.push(attachmentFileList[index]);
+              result.taskGenreList.push(taskGenreList[index]);
+              result.projectDetailsArrows.push(projectDetailsArrows[index]);
+              result.attachedFiles.push(attachedFileList[index]);
               result.downloadUrls.push(downloadUrlList[index]);
             }
             return result;
           },
           {
             tasks: [],
-            projectDetailArrows: [],
-            attachmentFiles: [],
+            taskGenreList: [],
+            projectDetailsArrows: [],
+            attachedFiles: [],
             downloadUrls: [],
           }
         );
         setTaskData(filteredTaskData.tasks);
-        setProjectDetailArrows(
-          new Array(filteredTaskData.projectDetailArrows.length).fill(false)
+        setTaskGenreData(filteredTaskData.taskGenreList);
+        setProjectDetailsArrows(
+          new Array(filteredTaskData.projectDetailsArrows.length).fill(false)
         );
-        setAttachmentFileData(filteredTaskData.attachmentFiles);
+        setAttachedFileData(filteredTaskData.attachedFiles);
         setDownloadUrlData(filteredTaskData.downloadUrls);
       } else {
         setTaskData(tasks);
-        setProjectDetailArrows(new Array(tasks.length).fill(false));
-        setAttachmentFileData(attachmentFileList);
+        setTaskGenreData(taskGenreList);
+        setProjectDetailsArrows(new Array(tasks.length).fill(false));
+        setAttachedFileData(attachedFileList);
         setDownloadUrlData(downloadUrlList);
       }
     }
@@ -133,16 +141,6 @@ const TaskList: React.FC<TaskListProps> = ({
     setPageUpdated(true);
   };
 
-  const handleNullCheck = (index: number, i: number) => {
-    if (!downloadUrlData![index][i]) {
-      console.error("Attached File is null.");
-      setNotificationValue({
-        message: "Couldn't download Attached File.",
-        color: 1,
-      });
-    }
-  };
-
   return (
     <div className={styles[`task-list`]}>
       <table>
@@ -156,12 +154,16 @@ const TaskList: React.FC<TaskListProps> = ({
               Status
               <div className={styles.separator}></div>
             </th>
-            <th className={styles[`col-start-day`]}>
-              Start Day
+            <th className={styles[`col-start-date`]}>
+              Start Date
               <div className={styles.separator}></div>
             </th>
-            <th className={styles[`col-deadline-day`]}>
-              Deadline Day
+            <th className={styles[`col-deadline-date`]}>
+              Deadline Date
+              <div className={styles.separator}></div>
+            </th>
+            <th className={styles[`col-days`]}>
+              Days
               <div className={styles.separator}></div>
             </th>
             <th className={styles[`col-assigned-person`]}>
@@ -193,8 +195,8 @@ const TaskList: React.FC<TaskListProps> = ({
                   <td className={styles[`col-task-name`]}>
                     <div className={styles[`arrow-container`]}>
                       <Arrow
-                        projectDetailArrows={projectDetailArrows}
-                        setProjectDetailArrows={setProjectDetailArrows}
+                        projectDetailsArrows={projectDetailsArrows}
+                        setProjectDetailsArrows={setProjectDetailsArrows}
                         index={index}
                         target={3}
                       />
@@ -222,9 +224,15 @@ const TaskList: React.FC<TaskListProps> = ({
                       isSearchable={false}
                     />
                   </td>
-                  <td className={styles[`col-start-day`]}>{task.start_date}</td>
-                  <td className={styles[`col-deadline-day`]}>
-                    {task.deadline_date}
+                  <td className={styles[`col-start-date`]}>
+                    {formatDate(task.start_date)}
+                  </td>
+                  <td className={styles[`col-deadline-date`]}>
+                    {formatDate(task.deadline_date)}
+                  </td>
+
+                  <td className={styles[`col-days`]}>
+                    {task.number_of_days.toFixed(1)}
                   </td>
 
                   <td className={styles[`col-assigned-person`]}>
@@ -245,59 +253,144 @@ const TaskList: React.FC<TaskListProps> = ({
                 </tr>
                 <tr
                   className={
-                    projectDetailArrows[index]
-                      ? styles.detailOpen
-                      : styles.detailHidden
+                    projectDetailsArrows[index]
+                      ? styles[`details-open`]
+                      : styles[`details-hidden`]
                   }
                 >
-                  <td colSpan={6}>
+                  <td colSpan={7}>
                     <div className={styles[`scrollable-content`]}>
                       <dl>
-                        <dt>Detail</dt>
-                        <dd className={styles[`detail-area`]}>
-                          {task.details ? task.details : "No Detail"}
-                        </dd>
-                        <dt>Attached Files</dt>
-                        <dd className={styles["attachmentFile-area"]}>
-                          {attachmentFileData![index] &&
-                          attachmentFileData![index].length > 0
-                            ? attachmentFileData![index].map(
-                                (file: any, i: number) => (
-                                  <div
-                                    className={
-                                      styles["display-attachmentFile-container"]
-                                    }
-                                    key={i}
-                                  >
-                                    <div className={styles["file-info"]}>
-                                      <a
-                                        href={downloadUrlData![index][i] || "#"}
-                                        onClick={() =>
-                                          handleNullCheck(index, i)
-                                        }
-                                        download={file.name}
-                                      >
-                                        <span
-                                          className={classNames(
-                                            "material-symbols-outlined",
-                                            styles.downloadIcon
-                                          )}
-                                        >
-                                          download
-                                        </span>
-                                      </a>
+                        <div className={styles[`flex-content`]}>
+                          <div className={styles.flex}>
+                            <dt>Task Genre</dt>
+                            <dd>
+                              {taskGenreList[index] &&
+                              Object.keys(taskGenreList[index]).length > 0 ? (
+                                <div className={styles[`task-genre-area`]}>
+                                  <div className={styles[`task-genre-block`]}>
+                                    <div className={styles[`task-genre-name`]}>
+                                      {taskGenreList[index].taskGenreName}
                                     </div>
-                                    <p>{file.name}</p>
+
+                                    <div
+                                      className={
+                                        styles[`task-genre-table-container`]
+                                      }
+                                    >
+                                      <table>
+                                        <tbody>
+                                          <tr>
+                                            <td>Period</td>
+                                            <td>
+                                              {formatDate(
+                                                taskGenreList[index].startDate
+                                              )}{" "}
+                                              ~
+                                              {formatDate(
+                                                taskGenreList[index]
+                                                  .deadlineDate
+                                              )}
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td>Days</td>
+                                            <td>
+                                              {(
+                                                taskGenreList[index]
+                                                  .numberOfDays ?? 0
+                                              ).toFixed(1)}
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td>Persons</td>
+                                            <td>
+                                              {
+                                                taskGenreList[index]
+                                                  .numberOfPersons
+                                              }
+                                            </td>
+                                          </tr>
+                                          <tr>
+                                            <td>Persons/Days</td>
+                                            <td>
+                                              {(
+                                                (taskGenreList[index]
+                                                  .numberOfDays ?? 0) *
+                                                (taskGenreList[index]
+                                                  .numberOfPersons ?? 0)
+                                              ).toFixed(1)}
+                                            </td>
+                                          </tr>
+                                        </tbody>
+                                      </table>
+                                    </div>
                                   </div>
-                                )
-                              )
-                            : "No Attached File"}
-                        </dd>
+                                </div>
+                              ) : (
+                                <div className={styles[`non-task-genre`]}>
+                                  No Task Genre
+                                </div>
+                              )}
+                            </dd>
+                          </div>
+
+                          <div className={styles.flex}>
+                            <dt>Details</dt>
+                            <dd className={styles[`details-area`]}>
+                              {task.details ? (
+                                <div className={styles[`details-text`]}>
+                                  {task.details}
+                                </div>
+                              ) : (
+                                "No Details"
+                              )}
+                            </dd>
+
+                            <dt>Attached File</dt>
+                            <dd className={styles["attachedFile-area"]}>
+                              {attachedFileData![index] &&
+                              attachedFileData![index].length > 0
+                                ? attachedFileData![index].map(
+                                    (file: any, i: number) => (
+                                      <div
+                                        className={
+                                          styles[
+                                            "display-attachedFile-container"
+                                          ]
+                                        }
+                                        key={i}
+                                      >
+                                        <div className={styles["file-info"]}>
+                                          <a
+                                            href={
+                                              downloadUrlData![index][i] || "#"
+                                            }
+                                            download={file.name}
+                                          >
+                                            <span
+                                              className={classNames(
+                                                "material-symbols-outlined",
+                                                styles.downloadIcon
+                                              )}
+                                            >
+                                              download
+                                            </span>
+                                          </a>
+                                        </div>
+                                        <p>{file.name}</p>
+                                      </div>
+                                    )
+                                  )
+                                : "No Attached File"}
+                            </dd>
+                          </div>
+                        </div>
 
                         <Comment
                           userId={userId}
                           taskId={task.id}
-                          projectDetail={true}
+                          projectDetails={true}
                         />
                       </dl>
                     </div>

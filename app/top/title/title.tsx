@@ -12,7 +12,7 @@ interface TitleProps {
 const Title: React.FC<TitleProps> = ({ onClick, className }) => {
   return (
     <div className={classNames(styles[`title-area`], className)}>
-      <div className={styles.backgroundImage1} onClick={onClick}>
+      <div className={styles[`background-image-container`]} onClick={onClick}>
         <Image
           src="/img/background-image1.jpeg"
           alt="background-image1"

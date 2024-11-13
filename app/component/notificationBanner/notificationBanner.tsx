@@ -17,8 +17,7 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
   message,
   color,
 }) => {
-  const [show, setShow] = useState(false);
-  const { setNotificationValue } = useNotificationContext();
+  const { show, setShow, setNotificationValue } = useNotificationContext();
 
   useEffect(() => {
     setShow(true);
@@ -33,12 +32,14 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
         3000
       );
     }, 4000);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+    };
   }, []);
 
   return (
     <div
-      className={`${styles.notificationBanner} ${
+      className={`${styles[`notification-banner`]} ${
         show ? styles.show : styles.hide
       } ${color == Color.green ? styles.green : styles.red}`}
     >

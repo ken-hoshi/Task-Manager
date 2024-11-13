@@ -21,22 +21,27 @@ const MailNotificationList: React.FC<MailNotificationListProps> = ({
 }) => {
   useEffect(() => {
     return () => {
-      const updateNotifications = notifications.map(async (notification) => {
-        if (!notification.isRead) {
-          const { error: isReadUpdateError } = await clientSupabase
-            .from("mail_notifications")
-            .update({ isRead: true })
-            .eq("id", notification.id);
+      const updateNotifications = async () => {
+        const promiseUpdateNotifications = notifications.map(
+          async (notification) => {
+            if (!notification.isRead) {
+              const { error: isReadUpdateError } = await clientSupabase
+                .from("mail_notifications")
+                .update({ isRead: true })
+                .eq("id", notification.id);
 
-          if (isReadUpdateError) {
-            console.error(
-              "Error updating mail notifications:",
-              isReadUpdateError
-            );
+              if (isReadUpdateError) {
+                console.error(
+                  "Error updating mail notifications:",
+                  isReadUpdateError
+                );
+              }
+            }
           }
-        }
-      });
-      Promise.all(updateNotifications);
+        );
+        await Promise.all(promiseUpdateNotifications);
+      };
+      updateNotifications();
     };
   }, [notifications]);
 
@@ -52,17 +57,19 @@ const MailNotificationList: React.FC<MailNotificationListProps> = ({
                 key={notification.id}
                 className={classNames(
                   notifications.length == index + 1
-                    ? styles.lastListItem
-                    : styles.listItem,
-                  !notification.isRead ? styles.unReadList : ""
+                    ? styles[`last-list-item`]
+                    : styles[`list-item`],
+                  !notification.isRead ? styles[`un-read-list`] : ""
                 )}
               >
                 {!notification.isRead && (
-                  <span className={styles.unreadDot}></span>
+                  <span className={styles[`un-read-dot`]}></span>
                 )}
                 <p
                   className={
-                    !notification.isRead ? styles.unReadMessage : styles.message
+                    !notification.isRead
+                      ? styles[`un-read-message`]
+                      : styles.message
                   }
                 >
                   {notification.message}

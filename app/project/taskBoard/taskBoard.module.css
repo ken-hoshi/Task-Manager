@@ -150,18 +150,20 @@
   display: block;
 }
 
-.detail-area,
+.details-area,
 .attached-file-area {
   margin: 1.5vh;
 }
 
-.detail-area p,
+.details-area p,
 .attached-file-area p {
   margin: 1vh;
 }
 
-.detail-area p{
+.details-area p{
+  word-break: break-word;
   white-space: pre-wrap;
+  text-align: left;
 }
 
 .attached-file-label {
@@ -180,7 +182,7 @@
   justify-content: center;
 }
 
-.display-attachmentFile-container {
+.display-attachedFile-container {
   margin: 1vh 0.1vh;
   width: 9vh;
   height: 9vh;
@@ -191,13 +193,14 @@
   margin: 0 auto;
   cursor: pointer;
   color: black;
+  text-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
 }
 
 .downloadIcon:hover {
   color: #969696;
 }
 
-.display-attachmentFile-container p {
+.display-attachedFile-container p {
   margin: 0 auto;
   word-break: break-all;
   font-size: 1.5vh;
