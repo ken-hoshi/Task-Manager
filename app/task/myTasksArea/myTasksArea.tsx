@@ -235,8 +235,8 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
                 <tr
                   className={
                     myTaskArrows[index]
-                    ? styles[`details-open`]
-                    : styles[`details-hidden`]
+                      ? styles[`details-open`]
+                      : styles[`details-hidden`]
                   }
                 >
                   <td colSpan={5}>

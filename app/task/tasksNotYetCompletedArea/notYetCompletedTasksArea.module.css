@@ -234,16 +234,20 @@
 .left-part dd,
 .right-part dd {
   padding: 1.5vh 0;
-  width: 27vh;
   border-bottom: 1.5px dotted black;
 }
 
 .left-part dd {
   margin-left: 7.5vh;
+  width: 29vh;
+}
+
+.right-part dd {
+  width: 27vh;
 }
 
 .project-name {
-  max-width: 25vh;
+  max-width: 29vh;
   box-sizing: border-box;
   word-wrap: break-word;
   text-align: center !important;
