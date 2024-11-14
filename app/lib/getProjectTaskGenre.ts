@@ -51,7 +51,7 @@ export async function getProjectTaskGenre(projectIdList: number[]) {
     });
     return taskGenreArrayByProjects;
   } catch (error) {
-    console.error("Error get project Task Genre:", error);
+    console.error("Error Get project Task Genre:", error);
     return [];
   }
 }

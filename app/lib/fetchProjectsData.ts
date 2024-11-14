@@ -24,7 +24,7 @@ export const fetchProjectsData = async (userId?: number) => {
 
     return { projectsData, projectMembersData, projectStatusData };
   } catch (error) {
-    console.error("Error fetch Projects Data:", error);
+    console.error("Error Fetch Projects Data:", error);
     return {};
   }
 };

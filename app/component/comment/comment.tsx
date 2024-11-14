@@ -13,7 +13,11 @@ interface CommentProps {
   projectDetails?: boolean;
 }
 
-const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetails }) => {
+const Comment: React.FC<CommentProps> = ({
+  userId,
+  taskId,
+  projectDetails,
+}) => {
   const { setNotificationValue } = useNotificationContext();
 
   const [reRendering, setReRendering] = useState<boolean>(false);
@@ -92,7 +96,7 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetails }) => 
         throw commentDeleteError;
       }
     } catch (error) {
-      console.error("Error delete comment:", error);
+      console.error("Error Delete Comment:", error);
       setNotificationValue({
         message: "Comment was not deleted.",
         color: 1,
@@ -113,7 +117,7 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetails }) => 
         throw commentUpdateError;
       }
     } catch (error) {
-      console.error("Error edit comment:", error);
+      console.error("Error Edit Comment:", error);
       setNotificationValue({
         message: "Comment was not edited.",
         color: 1,
@@ -153,7 +157,7 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId, projectDetails }) => 
         );
       }
     } catch (error) {
-      console.error("Error insert comment:", error);
+      console.error("Error Insert Comment:", error);
       setNotificationValue({
         message: "Comment was not added.",
         color: 1,

@@ -158,10 +158,12 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
               (taskGenre) => taskGenre.id === taskData.task_genre_id
             );
 
-            setSelectedTaskGenre({
-              value: taskData.task_genre_id,
-              label: selectedTaskGenre.task_genre_name,
-            });
+            if(selectedTaskGenre){
+              setSelectedTaskGenre({
+                value: taskData.task_genre_id,
+                label: selectedTaskGenre.task_genre_name,
+              });
+            }
           }
           setProjects(await getProjects(taskData.assigned_user_id));
 
@@ -181,7 +183,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
           setGetLoading(false);
         } catch (error) {
-          console.error("Error fetch task details:", error);
+          console.error("Error Fetch Task Details:", error);
           onClose();
           setNotificationValue({
             message: "Couldn't get the Task data.",
@@ -232,7 +234,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
           setGetLoading(false);
         } catch (error) {
-          console.error("Error fetch task details:", error);
+          console.error("Error Fetch Task Details:", error);
           onClose();
           setNotificationValue({
             message: "Couldn't get the Task data.",

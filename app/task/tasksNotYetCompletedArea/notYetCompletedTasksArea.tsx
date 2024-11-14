@@ -11,7 +11,8 @@ import { selectBoxStyles } from "../selectBoxStyles";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
 import { formatDate } from "@/app/lib/formatDateTime";
 import { fetchAttachedFiles } from "@/app/lib/fetchAttachedFiles";
-import { getTaskGenre } from "@/app/lib/getTaskGenre";
+import { getTaskGenreData } from "@/app/lib/getTaskGenre";
+import DatePicker from "react-datepicker";
 
 interface StatusProps {
   id: number;
@@ -46,10 +47,20 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
   const [statusList, setStatusList] = useState<StatusProps[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<Option[]>([]);
   const [taskGenreList, setTaskGenreList] = useState<any[]>([]);
+  const [selectedResultDeadlineDate, setSelectedResultDeadlineDate] = useState<
+    Date | undefined
+  >(undefined);
+  const [selectedResultStartDate, setSelectedResultStartDate] = useState<
+    Date | undefined
+  >(undefined);
+  const [numberOfResultDays, setNumberOfResultDays] = useState<
+    number | string | undefined
+  >("");
   const [attachedFileList, setAttachedFileList] = useState<File[][]>([[]]);
   const [downloadUrlList, setDownloadUrlList] = useState<(string | null)[][]>([
     [],
   ]);
+  const [postLoading, setPostLoading] = useState(true);
 
   useEffect(() => {
     setStatusList(statuses);
@@ -69,11 +80,21 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
         (notYetCompletedTask) => notYetCompletedTask.task_genre_id
       );
       const taskGenreDataArray = await Promise.all(
-        taskGenreIdList.map(async (taskGenreId) => {
+        taskGenreIdList.map(async (taskGenreId, index) => {
           if (!taskGenreId) {
-            return {};
+            return {
+              assignedUserTaskResultData: [
+                {
+                  userName: notYetCompletedTasks[index].users.name,
+                  numberOfResultDays: notYetCompletedTasks[index]
+                    .number_of_result_days
+                    ? notYetCompletedTasks[index].number_of_result_days
+                    : 0,
+                },
+              ],
+            };
           } else {
-            return await getTaskGenre(taskGenreId);
+            return await getTaskGenreData(taskGenreId);
           }
         })
       );
@@ -142,13 +163,75 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
         );
       }
     } catch (error) {
-      console.error("Error update status:", error);
+      console.error("Error Update Status:", error);
       setNotificationValue({
         message: "Couldn't change the Status data.",
         color: 1,
       });
     }
     setPageUpdated(true);
+  };
+
+  const handleResultDateRangeChange = (dates: [Date | null, Date | null]) => {
+    const [start, deadline] = dates;
+    setSelectedResultStartDate(start ?? undefined);
+    setSelectedResultDeadlineDate(deadline ?? undefined);
+
+    if (start && deadline) {
+      const numberOfResultDays = Math.ceil(
+        (deadline.getTime() - start.getTime()) / (1000 * 60 * 60 * 24) + 1
+      );
+      setNumberOfResultDays(numberOfResultDays);
+    }
+  };
+
+  const handleSubmit = async (
+    e: { preventDefault: () => void },
+    taskId: number
+  ) => {
+    e.preventDefault();
+
+    if (!postLoading) return;
+    setPostLoading(false);
+
+    const startDateWithTime = new Date(selectedResultStartDate!);
+    startDateWithTime.setHours(9, 0, 0, 0);
+
+    const deadlineDateWithTime = new Date(selectedResultDeadlineDate!);
+    deadlineDateWithTime.setHours(9, 0, 0, 0);
+
+    try {
+      const { error: taskResultUpdateError } = await clientSupabase
+        .from("tasks")
+        .update({
+          result_start_date: startDateWithTime,
+          result_deadline_date: deadlineDateWithTime,
+          number_of_result_days: numberOfResultDays,
+        })
+        .eq("id", taskId);
+
+      if (taskResultUpdateError) {
+        throw taskResultUpdateError;
+      }
+
+      setNotificationValue({
+        message: "Task Result was added.",
+        color: 0,
+      });
+      setPostLoading(true);
+      setPageUpdated(true);
+    } catch (error) {
+      console.error("Error Add Task Result:", error);
+      setNotificationValue({
+        message: "Task Result was not added.",
+        color: 1,
+      });
+      setPostLoading(true);
+      setPageUpdated(true);
+    }
+    setSelectedResultDeadlineDate(undefined);
+    setSelectedResultStartDate(undefined);
+    setNumberOfResultDays(undefined);
   };
 
   return (
@@ -242,116 +325,291 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
                 <tr
                   className={
                     notYetCompletedTasksArrows[index]
-                    ? styles[`details-open`]
-                    : styles[`details-hidden`]
+                      ? styles[`details-open`]
+                      : styles[`details-hidden`]
                   }
                 >
                   <td colSpan={6}>
                     <div className={styles[`scrollable-content`]}>
                       <dl>
                         <div className={styles[`scrollable-content-container`]}>
-                          <div className={styles[`left-part`]}>
-                            <dt>Project</dt>
-                            <dd className={styles[`project-name`]}>
-                              <div className={styles[`white-text`]}>
-                                {taskNotYetCompleted.projects.project_name}
-                              </div>
-                            </dd>
-
-                            <dt>Period</dt>
-                            <dd>
-                              <div>
+                          <div className={styles[`flex-area`]}>
+                            <div className={styles.flex}>
+                              <dt>Project</dt>
+                              <dd className={styles[`project-name`]}>
                                 <div className={styles[`white-text`]}>
-                                  {formatDate(taskNotYetCompleted.start_date)}
+                                  {taskNotYetCompleted.projects.project_name}
                                 </div>
-                                〜
-                                <div className={styles[`white-text`]}>
-                                  {formatDate(
-                                    taskNotYetCompleted.deadline_date
-                                  )}
-                                </div>
-                              </div>
-                            </dd>
-
-                            <dt>Days</dt>
-                            <dd>
-                              <div className={styles[`white-text`]}>
-                                {taskNotYetCompleted.number_of_days.toFixed(1)}
-                              </div>
-                            </dd>
-                          </div>
-
-                          <div className={styles[`right-part`]}>
-                            <dt>Task Genre</dt>
-                            <dd>
-                              {taskGenreList[index] &&
-                              Object.keys(taskGenreList[index]).length > 0 ? (
-                                <div className={styles[`task-genre-area`]}>
-                                  <div className={styles[`task-genre-block`]}>
-                                    <div className={styles[`task-genre-name`]}>
-                                      {taskGenreList[index].taskGenreName}
-                                    </div>
-
-                                    <div
-                                      className={
-                                        styles[`task-genre-table-container`]
-                                      }
-                                    >
-                                      <table>
-                                        <tbody>
-                                          <tr>
-                                            <td>Period</td>
-                                            <td>
-                                              {formatDate(
-                                                taskGenreList[index].startDate
-                                              )}{" "}
-                                              ~
-                                              {formatDate(
-                                                taskGenreList[index]
-                                                  .deadlineDate
-                                              )}
-                                            </td>
-                                          </tr>
-                                          <tr>
-                                            <td>Days</td>
-                                            <td>
-                                              {(
-                                                taskGenreList[index]
-                                                  .numberOfDays ?? 0
-                                              ).toFixed(1)}
-                                            </td>
-                                          </tr>
-                                          <tr>
-                                            <td>Persons</td>
-                                            <td>
-                                              {
-                                                taskGenreList[index]
-                                                  .numberOfPersons
-                                              }
-                                            </td>
-                                          </tr>
-                                          <tr>
-                                            <td>Persons/Days</td>
-                                            <td>
-                                              {(
-                                                (taskGenreList[index]
-                                                  .numberOfDays ?? 0) *
-                                                (taskGenreList[index]
-                                                  .numberOfPersons ?? 0)
-                                              ).toFixed(1)}
-                                            </td>
-                                          </tr>
-                                        </tbody>
-                                      </table>
-                                    </div>
+                              </dd>
+                            </div>
+                            <div className={styles.flex}>
+                              <dt>Period</dt>
+                              <dd>
+                                <div>
+                                  <div className={styles[`white-text`]}>
+                                    {formatDate(taskNotYetCompleted.start_date)}
+                                  </div>
+                                  〜
+                                  <div className={styles[`white-text`]}>
+                                    {formatDate(
+                                      taskNotYetCompleted.deadline_date
+                                    )}
                                   </div>
                                 </div>
-                              ) : (
-                                <div className={styles[`non-task-genre`]}>
-                                  No Task Genre
-                                </div>
-                              )}
-                            </dd>
+                              </dd>
+                            </div>
+                          </div>
+
+                          <div className={styles[`flex-area`]}>
+                            <div className={styles.flex}>
+                              <dt>Task Genre</dt>
+                              <dd>
+                                {taskGenreList[index] &&
+                                taskGenreList[index].taskGenreName ? (
+                                  <div className={styles[`task-genre-area`]}>
+                                    <div className={styles[`task-genre-block`]}>
+                                      <div
+                                        className={styles[`task-genre-name`]}
+                                      >
+                                        {taskGenreList[index].taskGenreName}
+                                      </div>
+
+                                      <div
+                                        className={
+                                          styles[`task-genre-table-container`]
+                                        }
+                                      >
+                                        <table>
+                                          <tbody>
+                                            <tr>
+                                              <td>Period</td>
+                                              <td>
+                                                {formatDate(
+                                                  taskGenreList[index].startDate
+                                                )}{" "}
+                                                ~
+                                                {formatDate(
+                                                  taskGenreList[index]
+                                                    .deadlineDate
+                                                )}
+                                              </td>
+                                            </tr>
+                                            <tr>
+                                              <td>Days</td>
+                                              <td>
+                                                {(
+                                                  taskGenreList[index]
+                                                    .numberOfDays ?? 0
+                                                ).toFixed(1)}
+                                              </td>
+                                            </tr>
+                                            <tr>
+                                              <td>Persons</td>
+                                              <td>
+                                                {
+                                                  taskGenreList[index]
+                                                    .numberOfPersons
+                                                }
+                                              </td>
+                                            </tr>
+                                            <tr>
+                                              <td>Persons/Days</td>
+                                              <td>
+                                                {(
+                                                  (taskGenreList[index]
+                                                    .numberOfDays ?? 0) *
+                                                  (taskGenreList[index]
+                                                    .numberOfPersons ?? 0)
+                                                ).toFixed(1)}
+                                              </td>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className={styles[`non-task-genre`]}>
+                                    No Task Genre
+                                  </div>
+                                )}
+                              </dd>
+                            </div>
+                            <div className={styles.flex}>
+                              <dt>Task Result</dt>
+                              <dd>
+                                {taskGenreList &&
+                                  taskGenreList[index] &&
+                                  Object.keys(taskGenreList[index]).length >
+                                    0 &&
+                                  taskGenreList[index]
+                                    .assignedUserTaskResultData.length > 0 && (
+                                    <div
+                                      className={
+                                        styles["user-result-value-area"]
+                                      }
+                                    >
+                                      <div>
+                                        {taskGenreList[
+                                          index
+                                        ].assignedUserTaskResultData.map(
+                                          (
+                                            assignedUserTaskResult: {
+                                              userName: string;
+                                              numberOfResultDays: number;
+                                            },
+                                            i: number
+                                          ) => (
+                                            <div
+                                              key={i}
+                                              className={
+                                                styles["assigned-user-list"]
+                                              }
+                                            >
+                                              <div>
+                                                {
+                                                  assignedUserTaskResult.userName
+                                                }
+                                              </div>
+                                              <div>
+                                                {(assignedUserTaskResult.numberOfResultDays
+                                                  ? assignedUserTaskResult.numberOfResultDays
+                                                  : 0
+                                                ).toFixed(1)}
+                                                {" days"}
+                                              </div>
+                                            </div>
+                                          )
+                                        )}
+                                      </div>
+                                      <div className={styles["result-area"]}>
+                                        <div>Result</div>
+                                        <div className={styles["result-value"]}>
+                                          <div
+                                            className={
+                                              taskGenreList[
+                                                index
+                                              ].assignedUserTaskResultData.reduce(
+                                                (
+                                                  acc: number,
+                                                  curr: {
+                                                    userName: string;
+                                                    numberOfResultDays: number;
+                                                  }
+                                                ) =>
+                                                  acc + curr.numberOfResultDays,
+                                                0
+                                              ) <=
+                                              (taskGenreList[index]
+                                                .numberOfDays ?? 0) *
+                                                (taskGenreList[index]
+                                                  .numberOfPersons ?? 0)
+                                                ? styles[`value-green`]
+                                                : styles[`value-red`]
+                                            }
+                                          >
+                                            {taskGenreList[
+                                              index
+                                            ].assignedUserTaskResultData
+                                              .reduce(
+                                                (
+                                                  acc: number,
+                                                  curr: {
+                                                    userName: string;
+                                                    numberOfResultDays: number;
+                                                  }
+                                                ) =>
+                                                  acc + curr.numberOfResultDays,
+                                                0
+                                              )
+                                              .toFixed(1)}
+                                          </div>
+                                          <div>
+                                            {" / "}
+                                            {(
+                                              (taskGenreList[index]
+                                                .numberOfDays ?? 0) *
+                                              (taskGenreList[index]
+                                                .numberOfPersons ?? 0)
+                                            ).toFixed(1)}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                {userId ===
+                                  taskNotYetCompleted.assigned_user_id && (
+                                  <form
+                                    onSubmit={(e) =>
+                                      handleSubmit(e, taskNotYetCompleted.id)
+                                    }
+                                    className={styles[`task-result-form`]}
+                                  >
+                                    <DatePicker
+                                      selected={selectedResultStartDate}
+                                      onChange={handleResultDateRangeChange}
+                                      startDate={selectedResultStartDate}
+                                      endDate={selectedResultDeadlineDate}
+                                      selectsRange
+                                      dateFormat="yyyy/MM/dd"
+                                      className={styles[`date-picker`]}
+                                      calendarClassName={
+                                        styles[`custom-calendar`]
+                                      }
+                                      showIcon
+                                      required
+                                    />
+
+                                    <div className={styles["form-container"]}>
+                                      <div>
+                                        <input
+                                          type="number"
+                                          name="numberOfResultDays"
+                                          step="0.1"
+                                          min="0"
+                                          className={
+                                            styles[`number-of-result-days-form`]
+                                          }
+                                          value={
+                                            numberOfResultDays !== undefined
+                                              ? numberOfResultDays
+                                              : ""
+                                          }
+                                          onChange={(e) => {
+                                            const inputValue = e.target.value;
+                                            setNumberOfResultDays(
+                                              inputValue
+                                                ? Number(inputValue)
+                                                : undefined
+                                            );
+                                          }}
+                                          required
+                                        />
+                                        {" days"}
+                                      </div>
+                                      <div
+                                        className={styles[`button-container`]}
+                                      >
+                                        <button
+                                          className={styles.confirm}
+                                          type="submit"
+                                        >
+                                          {postLoading ? (
+                                            "confirm"
+                                          ) : (
+                                            <div
+                                              className={
+                                                styles[`button-spinner`]
+                                              }
+                                            ></div>
+                                          )}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </form>
+                                )}
+                              </dd>
+                            </div>
                           </div>
                         </div>
                         <dt>Details</dt>

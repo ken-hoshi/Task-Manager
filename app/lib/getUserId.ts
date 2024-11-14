@@ -18,7 +18,7 @@ export async function getUserId(authUserId: string) {
       throw new Error("user_id not found");
     }
   } catch (error) {
-    console.error("Error fetch User ID:", error);
+    console.error("Error Fetch User ID:", error);
     return null;
   }
 }

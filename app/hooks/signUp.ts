@@ -41,7 +41,7 @@ export const signUp = () => {
         throw new Error("User Id is null");
       }
     } catch (error) {
-      console.error("Error sign up:", error);
+      console.error("Error Sign up:", error);
       setNotificationValue({
         message: "Couldn't sign up.",
         color: 1,

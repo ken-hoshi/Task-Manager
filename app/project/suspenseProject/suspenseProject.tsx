@@ -20,7 +20,7 @@ import { useSessionTimeout } from "@/app/hooks/sessionTimeout";
 import { fetchAttachedFiles } from "@/app/lib/fetchAttachedFiles";
 import { fetchProjectDetailsData } from "@/app/lib/fetchProjectDetailsData";
 import { getProjectTaskGenre } from "@/app/lib/getProjectTaskGenre";
-import { getTaskGenre } from "@/app/lib/getTaskGenre";
+import { getTaskGenreData } from "@/app/lib/getTaskGenre";
 
 interface StatusProps {
   id: number;
@@ -103,12 +103,25 @@ const SuspenseProject: React.FC = () => {
             const taskGenreIdList = projectDetailsData.tasksData.map(
               (task) => task.task_genre_id
             );
+
             const taskGenreDataArray = await Promise.all(
-              taskGenreIdList.map(async (taskGenreId) => {
+              taskGenreIdList.map(async (taskGenreId, index) => {
                 if (!taskGenreId) {
-                  return {};
+                  return {
+                    assignedUserTaskResultData: [
+                      {
+                        userName:
+                          projectDetailsData.tasksData[index].users.name,
+                        numberOfResultDays: projectDetailsData.tasksData[index]
+                          .number_of_result_days
+                          ? projectDetailsData.tasksData[index]
+                              .number_of_result_days
+                          : 0,
+                      },
+                    ],
+                  };
                 } else {
-                  return await getTaskGenre(taskGenreId);
+                  return await getTaskGenreData(taskGenreId);
                 }
               })
             );
@@ -162,7 +175,7 @@ const SuspenseProject: React.FC = () => {
         setPageUpdated(false);
         setLoading(false);
       } catch (error) {
-        console.error("Error fetch Project Details Data:", error);
+        console.error("Error Fetch Project Details Data:", error);
         setNotificationValue({
           message: "Couldn't get Project Data.",
           color: 1,

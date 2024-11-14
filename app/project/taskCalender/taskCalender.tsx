@@ -251,7 +251,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
 
   const updateTaskPeriod = async (taskId: number, target: Target) => {
     try {
-      let startDate, endDate, startField, endField, tableName;
+      let startDate, endDate, startField, endField, numberOfDaysDaysField,tableName;
 
       switch (target) {
         case Target.task:
@@ -259,6 +259,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
           endDate = updateTaskEndDate;
           startField = "start_date";
           endField = "deadline_date";
+          numberOfDaysDaysField="number_of_days"
           tableName = "tasks";
           break;
 
@@ -267,6 +268,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
           endDate = updateTaskResultEndDate;
           startField = "result_start_date";
           endField = "result_deadline_date";
+          numberOfDaysDaysField="number_of_result_days"
           tableName = "tasks";
           break;
 
@@ -281,16 +283,25 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
         default:
           throw new Error("Invalid target");
       }
-
       if (startDate) {
+        const numberOfDays = endDate
+          ? Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+          : 1;
+
+        const updateData: { [key: string]: Date | number }  = {
+          [startField]: new Date(startDate.setDate(startDate.getDate() + 1)),
+          [endField]: endDate
+            ? new Date(endDate.setDate(endDate.getDate() + 1))
+            : startDate,
+        };
+
+        if ((target === Target.task || target === Target.taskResult)&&numberOfDaysDaysField) {
+          updateData[numberOfDaysDaysField] = numberOfDays;
+        }
+
         const { error: taskUpdateError } = await clientSupabase
           .from(tableName)
-          .update({
-            [startField]: new Date(startDate.setDate(startDate.getDate() + 1)),
-            [endField]: endDate
-              ? new Date(endDate.setDate(endDate.getDate() + 1))
-              : startDate,
-          })
+          .update(updateData)
           .eq("id", taskId);
 
         if (taskUpdateError) {
@@ -337,7 +348,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
         color: 0,
       });
     } catch (error) {
-      console.error("Error updating task:", error);
+      console.error("Error Update Task:", error);
 
       setPageUpdated(true);
       setClickCount(0);

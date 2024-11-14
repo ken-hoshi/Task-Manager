@@ -75,7 +75,7 @@ const SuspenseAccount: React.FC = () => {
           throw new Error("User ID is null");
         }
       } catch (error) {
-        console.error("Error fetch user data:", error);
+        console.error("Error Fetch User Data:", error);
         setNotificationValue({
           message: "Couldn't get User Data.",
           color: 1,
@@ -126,7 +126,7 @@ const SuspenseAccount: React.FC = () => {
       }
       router.push("/");
     } catch (error) {
-      console.error("Error delete user:", error);
+      console.error("Error Delete User:", error);
       setNotificationValue({
         message: "Couldn't delete Account.",
         color: 1,

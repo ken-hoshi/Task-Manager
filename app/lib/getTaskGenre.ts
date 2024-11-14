@@ -1,6 +1,6 @@
 import { clientSupabase } from "./supabase/client";
 
-export async function getTaskGenre(taskGenreId: number) {
+export async function getTaskGenreData(taskGenreId: number) {
   try {
     const [
       { data: taskGenreData, error: selectTaskGenreDataError },
@@ -13,7 +13,7 @@ export async function getTaskGenre(taskGenreId: number) {
         .single(),
       clientSupabase
         .from("tasks")
-        .select("id")
+        .select("*,users(name)")
         .eq("task_genre_id", taskGenreId),
     ]);
 
@@ -29,6 +29,20 @@ export async function getTaskGenre(taskGenreId: number) {
       return [];
     }
 
+    let assignedUserTaskResults: {
+      userName: string;
+      numberOfResultDays: number;
+    }[] = [];
+
+    if (tasks && tasks.length > 0) {
+      assignedUserTaskResults = tasks.map((task) => {
+        return {
+          userName: task.users.name,
+          numberOfResultDays: task.number_of_result_days,
+        };
+      });
+    }
+
     return {
       id: taskGenreData.id,
       taskGenreName: taskGenreData.task_genre_name,
@@ -41,9 +55,10 @@ export async function getTaskGenre(taskGenreId: number) {
           (1000 * 60 * 60 * 24) +
           1
       ),
+      assignedUserTaskResultData: assignedUserTaskResults,
     };
   } catch (error) {
-    console.error("Error get Task Genre:", error);
+    console.error("Error Get Task Genre:", error);
     return {};
   }
 }

@@ -318,7 +318,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         );
       }
     } catch (error) {
-      console.error("Error update status:", error);
+      console.error("Error Update status:", error);
       setNotificationValue({
         message: "Couldn't change the Status data.",
         color: 1,

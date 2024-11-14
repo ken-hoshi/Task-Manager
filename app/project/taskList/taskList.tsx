@@ -14,6 +14,7 @@ import Comment from "@/app/component/comment/comment";
 import AddButton from "@/app/component/addButton/addButton";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
 import { formatDate } from "@/app/lib/formatDateTime";
+import DatePicker from "react-datepicker";
 
 interface Option {
   value: number;
@@ -55,9 +56,20 @@ const TaskList: React.FC<TaskListProps> = ({
   const [attachedFileData, setAttachedFileData] = useState<any[]>();
   const [downloadUrlData, setDownloadUrlData] = useState<any[]>();
 
+  const [selectedResultDeadlineDate, setSelectedResultDeadlineDate] = useState<
+    Date | undefined
+  >(undefined);
+  const [selectedResultStartDate, setSelectedResultStartDate] = useState<
+    Date | undefined
+  >(undefined);
+  const [numberOfResultDays, setNumberOfResultDays] = useState<
+    number | string | undefined
+  >("");
+
   const { newItem } = useFlashDisplayContext();
   const { setNotificationValue } = useNotificationContext();
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
+  const [postLoading, setPostLoading] = useState(true);
 
   useEffect(() => {
     if (tasks.length > 0) {
@@ -132,13 +144,75 @@ const TaskList: React.FC<TaskListProps> = ({
         );
       }
     } catch (error) {
-      console.error("Error updating status:", error);
+      console.error("Error Update Status:", error);
       setNotificationValue({
         message: "Couldn't change the Status data.",
         color: 1,
       });
     }
     setPageUpdated(true);
+  };
+
+  const handleResultDateRangeChange = (dates: [Date | null, Date | null]) => {
+    const [start, deadline] = dates;
+    setSelectedResultStartDate(start ?? undefined);
+    setSelectedResultDeadlineDate(deadline ?? undefined);
+
+    if (start && deadline) {
+      const numberOfResultDays = Math.ceil(
+        (deadline.getTime() - start.getTime()) / (1000 * 60 * 60 * 24) + 1
+      );
+      setNumberOfResultDays(numberOfResultDays);
+    }
+  };
+
+  const handleSubmit = async (
+    e: { preventDefault: () => void },
+    taskId: number
+  ) => {
+    e.preventDefault();
+
+    if (!postLoading) return;
+    setPostLoading(false);
+
+    const startDateWithTime = new Date(selectedResultStartDate!);
+    startDateWithTime.setHours(9, 0, 0, 0);
+
+    const deadlineDateWithTime = new Date(selectedResultDeadlineDate!);
+    deadlineDateWithTime.setHours(9, 0, 0, 0);
+
+    try {
+      const { error: taskResultUpdateError } = await clientSupabase
+        .from("tasks")
+        .update({
+          result_start_date: startDateWithTime,
+          result_deadline_date: deadlineDateWithTime,
+          number_of_result_days: numberOfResultDays,
+        })
+        .eq("id", taskId);
+
+      if (taskResultUpdateError) {
+        throw taskResultUpdateError;
+      }
+
+      setNotificationValue({
+        message: "Task Result was added.",
+        color: 0,
+      });
+      setPostLoading(true);
+      setPageUpdated(true);
+    } catch (error) {
+      console.error("Error Add Task Result:", error);
+      setNotificationValue({
+        message: "Task Result was not added.",
+        color: 1,
+      });
+      setPostLoading(true);
+      setPageUpdated(true);
+    }
+    setSelectedResultDeadlineDate(undefined);
+    setSelectedResultStartDate(undefined);
+    setNumberOfResultDays(undefined);
   };
 
   return (
@@ -265,12 +339,13 @@ const TaskList: React.FC<TaskListProps> = ({
                           <div className={styles.flex}>
                             <dt>Task Genre</dt>
                             <dd>
-                              {taskGenreList[index] &&
-                              Object.keys(taskGenreList[index]).length > 0 ? (
+                              {taskGenreData &&
+                              taskGenreData[index] &&
+                              taskGenreData[index].taskGenreName ? (
                                 <div className={styles[`task-genre-area`]}>
                                   <div className={styles[`task-genre-block`]}>
                                     <div className={styles[`task-genre-name`]}>
-                                      {taskGenreList[index].taskGenreName}
+                                      {taskGenreData[index].taskGenreName}
                                     </div>
 
                                     <div
@@ -284,11 +359,11 @@ const TaskList: React.FC<TaskListProps> = ({
                                             <td>Period</td>
                                             <td>
                                               {formatDate(
-                                                taskGenreList[index].startDate
+                                                taskGenreData[index].startDate
                                               )}{" "}
                                               ~
                                               {formatDate(
-                                                taskGenreList[index]
+                                                taskGenreData[index]
                                                   .deadlineDate
                                               )}
                                             </td>
@@ -297,7 +372,7 @@ const TaskList: React.FC<TaskListProps> = ({
                                             <td>Days</td>
                                             <td>
                                               {(
-                                                taskGenreList[index]
+                                                taskGenreData[index]
                                                   .numberOfDays ?? 0
                                               ).toFixed(1)}
                                             </td>
@@ -306,7 +381,7 @@ const TaskList: React.FC<TaskListProps> = ({
                                             <td>Persons</td>
                                             <td>
                                               {
-                                                taskGenreList[index]
+                                                taskGenreData[index]
                                                   .numberOfPersons
                                               }
                                             </td>
@@ -315,9 +390,9 @@ const TaskList: React.FC<TaskListProps> = ({
                                             <td>Persons/Days</td>
                                             <td>
                                               {(
-                                                (taskGenreList[index]
+                                                (taskGenreData[index]
                                                   .numberOfDays ?? 0) *
-                                                (taskGenreList[index]
+                                                (taskGenreData[index]
                                                   .numberOfPersons ?? 0)
                                               ).toFixed(1)}
                                             </td>
@@ -336,6 +411,177 @@ const TaskList: React.FC<TaskListProps> = ({
                           </div>
 
                           <div className={styles.flex}>
+                            <dt>Task Result</dt>
+
+                            <dd>
+                              {taskGenreData &&
+                                taskGenreData[index] &&
+                                Object.keys(taskGenreData[index]).length > 0 &&
+                                taskGenreData[index].assignedUserTaskResultData
+                                  .length > 0 && (
+                                  <div
+                                    className={styles["user-result-value-area"]}
+                                  >
+                                    <div>
+                                      {taskGenreData[
+                                        index
+                                      ].assignedUserTaskResultData.map(
+                                        (
+                                          assignedUserTaskResult: {
+                                            userName: string;
+                                            numberOfResultDays: number;
+                                          },
+                                          i: number
+                                        ) => (
+                                          <div
+                                            key={i}
+                                            className={
+                                              styles["assigned-user-list"]
+                                            }
+                                          >
+                                            <div>
+                                              {assignedUserTaskResult.userName}
+                                            </div>
+                                            <div>
+                                              {(assignedUserTaskResult.numberOfResultDays
+                                                ? assignedUserTaskResult.numberOfResultDays
+                                                : 0
+                                              ).toFixed(1)}
+                                              {" days"}
+                                            </div>
+                                          </div>
+                                        )
+                                      )}
+                                    </div>
+                                    <div className={styles["result-area"]}>
+                                      <div>Result</div>
+                                      <div className={styles["result-value"]}>
+                                        <div
+                                          className={
+                                            taskGenreData[
+                                              index
+                                            ].assignedUserTaskResultData.reduce(
+                                              (
+                                                acc: number,
+                                                curr: {
+                                                  userName: string;
+                                                  numberOfResultDays: number;
+                                                }
+                                              ) =>
+                                                acc + curr.numberOfResultDays,
+                                              0
+                                            ) <=
+                                            (taskGenreData[index]
+                                              .numberOfDays ?? 0) *
+                                              (taskGenreData[index]
+                                                .numberOfPersons ?? 0)
+                                              ? styles[`value-green`]
+                                              : styles[`value-red`]
+                                          }
+                                        >
+                                          {taskGenreData[
+                                            index
+                                          ].assignedUserTaskResultData
+                                            .reduce(
+                                              (
+                                                acc: number,
+                                                curr: {
+                                                  userName: string;
+                                                  numberOfResultDays: number;
+                                                }
+                                              ) =>
+                                                acc + curr.numberOfResultDays,
+                                              0
+                                            )
+                                            .toFixed(1)}
+                                        </div>
+                                        <div>
+                                          {" / "}
+                                          {(
+                                            (taskGenreData[index]
+                                              .numberOfDays ?? 0) *
+                                            (taskGenreData[index]
+                                              .numberOfPersons ?? 0)
+                                          ).toFixed(1)}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              {userId === task.assigned_user_id && (
+                                <form
+                                  onSubmit={(e) => handleSubmit(e, task.id)}
+                                  className={styles[`task-result-form`]}
+                                >
+                                  <div className={styles["form-container"]}>
+                                    <div>
+                                      <DatePicker
+                                        selected={selectedResultStartDate}
+                                        onChange={handleResultDateRangeChange}
+                                        startDate={selectedResultStartDate}
+                                        endDate={selectedResultDeadlineDate}
+                                        selectsRange
+                                        dateFormat="yyyy/MM/dd"
+                                        className={styles[`date-picker`]}
+                                        calendarClassName={
+                                          styles[`custom-calendar`]
+                                        }
+                                        showIcon
+                                        required
+                                      />
+                                      <p className={styles.instruction}>
+                                        Period
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <input
+                                        type="number"
+                                        name="numberOfResultDays"
+                                        step="0.1"
+                                        min="0"
+                                        className={
+                                          styles[`number-of-result-days-form`]
+                                        }
+                                        value={
+                                          numberOfResultDays !== undefined
+                                            ? numberOfResultDays
+                                            : ""
+                                        }
+                                        onChange={(e) => {
+                                          const inputValue = e.target.value;
+                                          setNumberOfResultDays(
+                                            inputValue
+                                              ? Number(inputValue)
+                                              : undefined
+                                          );
+                                        }}
+                                        required
+                                      />
+                                      <p className={styles.instruction}>Days</p>
+                                    </div>
+                                    <div className={styles[`button-container`]}>
+                                      <button
+                                        className={styles.confirm}
+                                        type="submit"
+                                      >
+                                        {postLoading ? (
+                                          "confirm"
+                                        ) : (
+                                          <div
+                                            className={styles[`button-spinner`]}
+                                          ></div>
+                                        )}
+                                      </button>
+                                    </div>
+                                  </div>
+                                </form>
+                              )}
+                            </dd>
+                          </div>
+                        </div>
+
+                        <div className={styles[`flex-content`]}>
+                          <div className={styles.flex}>
                             <dt>Details</dt>
                             <dd className={styles[`details-area`]}>
                               {task.details ? (
@@ -346,7 +592,8 @@ const TaskList: React.FC<TaskListProps> = ({
                                 "No Details"
                               )}
                             </dd>
-
+                          </div>
+                          <div className={styles.flex}>
                             <dt>Attached File</dt>
                             <dd className={styles["attachedFile-area"]}>
                               {attachedFileData![index] &&

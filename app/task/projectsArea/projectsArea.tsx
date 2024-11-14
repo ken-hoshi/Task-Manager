@@ -73,7 +73,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
           !filteredProjects.projectMembersData ||
           !filteredProjects.projectStatusData
         ) {
-          console.error("Error fetch Projects Data: Projects Data are null");
+          console.error("Error Fetch Projects Data: Projects Data are null");
           setNotificationValue({
             message: "Couldn't get the Projects data.",
             color: 1,

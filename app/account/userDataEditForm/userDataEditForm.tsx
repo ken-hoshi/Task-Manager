@@ -125,7 +125,7 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
         throw userUpdateError;
       }
     } catch (error) {
-      console.error("Error update user data:", error);
+      console.error("Error Update User Data:", error);
       setNotificationValue({
         message: "Couldn't update User data.",
         color: 1,
@@ -163,7 +163,7 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
           type="email"
           placeholder="Email"
           name="email"
-          autoComplete="email" 
+          autoComplete="email"
           required
           value={formData.email}
           onChange={handleChange}
@@ -180,7 +180,7 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
           type="password"
           placeholder="Password"
           name="password"
-          autoComplete="current-password" 
+          autoComplete="current-password"
           required
           value={formData.password}
           onChange={handleChange}

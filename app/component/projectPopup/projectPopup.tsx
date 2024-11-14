@@ -151,7 +151,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
 
           setGetLoading(false);
         } catch (error) {
-          console.error("Error fetching project details:", error);
+          console.error("Error Fetch Project Details:", error);
           onClose();
           setNotificationValue({
             message: "Couldn't get the Project data.",

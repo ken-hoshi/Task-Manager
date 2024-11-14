@@ -11,7 +11,7 @@ export const GetSession = () => {
       }
       return sessionData.session;
     } catch (error) {
-      console.error("Error get Session:", error);
+      console.error("Error Get Session:", error);
       return null;
     }
   };
