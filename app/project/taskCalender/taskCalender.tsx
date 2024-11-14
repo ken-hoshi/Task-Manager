@@ -127,7 +127,10 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
       }
     }
 
-    if (tasks.length > 0 || projectTaskGenreList.length > 0) {
+    if (
+      (tasks && tasks.length > 0) ||
+      (projectTaskGenreList && projectTaskGenreList.length > 0)
+    ) {
       const currentYear = currentMonth.getFullYear();
       const currentHolidays = holidayJp.between(
         new Date(currentYear, 0, 1),
@@ -251,7 +254,12 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
 
   const updateTaskPeriod = async (taskId: number, target: Target) => {
     try {
-      let startDate, endDate, startField, endField, numberOfDaysDaysField,tableName;
+      let startDate,
+        endDate,
+        startField,
+        endField,
+        numberOfDaysDaysField,
+        tableName;
 
       switch (target) {
         case Target.task:
@@ -259,7 +267,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
           endDate = updateTaskEndDate;
           startField = "start_date";
           endField = "deadline_date";
-          numberOfDaysDaysField="number_of_days"
+          numberOfDaysDaysField = "number_of_days";
           tableName = "tasks";
           break;
 
@@ -268,7 +276,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
           endDate = updateTaskResultEndDate;
           startField = "result_start_date";
           endField = "result_deadline_date";
-          numberOfDaysDaysField="number_of_result_days"
+          numberOfDaysDaysField = "number_of_result_days";
           tableName = "tasks";
           break;
 
@@ -285,17 +293,22 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
       }
       if (startDate) {
         const numberOfDays = endDate
-          ? Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+          ? Math.ceil(
+              (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+            ) + 1
           : 1;
 
-        const updateData: { [key: string]: Date | number }  = {
+        const updateData: { [key: string]: Date | number } = {
           [startField]: new Date(startDate.setDate(startDate.getDate() + 1)),
           [endField]: endDate
             ? new Date(endDate.setDate(endDate.getDate() + 1))
             : startDate,
         };
 
-        if ((target === Target.task || target === Target.taskResult)&&numberOfDaysDaysField) {
+        if (
+          (target === Target.task || target === Target.taskResult) &&
+          numberOfDaysDaysField
+        ) {
           updateData[numberOfDaysDaysField] = numberOfDays;
         }
 

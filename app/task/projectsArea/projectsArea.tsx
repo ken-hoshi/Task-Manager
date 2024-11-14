@@ -295,7 +295,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
 
                         <dt>Task Genre</dt>
                         <dd>
-                          {projectTaskGenreData[index].length > 0 ? (
+                          {projectTaskGenreData[index] ? (
                             <div className={styles[`task-genre-area`]}>
                               {projectTaskGenreData[index].map(
                                 (projectTaskGenre: any, index: number) => (

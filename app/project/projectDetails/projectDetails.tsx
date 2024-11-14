@@ -176,7 +176,8 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                             : styles[`details-hidden`]
                         }
                       >
-                        {projectTaskGenreList.length > 0 ? (
+                        {projectTaskGenreList &&
+                        projectTaskGenreList.length > 0 ? (
                           <div className={styles[`task-genre-area`]}>
                             {projectTaskGenreList.map(
                               (projectTaskGenre: any, index: number) => (
