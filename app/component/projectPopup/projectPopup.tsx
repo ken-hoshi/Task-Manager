@@ -696,7 +696,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                                 selectsRange
                                 dateFormat="yyyy/MM/dd"
                                 placeholderText="Period"
-                                className={styles[`data-picker`]}
+                                className={styles[`date-picker`]}
                                 calendarClassName={styles[`custom-calendar`]}
                                 showIcon
                                 required
@@ -746,7 +746,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                     <span
                       className={classNames(
                         "material-symbols-outlined",
-                        styles[`clip-icon `]
+                        styles.clip
                       )}
                     >
                       attach_file

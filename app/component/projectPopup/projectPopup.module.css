@@ -246,7 +246,7 @@
 }
 
 .attached-file-area p {
-  margin: 0 auto;
+  margin: 1vh auto 0;
 }
 
 .display-attached-file-area {
@@ -275,16 +275,17 @@
   text-overflow: ellipsis;
   -webkit-line-clamp: 2;
   line-clamp: 2;
+  margin: 0;
 }
 
-.clip-icon {
+.clip {
   font-size: 5vh !important;
   margin: 1vh auto;
 }
 
 .attached-file-icon {
   font-size: 5vh !important;
-  margin: 1vh 0 0 2vh;
+  margin: 0.5vh 0 0 2vh;
 }
 
 .cancel-icon {
@@ -301,7 +302,7 @@
   font-size: 1.5vh;
   height: 3.5vh;
   width: 14vh;
-  margin: 0.5vh;
+  margin: 0;
   border: none;
   background-color: #207dea;
   color: white;

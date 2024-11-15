@@ -170,15 +170,13 @@
   background-color: #d9d9d9;
   margin: 0 auto;
   height: 17vh;
+  width: 100%;
   border: 1px dotted #000000;
+  box-sizing: border-box;
 }
 
 .attached-file-area.drag-over {
   border-color: #4a90e2;
-}
-
-.none-attached-file-area {
-  text-align: center;
 }
 
 .none-attached-file-area p {
@@ -191,8 +189,8 @@
   align-items: center;
 }
 
-.display-attached-file-area p {
-  margin: 0 auto;
+.attached-file-area p {
+  margin: 1vh auto 0;
 }
 
 .display-attached-file-area {
@@ -203,7 +201,7 @@
 
 .display-attached-file-container {
   margin: 1vh;
-  width: 8vh;
+  width: 10vh;
   height: 9vh;
 }
 
@@ -213,7 +211,6 @@
 }
 
 .display-attached-file-container p {
-  margin: 0 auto;
   font-size: 1.5vh;
   word-break: break-all;
   display: -webkit-box;
@@ -222,40 +219,39 @@
   text-overflow: ellipsis;
   -webkit-line-clamp: 2;
   line-clamp: 2;
+  margin: 0;
 }
 
 .clip-icon {
   font-size: 5vh !important;
   margin: 1vh auto;
-  color: #000000 !important;
 }
 
 .attached-file-icon {
   font-size: 5vh !important;
-  margin: 1vh 0 0 2vh;
-  color: #000000 !important;
+  margin: 0.5vh 0 0 2vh;
 }
 
 .cancel-icon {
   font-size: 2vh !important;
-  color: #ff1100 !important;
+  color: #ff1100;
   cursor: pointer;
 }
 
 .cancel-icon:hover {
-  color: #f1746b !important;
+  color: #f1746b;
 }
 
 .attached-file-area button {
   font-size: 1.5vh;
   height: 3.5vh;
   width: 14vh;
-  margin: 0.5vh;
+  margin: 0;
   border: none;
   background-color: #207dea;
   color: white;
   cursor: pointer;
-  border-radius: 5px;
+  border-radius: 1vh;
   box-shadow: 1px 1px 3px rgba(0, 0, 0, 10);
 }
 
@@ -277,7 +273,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 1vh;
-  margin: 2vh auto 0.5vh;
+  margin-top: 1.5vh;
 }
 
 .button-area button {
