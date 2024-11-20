@@ -12,6 +12,9 @@ export const signUp = () => {
         email: email,
         password: password,
         options: {
+          emailRedirectTo: `https://task-manager-eta-eosin.vercel.app/complete?name=${encodeURIComponent(
+            name
+          )}&email=${encodeURIComponent(email)}`,
           data: {
             display_name: name,
           },
@@ -32,7 +35,7 @@ export const signUp = () => {
           throw insertError;
         } else {
           router.push(
-            `/complete?name=${encodeURIComponent(
+            `/authentication?name=${encodeURIComponent(
               name
             )}&email=${encodeURIComponent(email)}`
           );

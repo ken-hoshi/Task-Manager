@@ -106,7 +106,7 @@ const TaskItem = ({
           <div
             className={classNames(styles[`attached-file-label`], styles.label)}
           >
-            Attached-file
+            Attached File
           </div>
           <div className={styles[`attached-file-flex-area`]}>
             {attachedFiles && attachedFiles.length > 0 ? (

@@ -591,7 +591,12 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                       .map((task, index) => (
                         <React.Fragment key={index}>
                           <tr>
-                            <td className={styles[`task-name`]}>
+                            <td
+                              className={classNames(
+                                styles[`task-name`],
+                                index % 2 === 0 && styles[`odd-color`]
+                              )}
+                            >
                               <div className={styles[`task-name-area`]}>
                                 <p>{task.task_name}</p>
                                 <div className={styles[`button-area`]}>
@@ -675,7 +680,12 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                           </tr>
 
                           <tr>
-                            <td className={styles[`result-task-name`]}>
+                            <td
+                              className={classNames(
+                                styles[`result-task-name`],
+                                index % 2 === 0 && styles[`odd-color`]
+                              )}
+                            >
                               <div className={styles[`result-area`]}>
                                 <p>Assigned : {task.users.name}</p>
                                 <div className={styles[`button-area`]}>

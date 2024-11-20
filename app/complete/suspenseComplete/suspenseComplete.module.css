@@ -60,16 +60,3 @@
   color: #fff;
   font-size: 1.8vh;
 }
-
-.confirm-mail-area p {
-  text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.5);
-  width: 70%;
-  margin: 1vh auto 0;
-  color: #fff;
-  font-size: 1.8vh;
-}
-
-.confirm-mail-area span {
-  color: rgb(7, 3, 255);
-  font-style: italic;
-}

@@ -2,16 +2,15 @@
 
 import BackgroundImage2 from "@/app/component/backgroundImage2/backgroundImage2";
 import Loading from "@/app/component/loading/loading";
-import styles from "./suspenseComplete.module.css";
+import styles from "./suspenseAuthentication.module.css";
 import classNames from "classnames";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import NotificationBanner from "@/app/component/notificationBanner/notificationBanner";
-import { useFormContext } from "@/app/provider/formProvider";
+import { clientSupabase } from "@/app/lib/supabase/client";
 
-const SuspenseComplete: React.FC = () => {
-  const { setBackForm } = useFormContext();
+const SuspenseAuthentication: React.FC = () => {
   const { setNotificationValue } = useNotificationContext();
   const { notificationValue } = useNotificationContext();
   const router = useRouter();
@@ -29,14 +28,28 @@ const SuspenseComplete: React.FC = () => {
         color: 1,
       });
       router.push("/register");
+      return;
     }
-    setLoading(false);
-  }, []);
 
-  const handleNavigateTopPage = async () => {
-    setBackForm(true);
-    router.push("/");
-  };
+    const checkAuthState = async () => {
+      const { data: subscription } = clientSupabase.auth.onAuthStateChange(
+        async (event, session) => {
+          if (event === "SIGNED_IN" && session) {
+            router.push(
+              `/complete?name=${encodeURIComponent(paramsName)}&email=${encodeURIComponent(
+                paramsEmail
+              )}`
+            );
+          }
+        }
+      );
+      return () => {
+        subscription?.subscription?.unsubscribe(); 
+      };
+    };
+    setLoading(false);
+    checkAuthState();
+  }, [paramsName, paramsEmail, router, setNotificationValue]);
 
   return (
     <>
@@ -51,30 +64,24 @@ const SuspenseComplete: React.FC = () => {
             />
           )}
 
-          <div className={styles.complete}>
+          <div className={styles.authentication}>
             <BackgroundImage2 />
-
-            <div className={styles[`text-area`]}>
-              <h1>Success!</h1>
-
-              <ul>
-                <p>Name</p>
-                <li className={styles[`name-item`]}>{paramsName}</li>
-                <p>Email Address</p>
-                <li className={styles[`email-item`]}>{paramsEmail}</li>
-              </ul>
-
-              <div className={styles[`to-task-page-area`]}>
+            <div className={styles[`inner-area`]}>
+              <div className={styles[`mail-image-area`]}>
                 <span
                   className={classNames(
                     "material-symbols-outlined",
-                    styles.icon
+                    styles.mail
                   )}
-                  onClick={handleNavigateTopPage}
                 >
-                  arrow_circle_right
+                  mail
                 </span>
-                <p>To Login page</p>
+              </div>
+
+              <div className={styles[`text-area`]}>
+                <p>
+                  登録したメールアドレス宛に認証メールを送信しました。メール内の指示に従って認証してください。
+                </p>
               </div>
             </div>
           </div>
@@ -84,4 +91,4 @@ const SuspenseComplete: React.FC = () => {
   );
 };
 
-export default SuspenseComplete;
+export default SuspenseAuthentication;

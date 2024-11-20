@@ -1,0 +1,34 @@
+.inner-area {
+  background-color: rgba(10, 169, 236, 0.7);
+  position: absolute;
+  top: 50vh;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 75vh;
+  height: 75vh;
+  border-radius: 3vh;
+  box-shadow: 3px 3px 20px rgba(0, 0, 0, 10);
+}
+
+.mail-image-area {
+  height: 30vh;
+  margin-top: 10vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mail {
+  font-size: 30vh !important;
+}
+
+.text-area {
+  width: 100%;
+}
+
+.text-area p {
+  width: 80%;
+  margin: 0 auto;
+  color: white;
+  font-size: 3vh;
+}

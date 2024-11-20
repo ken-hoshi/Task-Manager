@@ -73,7 +73,6 @@ const Register: React.FC = () => {
     }
 
     await useSignUp(name, email, password);
-    setLoading(false);
   };
 
   return (
