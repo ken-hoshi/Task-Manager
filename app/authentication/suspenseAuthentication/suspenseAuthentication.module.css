@@ -32,3 +32,25 @@
   color: white;
   font-size: 3vh;
 }
+
+.to-task-page-area {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+}
+
+.icon {
+  color: #fff;
+  font-size: 6vh !important;
+  cursor: pointer;
+}
+
+.icon:hover {
+  color: dimgrey;
+}
+
+.to-task-page-area p {
+  margin: auto 0;
+  color: #fff;
+  font-size: 2vh;
+}

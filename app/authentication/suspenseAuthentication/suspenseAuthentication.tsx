@@ -8,11 +8,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import NotificationBanner from "@/app/component/notificationBanner/notificationBanner";
-import { clientSupabase } from "@/app/lib/supabase/client";
+import { useFormContext } from "@/app/provider/formProvider";
 
 const SuspenseAuthentication: React.FC = () => {
   const { setNotificationValue } = useNotificationContext();
   const { notificationValue } = useNotificationContext();
+  const { setBackForm } = useFormContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramsName = searchParams.get("name");
@@ -30,26 +31,14 @@ const SuspenseAuthentication: React.FC = () => {
       router.push("/register");
       return;
     }
-
-    const checkAuthState = async () => {
-      const { data: subscription } = clientSupabase.auth.onAuthStateChange(
-        async (event, session) => {
-          if (event === "SIGNED_IN" && session) {
-            router.push(
-              `/complete?name=${encodeURIComponent(paramsName)}&email=${encodeURIComponent(
-                paramsEmail
-              )}`
-            );
-          }
-        }
-      );
-      return () => {
-        subscription?.subscription?.unsubscribe(); 
-      };
-    };
     setLoading(false);
-    checkAuthState();
-  }, [paramsName, paramsEmail, router, setNotificationValue]);
+  }, []);
+
+
+  const handleNavigateTopPage = async () => {
+    setBackForm(true);
+    router.push("/");
+  };
 
   return (
     <>
@@ -82,6 +71,18 @@ const SuspenseAuthentication: React.FC = () => {
                 <p>
                   登録したメールアドレス宛に認証メールを送信しました。メール内の指示に従って認証してください。
                 </p>
+              </div>
+              <div className={styles[`to-task-page-area`]}>
+                <span
+                  className={classNames(
+                    "material-symbols-outlined",
+                    styles.icon
+                  )}
+                  onClick={handleNavigateTopPage}
+                >
+                  arrow_circle_right
+                </span>
+                <p>To Login page</p>
               </div>
             </div>
           </div>
