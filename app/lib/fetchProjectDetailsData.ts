@@ -39,7 +39,7 @@ export const fetchProjectDetailsData = async (projectId: number) => {
       tasksData,
     };
   } catch (error) {
-    console.error("Error Fetch Project Details Data:", error);
+    console.error("Error Fetch Project Details Data ", error);
     return {};
   }
 };

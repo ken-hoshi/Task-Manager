@@ -58,7 +58,7 @@ export async function getTaskGenreData(taskGenreId: number) {
       assignedUserTaskResultData: assignedUserTaskResults,
     };
   } catch (error) {
-    console.error("Error Get Task Genre:", error);
+    console.error("Error Get Task Genre ", error);
     return {};
   }
 }

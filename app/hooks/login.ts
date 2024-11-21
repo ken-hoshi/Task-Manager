@@ -19,7 +19,7 @@ export const login = () => {
       }
       router.push("/task");
     } catch (error) {
-      console.error("Error Login:", error);
+      console.error("Error Login ", error);
       setNotificationValue({
         message: "Password or Email address is wrong.",
         color: 1,

@@ -313,12 +313,12 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
       );
       if (postEmailNotificationsError) {
         console.error(
-          "Error post mail notifications:",
+          "Error post mail notifications ",
           postEmailNotificationsError
         );
       }
     } catch (error) {
-      console.error("Error Update status:", error);
+      console.error("Error Update status ", error);
       setNotificationValue({
         message: "Couldn't change the Status data.",
         color: 1,

@@ -110,7 +110,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
               try {
                 return URL.createObjectURL(file);
               } catch (error) {
-                console.error("Failed to create object URL:", error);
+                console.error("Failed to create object URL ", error);
                 return null;
               }
             })
@@ -143,7 +143,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
         throw error;
       }
     } catch (error) {
-      console.error("Error Update Status:", error);
+      console.error("Error Update Status ", error);
       setNotificationValue({
         message: "Couldn't change the Status data.",
         color: 1,
@@ -201,7 +201,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
       setPostLoading(true);
       setPageUpdated(true);
     } catch (error) {
-      console.error("Error Add Task Result:", error);
+      console.error("Error Add Task Result ", error);
       setNotificationValue({
         message: "Task Result was not added.",
         color: 1,

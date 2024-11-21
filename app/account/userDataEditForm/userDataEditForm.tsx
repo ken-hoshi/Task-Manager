@@ -79,7 +79,7 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
     );
 
     if (signInError) {
-      console.error("Password verification failed:", signInError.message);
+      console.error("Password verification failed ", signInError.message);
       setPasswordError("パスワードが違います。");
       setUpdateLoading(false);
       return;
@@ -125,7 +125,7 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
         throw userUpdateError;
       }
     } catch (error) {
-      console.error("Error Update User Data:", error);
+      console.error("Error Update User Data ", error);
       setNotificationValue({
         message: "Couldn't update User data.",
         color: 1,

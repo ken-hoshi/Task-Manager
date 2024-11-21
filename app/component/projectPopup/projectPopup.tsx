@@ -151,7 +151,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
 
           setGetLoading(false);
         } catch (error) {
-          console.error("Error Fetch Project Details:", error);
+          console.error("Error Fetch Project Details ", error);
           onClose();
           setNotificationValue({
             message: "Couldn't get the Project data.",
@@ -441,7 +441,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           );
           if (postEmailNotificationsError) {
             console.error(
-              "Error post mail notifications:",
+              "Error post mail notifications ",
               postEmailNotificationsError
             );
           }
@@ -466,7 +466,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           );
           if (postEmailNotificationsError) {
             console.error(
-              "Error post mail notifications:",
+              "Error post mail notifications ",
               postEmailNotificationsError
             );
           }
@@ -564,7 +564,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         );
         if (postEmailNotificationsError) {
           console.error(
-            "Error post mail notifications:",
+            "Error post mail notifications ",
             postEmailNotificationsError
           );
         }
@@ -580,7 +580,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
       }
     } catch (error) {
       console.error(
-        projectId ? "Error edit project:" : "Error add project:",
+        projectId ? "Error edit project " : "Error add project ",
         error
       );
       setNotificationValue({

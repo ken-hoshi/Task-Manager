@@ -106,7 +106,7 @@ export async function fetchAttachedFiles(
 
     return attachedFilesData;
   } catch (error) {
-    console.error("Error Fetch Attached Files:", error);
+    console.error("Error Fetch Attached Files ", error);
     return Array(ids.length).fill([]);
   }
 }

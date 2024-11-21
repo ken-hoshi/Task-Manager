@@ -96,7 +96,7 @@ const Comment: React.FC<CommentProps> = ({
         throw commentDeleteError;
       }
     } catch (error) {
-      console.error("Error Delete Comment:", error);
+      console.error("Error Delete Comment ", error);
       setNotificationValue({
         message: "Comment was not deleted.",
         color: 1,
@@ -117,7 +117,7 @@ const Comment: React.FC<CommentProps> = ({
         throw commentUpdateError;
       }
     } catch (error) {
-      console.error("Error Edit Comment:", error);
+      console.error("Error Edit Comment ", error);
       setNotificationValue({
         message: "Comment was not edited.",
         color: 1,
@@ -152,12 +152,12 @@ const Comment: React.FC<CommentProps> = ({
       );
       if (postEmailNotificationsError) {
         console.error(
-          "Error post mail notifications:",
+          "Error post mail notifications ",
           postEmailNotificationsError
         );
       }
     } catch (error) {
-      console.error("Error Insert Comment:", error);
+      console.error("Error Insert Comment ", error);
       setNotificationValue({
         message: "Comment was not added.",
         color: 1,

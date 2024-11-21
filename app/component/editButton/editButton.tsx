@@ -27,7 +27,9 @@ const EditButton: React.FC<EditButtonProps> = ({
     } else if (taskId && !projectId) {
       setShowTaskPopup(!showTaskPopup);
     } else {
-      console.error("Task ID or Project ID is null.");
+      console.error(
+        "Error get Task ID Project ID: Task ID or Project ID is null."
+      );
       setNotificationValue({
         message: "Couldn't get the data.",
         color: 1,

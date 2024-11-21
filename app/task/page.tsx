@@ -122,7 +122,7 @@ const Task: React.FC = () => {
                 try {
                   return URL.createObjectURL(file);
                 } catch (error) {
-                  console.error("Failed to create object URL:", error);
+                  console.error("Failed to create object URL ", error);
                   return null;
                 }
               })
@@ -217,7 +217,7 @@ const Task: React.FC = () => {
         setPageUpdated(false);
         setLoading(false);
       } catch (error) {
-        console.error("Error Fetch Data:", error);
+        console.error("Error Fetch Data ", error);
         setBackForm(true);
         alert("データの取得に失敗しました。");
         router.push("/");

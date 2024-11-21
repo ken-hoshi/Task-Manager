@@ -116,7 +116,7 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
               try {
                 return URL.createObjectURL(file);
               } catch (error) {
-                console.error("Failed to create object URL:", error);
+                console.error("Failed to create object URL ", error);
                 return null;
               }
             })
@@ -158,12 +158,12 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
       );
       if (postEmailNotificationsError) {
         console.error(
-          "Error post mail notifications:",
+          "Error post mail notifications ",
           postEmailNotificationsError
         );
       }
     } catch (error) {
-      console.error("Error Update Status:", error);
+      console.error("Error Update Status ", error);
       setNotificationValue({
         message: "Couldn't change the Status data.",
         color: 1,
@@ -221,7 +221,7 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
       setPostLoading(true);
       setPageUpdated(true);
     } catch (error) {
-      console.error("Error Add Task Result:", error);
+      console.error("Error Add Task Result ", error);
       setNotificationValue({
         message: "Task Result was not added.",
         color: 1,

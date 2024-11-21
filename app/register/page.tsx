@@ -14,6 +14,7 @@ const WORD_LINCRAFT = "lincraft";
 
 const Register: React.FC = () => {
   const { setBackForm } = useFormContext();
+  const { setNotificationValue } = useNotificationContext();
   const { notificationValue } = useNotificationContext();
   const router = useRouter();
   const { useSignUp } = signUp();
@@ -72,7 +73,15 @@ const Register: React.FC = () => {
       return;
     }
 
-    await useSignUp(name, email, password);
+    const signUpError = await useSignUp(name, email, password);
+    if (signUpError) {
+      console.error("Error Sign up ", signUpError);
+      setNotificationValue({
+        message: "Couldn't sign up.",
+        color: 1,
+      });
+      setLoading(false);
+    }
   };
 
   return (

@@ -96,7 +96,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
 
         if (postEmailNotificationsError) {
           console.error(
-            "Error post mail notifications:",
+            "Error post mail notifications ",
             postEmailNotificationsError
           );
         }
@@ -143,7 +143,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
 
         if (postEmailNotificationsError) {
           console.error(
-            "Error post mail notifications:",
+            "Error post mail notifications ",
             postEmailNotificationsError
           );
         }
@@ -166,7 +166,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
       });
     } catch (error) {
       console.error(
-        projectId ? "Error delete project:" : "Error delete task:",
+        projectId ? "Error delete project " : "Error delete task ",
         error
       );
       setNotificationValue({

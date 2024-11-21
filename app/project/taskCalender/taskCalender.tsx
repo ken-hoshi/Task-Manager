@@ -331,7 +331,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
           );
           if (postEmailNotificationsError) {
             console.error(
-              "Error post mail notifications:",
+              "Error post mail notifications ",
               postEmailNotificationsError
             );
           }
@@ -361,7 +361,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
         color: 0,
       });
     } catch (error) {
-      console.error("Error Update Task:", error);
+      console.error("Error Update Task ", error);
 
       setPageUpdated(true);
       setClickCount(0);

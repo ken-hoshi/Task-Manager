@@ -19,7 +19,7 @@ export const Logout = () => {
       setBackForm(true);
       router.push("/");
     } catch (error) {
-      console.error("Error Log out:", error);
+      console.error("Error Log out ", error);
       setNotificationValue({
         message: "Failed to log out.",
         color: 1,

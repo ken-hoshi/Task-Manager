@@ -1,10 +1,8 @@
 import { useRouter } from "next/navigation";
 import { clientSupabase } from "../lib/supabase/client";
-import { useNotificationContext } from "../provider/notificationProvider";
 
 export const signUp = () => {
   const router = useRouter();
-  const { setNotificationValue } = useNotificationContext();
 
   const useSignUp = async (name: string, email: string, password: string) => {
     try {
@@ -44,11 +42,7 @@ export const signUp = () => {
         throw new Error("User Id is null");
       }
     } catch (error) {
-      console.error("Error Sign up:", error);
-      setNotificationValue({
-        message: "Couldn't sign up.",
-        color: 1,
-      });
+      return error;
     }
   };
   return { useSignUp };

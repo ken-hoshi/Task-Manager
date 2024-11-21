@@ -97,7 +97,7 @@ const PasswordEditForm: React.FC<PasswordEditForm> = ({
         throw passwordUpdateError;
       }
     } catch (error) {
-      console.error("Error Update Password:", error);
+      console.error("Error Update Password ", error);
       setNotificationValue({
         message: "Couldn't update Password.",
         color: 1,

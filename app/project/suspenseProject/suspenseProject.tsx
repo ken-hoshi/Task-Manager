@@ -133,7 +133,7 @@ const SuspenseProject: React.FC = () => {
               try {
                 return URL.createObjectURL(file);
               } catch (error) {
-                console.error("Failed to create object URL:", error);
+                console.error("Failed to create object URL ", error);
                 return null;
               }
             });
@@ -163,7 +163,7 @@ const SuspenseProject: React.FC = () => {
                   try {
                     return URL.createObjectURL(file);
                   } catch (error) {
-                    console.error("Failed to create object URL:", error);
+                    console.error("Failed to create object URL ", error);
                     return null;
                   }
                 })
@@ -175,7 +175,7 @@ const SuspenseProject: React.FC = () => {
         setPageUpdated(false);
         setLoading(false);
       } catch (error) {
-        console.error("Error Fetch Project Details Data:", error);
+        console.error("Error Fetch Project Details Data ", error);
         setNotificationValue({
           message: "Couldn't get Project Data.",
           color: 1,

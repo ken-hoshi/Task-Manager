@@ -183,7 +183,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
           setGetLoading(false);
         } catch (error) {
-          console.error("Error Fetch Task Details:", error);
+          console.error("Error Fetch Task Details ", error);
           onClose();
           setNotificationValue({
             message: "Couldn't get the Task data.",
@@ -234,7 +234,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
           setGetLoading(false);
         } catch (error) {
-          console.error("Error Fetch Task Details:", error);
+          console.error("Error Fetch Task Details ", error);
           onClose();
           setNotificationValue({
             message: "Couldn't get the Task data.",
@@ -506,7 +506,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         );
         if (postEmailNotificationsError) {
           console.error(
-            "Error post mail notifications:",
+            "Error post mail notifications ",
             postEmailNotificationsError
           );
         }
@@ -568,7 +568,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         );
         if (postEmailNotificationsError) {
           console.error(
-            "Error post mail notifications:",
+            "Error post mail notifications ",
             postEmailNotificationsError
           );
         }
@@ -583,7 +583,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         onClose();
       }
     } catch (error) {
-      console.error(taskId ? "Error edit task:" : "Error add task:", error);
+      console.error(taskId ? "Error edit task " : "Error add task ", error);
       setNotificationValue({
         message: taskId ? "Task was not edited." : "Task was not added.",
         color: 1,
