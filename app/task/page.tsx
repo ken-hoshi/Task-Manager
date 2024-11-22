@@ -60,7 +60,6 @@ const Task: React.FC = () => {
   const router = useRouter();
 
   const today = new Date();
-
   const tomorrow = useMemo(() => {
     const memoTomorrow = new Date(today);
     memoTomorrow.setDate(today.getDate() + 1);

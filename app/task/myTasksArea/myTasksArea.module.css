@@ -83,6 +83,10 @@
   overflow-y: auto;
 }
 
+.my-task-area tbody::-webkit-scrollbar{
+  display: none;
+}
+
 .my-task-area tr {
   border: 1px solid #878788;
 }
@@ -216,6 +220,11 @@
 .scrollable-content {
   max-height: 30vh;
   overflow-y: auto;
+  width: 75vh;
+}
+
+.scrollable-content::-webkit-scrollbar{
+  display: none;
 }
 
 .scrollable-content dl {

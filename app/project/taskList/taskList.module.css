@@ -34,6 +34,10 @@
   overflow-y: auto;
 }
 
+.task-list-tbody::-webkit-scrollbar {
+  display: none;
+}
+
 .task-list th {
   background-color: #0aa9ec;
   color: white;
@@ -418,7 +422,6 @@
   text-align: left;
 }
 
-
 dd.dd-last {
   border-bottom: none;
 }
@@ -426,6 +429,11 @@ dd.dd-last {
 .scrollable-content {
   max-height: 30vh;
   overflow-y: auto;
+  width: 130vh;
+}
+
+.scrollable-content::-webkit-scrollbar {
+  display: none;
 }
 
 .attachedFile-area {

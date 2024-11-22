@@ -20,6 +20,10 @@
   box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.5);
 }
 
+.column::-webkit-scrollbar {
+  display: none;
+}
+
 .not-started-column {
   background-color: #f3cece;
 }
@@ -160,7 +164,7 @@
   margin: 1vh;
 }
 
-.details-area p{
+.details-area p {
   word-break: break-word;
   white-space: pre-wrap;
   text-align: left;

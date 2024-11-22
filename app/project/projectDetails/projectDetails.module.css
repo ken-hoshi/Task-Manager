@@ -94,6 +94,10 @@ td.col-status-situation {
   margin: 0;
 }
 
+.scrollable-content::-webkit-scrollbar {
+  display: none;
+}
+
 .scrollable-content dl {
   border-bottom: 1px solid #878788;
   margin: 0;

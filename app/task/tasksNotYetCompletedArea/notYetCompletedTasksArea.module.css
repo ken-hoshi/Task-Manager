@@ -83,6 +83,10 @@
   overflow-y: auto;
 }
 
+.not-yet-completed-tasks-area tbody::-webkit-scrollbar {
+  display: none;
+}
+
 .not-yet-completed-tasks-area tr {
   border: 1px solid #878788;
 }
@@ -198,6 +202,11 @@
 .scrollable-content {
   max-height: 30vh;
   overflow-y: auto;
+  width: 75vh;
+}
+
+.scrollable-content::-webkit-scrollbar {
+  display: none;
 }
 
 .scrollable-content dl {

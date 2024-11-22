@@ -106,6 +106,10 @@
   background-color: white;
 }
 
+.calender-container::-webkit-scrollbar {
+  display: none;
+}
+
 .calender-table thead {
   position: sticky;
   top: 0;
