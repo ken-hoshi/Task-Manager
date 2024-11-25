@@ -152,7 +152,12 @@
 }
 
 .odd-color {
-  background-color: #efefef;
+  background-color: #d4d4d4;
+  border: none !important;
+}
+
+.even-color {
+  border: none !important;
 }
 
 .task-genre-name-area p,
@@ -163,12 +168,14 @@
   margin: 0;
   box-sizing: border-box;
   word-break: break-all;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
   -webkit-line-clamp: 2;
   line-clamp: 2;
+}
+
+.task-name-area p {
+  font-weight: 600;
 }
 
 .button-area {
@@ -261,11 +268,13 @@
 .result-area {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   width: 20vh;
 }
 
 .result-area p {
-  font-size: 1.7vh;
+  height: 2vh;
+  font-size: 1.6vh;
   text-align: center;
   width: 18vh;
   padding: 0 0.5vh 0 0.5vh;

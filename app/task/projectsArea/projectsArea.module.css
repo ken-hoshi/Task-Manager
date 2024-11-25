@@ -300,7 +300,7 @@
 .scrollable-content {
   max-height: 30vh;
   overflow-y: auto;
-  width: 90vh;
+  width: 100%;
 }
 
 .scrollable-content::-webkit-scrollbar {

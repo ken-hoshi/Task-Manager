@@ -424,12 +424,12 @@
 
 dd.dd-last {
   border-bottom: none;
-}
+}Ï
 
 .scrollable-content {
   max-height: 30vh;
   overflow-y: auto;
-  width: 130vh;
+  width: 100%;
 }
 
 .scrollable-content::-webkit-scrollbar {

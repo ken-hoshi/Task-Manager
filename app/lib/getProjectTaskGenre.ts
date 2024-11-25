@@ -9,7 +9,7 @@ export async function getProjectTaskGenre(projectIdList: number[]) {
       clientSupabase
         .from("task_genre")
         .select("*")
-        .order("id", { ascending: true }),
+        .order("start_date", { ascending: true }),
       clientSupabase.from("tasks").select("task_genre_id"),
     ]);
 

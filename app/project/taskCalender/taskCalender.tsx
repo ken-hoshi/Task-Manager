@@ -77,7 +77,13 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
       const taskList = isChecked
         ? tasks.filter((task) => task.assigned_user_id === userId)
         : tasks;
-      setTaskData(taskList);
+      const sortedTaskList = [...taskList].sort((a, b) => {
+        const dateA = new Date(a.start_date).getTime();
+        const dateB = new Date(b.start_date).getTime();
+        return dateA - dateB;
+      });
+
+      setTaskData(sortedTaskList);
 
       const formatTaskPeriod = (
         list: any[],
@@ -594,7 +600,9 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                             <td
                               className={classNames(
                                 styles[`task-name`],
-                                index % 2 === 0 && styles[`odd-color`]
+                                index % 2 === 0
+                                  ? styles[`odd-color`]
+                                  : styles[`even-color`]
                               )}
                             >
                               <div className={styles[`task-name-area`]}>
@@ -683,11 +691,13 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                             <td
                               className={classNames(
                                 styles[`result-task-name`],
-                                index % 2 === 0 && styles[`odd-color`]
+                                index % 2 === 0
+                                  ? styles[`odd-color`]
+                                  : styles[`even-color`]
                               )}
                             >
                               <div className={styles[`result-area`]}>
-                                <p>Assigned : {task.users.name}</p>
+                                <p>{task.users.name}</p>
                                 <div className={styles[`button-area`]}>
                                   {task.id !== onEditResultTaskId && (
                                     <span
@@ -799,7 +809,14 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                         .map((task, index) => (
                           <React.Fragment key={index}>
                             <tr>
-                              <td className={styles[`task-name`]}>
+                              <td
+                                className={classNames(
+                                  styles[`task-name`],
+                                  index % 2 === 0
+                                    ? styles[`odd-color`]
+                                    : styles[`even-color`]
+                                )}
+                              >
                                 <div className={styles[`task-name-area`]}>
                                   <p>{task.task_name}</p>
                                   <div className={styles[`button-area`]}>
@@ -885,9 +902,16 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                             </tr>
 
                             <tr>
-                              <td className={styles[`result-task-name`]}>
+                              <td
+                                className={classNames(
+                                  styles[`result-task-name`],
+                                  index % 2 === 0
+                                    ? styles[`odd-color`]
+                                    : styles[`even-color`]
+                                )}
+                              >
                                 <div className={styles[`result-area`]}>
-                                  <p>Assigned : {task.users.name}</p>
+                                  <p>{task.users.name}</p>
                                   <div className={styles[`button-area`]}>
                                     {task.id !== onEditResultTaskId && (
                                       <span

@@ -35,8 +35,6 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
   attachedFiles,
   downloadUrls,
 }) => {
-  const { setNotificationValue } = useNotificationContext();
-
   const [projectDeatilArrow, setProjectDetailsArrow] =
     useState<ProjectDetailsArrowProps>({
       projectMember: false,
@@ -267,17 +265,18 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                       <dd
                         className={
                           projectDeatilArrow.details
-                            ? classNames(
-                                styles[`details-open`],
-                                styles[`details-text`]
-                              )
+                            ? styles[`details-open`]
                             : styles[`details-hidden`]
                         }
                       >
                         {projectData.details ? (
-                          projectData.details
+                          <p className={styles[`details-text`]}>
+                            {projectData.details}
+                          </p>
                         ) : (
-                          <p>No Details</p>
+                          <p className={styles[`non-details-text`]}>
+                            No Details
+                          </p>
                         )}
                       </dd>
                     </div>

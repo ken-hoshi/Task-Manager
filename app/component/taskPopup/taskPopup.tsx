@@ -158,7 +158,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
               (taskGenre) => taskGenre.id === taskData.task_genre_id
             );
 
-            if(selectedTaskGenre){
+            if (selectedTaskGenre) {
               setSelectedTaskGenre({
                 value: taskData.task_genre_id,
                 label: selectedTaskGenre.task_genre_name,

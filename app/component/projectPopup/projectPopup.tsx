@@ -301,19 +301,85 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           throw insertProjectUsersError;
         }
 
-        const deletedTaskGenreDataArray = beforeChangeTaskGenreDataArray.filter(
-          (taskGenre) => !taskGenreDataArray.includes(taskGenre)
-        );
-
-        if (deletedTaskGenreDataArray.length > 0) {
-          const deletedTaskGenreId = deletedTaskGenreDataArray.map(
-            (taskGenre) => taskGenre.id
+        const updatedTaskGenreDataArray = taskGenreDataArray.filter((after) => {
+          const before = beforeChangeTaskGenreDataArray.find(
+            (beforeChangeTaskGenreData) =>
+              beforeChangeTaskGenreData.id === after.id
           );
+          if (!before) return false;
+
+          const beforeStartTime = before.selectedStartDate
+            ? new Date(before.selectedStartDate).getTime()
+            : null;
+
+          const afterStartTime = after.selectedStartDate
+            ? new Date(after.selectedStartDate).getTime()
+            : null;
+
+          const beforeDeadlineTime = before.selectedDeadlineDate
+            ? new Date(before.selectedDeadlineDate).getTime()
+            : null;
+
+          const afterDeadlineTime = after.selectedDeadlineDate
+            ? new Date(after.selectedDeadlineDate).getTime()
+            : null;
+
+          return (
+            before.taskGenreName !== after.taskGenreName ||
+            beforeStartTime !== afterStartTime ||
+            beforeDeadlineTime !== afterDeadlineTime
+          );
+        });
+
+        if (updatedTaskGenreDataArray.length > 0) {
+          const updateTaskGenres = async (
+            updatedTaskGenreDataArray: TaskGenreDataProps[]
+          ) => {
+            const updates = updatedTaskGenreDataArray.map(
+              async (updatedTaskGenreData) => {
+                return clientSupabase
+                  .from("task_genre")
+                  .update({
+                    task_genre_name: updatedTaskGenreData.taskGenreName,
+                    start_date: updatedTaskGenreData.selectedStartDate,
+                    deadline_date: updatedTaskGenreData.selectedDeadlineDate,
+                  })
+                  .eq("id", updatedTaskGenreData.id);
+              }
+            );
+            const results = await Promise.all(updates);
+
+            const errors = results.filter(({ error }) => error);
+            if (errors.length > 0) {
+              throw errors[0];
+            }
+          };
+          updateTaskGenres(updatedTaskGenreDataArray);
+        }
+
+        const deletedTaskGenreIdList = beforeChangeTaskGenreDataArray
+          .map((beforeChangeTaskGenreData) => beforeChangeTaskGenreData.id)
+          .filter(
+            (taskGenreId) =>
+              !taskGenreDataArray
+                .map((taskGenreData) => taskGenreData.id)
+                .includes(taskGenreId)
+          );
+
+        if (deletedTaskGenreIdList.length > 0) {
+          const { error: updateTaskGenreIdError } = await clientSupabase
+            .from("tasks")
+            .update({ task_genre_id: null })
+            .in("task_genre_id", deletedTaskGenreIdList);
+
+          if (updateTaskGenreIdError) {
+            throw updateTaskGenreIdError;
+          }
 
           const { error: deleteTaskGenreError } = await clientSupabase
             .from("task_genre")
             .delete()
-            .in("id", deletedTaskGenreId);
+            .in("id", deletedTaskGenreIdList);
 
           if (deleteTaskGenreError) {
             throw deleteTaskGenreError;
@@ -321,7 +387,10 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         }
 
         const addedTaskGenreDataArray = taskGenreDataArray.filter(
-          (taskGenre) => !beforeChangeTaskGenreDataArray.includes(taskGenre)
+          (taskGenre) =>
+            !beforeChangeTaskGenreDataArray
+              .map((beforeChangeTaskGenreData) => beforeChangeTaskGenreData.id)
+              .includes(taskGenre.id)
         );
 
         if (addedTaskGenreDataArray.length > 0) {
