@@ -5,7 +5,7 @@ export async function getProjects(userId?: number) {
     let query = clientSupabase
       .from("projects")
       .select("*")
-      .order("id", { ascending: true });
+      .order("created_at", { ascending: true });
 
     if (userId) {
       const { data: projectIds, error: projectUsersSelectError } =
@@ -13,7 +13,7 @@ export async function getProjects(userId?: number) {
           .from("project_users")
           .select("project_id")
           .eq("user_id", userId)
-          .order("id", { ascending: true });
+          .order("created_at", { ascending: true });
 
       if (projectUsersSelectError) {
         throw projectUsersSelectError;

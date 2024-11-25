@@ -9,7 +9,7 @@ export async function fetchTasksData(userId?: number) {
           "*, task_status(status), projects(project_name), users(name)"
         )
         .eq("assigned_user_id", userId)
-        .order("id", { ascending: true });
+        .order("created_at", { ascending: true });
 
 
       if (tasksSelectError) {
@@ -25,7 +25,7 @@ export async function fetchTasksData(userId?: number) {
       .select(
         "*, task_status(status), projects(project_name), users(name)"
       )
-      .order("id", { ascending: true });
+      .order("created_at", { ascending: true });
 
     if (tasksSelectError) {
       throw tasksSelectError;

@@ -26,7 +26,7 @@ export const fetchProjectDetailsData = async (projectId: number) => {
         .from("tasks")
         .select("*, task_status(status), projects(project_name), users(name)")
         .eq("project_id", projectId)
-        .order("id", { ascending: true });
+        .order("created_at", { ascending: true });
 
     if (selectTasksDataError) {
       throw selectTasksDataError;

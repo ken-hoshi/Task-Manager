@@ -424,9 +424,8 @@
 
 dd.dd-last {
   border-bottom: none;
-}Ï
-
-.scrollable-content {
+}
+Ï .scrollable-content {
   max-height: 30vh;
   overflow-y: auto;
   width: 100%;

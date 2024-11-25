@@ -7,7 +7,7 @@ export async function getMailNotifications(userId: number) {
         .from("mail_notifications")
         .select("*")
         .eq("user_id", userId)
-        .order("id", { ascending: true });
+        .order("created_at", { ascending: true });
 
     if (mailNotificationsSelectError) {
       throw mailNotificationsSelectError;
