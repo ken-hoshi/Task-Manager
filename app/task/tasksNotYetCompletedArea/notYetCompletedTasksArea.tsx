@@ -265,10 +265,7 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
               Deadline
               <div className={styles.separator}></div>
             </th>
-            <th className={styles[`col-assigned-person`]}>
-              Assigned
-              <div className={styles.separator}></div>
-            </th>
+            <th className={styles[`col-assigned-person`]}>Assigned</th>
           </tr>
         </thead>
         <tbody>
