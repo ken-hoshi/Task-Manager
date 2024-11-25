@@ -26,6 +26,11 @@ interface StatusProps {
   status: string;
 }
 
+enum Sort {
+  startDate,
+  deadlineDate,
+}
+
 interface TaskListProps {
   userId: number;
   projectId: number;
@@ -65,6 +70,9 @@ const TaskList: React.FC<TaskListProps> = ({
   const [numberOfResultDays, setNumberOfResultDays] = useState<
     number | string | undefined
   >("");
+
+  const [startDateClickCount, setStartDateClickCount] = useState(0);
+  const [deadlineDateClickCount, setDeadlineDateClickCount] = useState(0);
 
   const { newItem } = useFlashDisplayContext();
   const { setNotificationValue } = useNotificationContext();
@@ -166,6 +174,49 @@ const TaskList: React.FC<TaskListProps> = ({
     }
   };
 
+  const sort = (sort: Sort) => {
+    if (!taskData) return;
+
+    const handleSort = (
+      sortKey: "start_date" | "deadline_date",
+      clickCount: number,
+      setClickCount: React.Dispatch<React.SetStateAction<number>>
+    ) => {
+      if (clickCount === 2) {
+        setTaskData(tasks);
+        setTaskGenreData(taskGenreList);
+        setAttachedFileData(attachedFileList);
+        setDownloadUrlData(downloadUrlList);
+        setClickCount(0);
+      } else {
+        const sortedTasks = [...taskData].sort((a, b) => {
+          const dateA = new Date(a[sortKey]).getTime();
+          const dateB = new Date(b[sortKey]).getTime();
+          return clickCount === 0 ? dateA - dateB : dateB - dateA;
+        });
+
+        const sortOrder = sortedTasks.map((task) => taskData.indexOf(task));
+        setTaskData(sortedTasks);
+        setTaskGenreData(sortOrder.map((index) => taskGenreList[index]));
+        setAttachedFileData(sortOrder.map((index) => attachedFileList[index]));
+        setDownloadUrlData(sortOrder.map((index) => downloadUrlList[index]));
+        setClickCount((prev) => prev + 1);
+      }
+    };
+
+    if (sort === Sort.startDate) {
+      setDeadlineDateClickCount(0);
+      handleSort("start_date", startDateClickCount, setStartDateClickCount);
+    } else if (sort === Sort.deadlineDate) {
+      setStartDateClickCount(0);
+      handleSort(
+        "deadline_date",
+        deadlineDateClickCount,
+        setDeadlineDateClickCount
+      );
+    }
+  };
+
   const handleSubmit = async (
     e: { preventDefault: () => void },
     taskId: number
@@ -228,12 +279,83 @@ const TaskList: React.FC<TaskListProps> = ({
               Status
               <div className={styles.separator}></div>
             </th>
-            <th className={styles[`col-start-date`]}>
-              Start Date
+            <th
+              className={styles[`col-start-date`]}
+              onClick={() => sort(Sort.startDate)}
+            >
+              <div className={styles[`date-col-container`]}>
+                Start Date
+                {startDateClickCount === 0 && (
+                  <span
+                    className={classNames(
+                      "material-symbols-outlined",
+                      styles.sort
+                    )}
+                  >
+                    swap_vert
+                  </span>
+                )}
+                {startDateClickCount === 1 && (
+                  <span
+                    className={classNames(
+                      "material-symbols-outlined",
+                      styles.sort
+                    )}
+                  >
+                    keyboard_double_arrow_down
+                  </span>
+                )}
+                {startDateClickCount === 2 && (
+                  <span
+                    className={classNames(
+                      "material-symbols-outlined",
+                      styles.sort
+                    )}
+                  >
+                    keyboard_double_arrow_up
+                  </span>
+                )}
+              </div>
+
               <div className={styles.separator}></div>
             </th>
-            <th className={styles[`col-deadline-date`]}>
-              Deadline Date
+            <th
+              className={styles[`col-deadline-date`]}
+              onClick={() => sort(Sort.deadlineDate)}
+            >
+              <div className={styles[`date-col-container`]}>
+                Deadline Date
+                {deadlineDateClickCount === 0 && (
+                  <span
+                    className={classNames(
+                      "material-symbols-outlined",
+                      styles.sort
+                    )}
+                  >
+                    swap_vert
+                  </span>
+                )}
+                {deadlineDateClickCount === 1 && (
+                  <span
+                    className={classNames(
+                      "material-symbols-outlined",
+                      styles.sort
+                    )}
+                  >
+                    keyboard_double_arrow_down
+                  </span>
+                )}
+                {deadlineDateClickCount === 2 && (
+                  <span
+                    className={classNames(
+                      "material-symbols-outlined",
+                      styles.sort
+                    )}
+                  >
+                    keyboard_double_arrow_up
+                  </span>
+                )}
+              </div>
               <div className={styles.separator}></div>
             </th>
             <th className={styles[`col-days`]}>
