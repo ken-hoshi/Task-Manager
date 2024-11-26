@@ -212,7 +212,7 @@ const TaskList: React.FC<TaskListProps> = ({
       } else {
         let sortedTasks: any[] = [];
         if (sortKey === "task_name") {
-          const sortedTasksByTaskGenre = tasks.sort(
+          const sortedTasksByTaskGenre = [...tasks].sort(
             (a, b) =>
               taskGenreStartDateSortArray.indexOf(a.task_genre_id) -
               taskGenreStartDateSortArray.indexOf(b.task_genre_id)
