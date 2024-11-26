@@ -392,7 +392,7 @@
 
 .custom-calendar {
   transform: scale(0.7);
-  transform-origin: bottom;
+  transform-origin: top;
   margin: 0;
   padding: 0;
 }
@@ -433,7 +433,7 @@
   border-radius: 0.8vh;
   cursor: pointer;
   width: 7vh;
-  height: 4vh;
+  height: 3.5vh;
   font-size: 1.5vh;
   transition: all 0.3s ease;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);

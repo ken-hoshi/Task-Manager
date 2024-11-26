@@ -314,6 +314,7 @@ const SuspenseProject: React.FC = () => {
                       projectId={params.projectId}
                       tasks={tasks}
                       taskGenreList={taskGenreList}
+                      projectTaskGenreList={projectTaskGenreList}
                       statuses={statuses}
                       projectDetailsArrows={projectDetailsArrows}
                       setProjectDetailsArrows={setProjectDetailsArrows}

@@ -67,8 +67,8 @@
 
 .task-list th.col-status,
 .task-list td.col-status {
-  width: 14vh;
-  padding: 0.5vh;
+  width: 14.5vh;
+  padding: 0.5vh 0;
   box-sizing: border-box;
 }
 
@@ -83,14 +83,14 @@
 
 .task-list th.col-days,
 .task-list td.col-days {
-  width: 7vh;
+  width: 8vh;
   padding: 1vh;
   box-sizing: border-box;
 }
 
 .task-list th.col-assigned-person,
 .task-list td.col-assigned-person {
-  width: 25vh;
+  width: 24vh;
   padding: 1vh;
   box-sizing: border-box;
 }
@@ -108,10 +108,15 @@
   justify-content: center;
 }
 
+.col-task-name,
+.col-status,
 .col-start-date,
-.col-deadline-date {
+.col-deadline-date,
+.col-days,
+.col-assigned-person {
   cursor: pointer;
 }
+
 .date-col-container {
   display: flex;
   justify-content: center;
@@ -349,7 +354,7 @@
   background-color: #d9d9d9;
   font-size: 2vh;
   font-family: "Roboto", sans-serif;
-  text-align: right;
+  text-align: center;
   width: 32vh;
   top: 0;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
@@ -357,7 +362,7 @@
 
 .custom-calendar {
   transform: scale(0.7);
-  transform-origin: bottom;
+  transform-origin: top;
   margin: 0;
   padding: 0;
 }
