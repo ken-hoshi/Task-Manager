@@ -110,6 +110,8 @@ const SuspenseProject: React.FC = () => {
                   return {
                     assignedUserTaskResultData: [
                       {
+                        userId:
+                          projectDetailsData.tasksData[index].assigned_user_id,
                         userName:
                           projectDetailsData.tasksData[index].users.name,
                         numberOfResultDays: projectDetailsData.tasksData[index]
@@ -313,6 +315,7 @@ const SuspenseProject: React.FC = () => {
                       userId={params.userId}
                       projectId={params.projectId}
                       tasks={tasks}
+                      setTasks={setTasks}
                       taskGenreList={taskGenreList}
                       projectTaskGenreList={projectTaskGenreList}
                       statuses={statuses}

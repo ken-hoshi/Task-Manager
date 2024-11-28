@@ -3,7 +3,7 @@ import DeleteButton from "@/app/component/deleteButton/deleteButton";
 import EditButton from "@/app/component/editButton/editButton";
 import { selectBoxStyles } from "../suspenseProject/selectBoxStyles";
 import classNames from "classnames";
-import React, { useEffect, useState } from "react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import Select, { SingleValue } from "react-select";
 import styles from "./taskList.module.css";
 import { useFlashDisplayContext } from "@/app/provider/flashDisplayProvider";
@@ -39,6 +39,7 @@ interface TaskListProps {
   userId: number;
   projectId: number;
   tasks: any[];
+  setTasks: Dispatch<SetStateAction<any[]>>;
   taskGenreList: any[];
   projectTaskGenreList: any[];
   statuses: StatusProps[];
@@ -61,6 +62,7 @@ const TaskList: React.FC<TaskListProps> = ({
   attachedFileList,
   downloadUrlList,
   isChecked,
+  setTasks,
 }) => {
   const [taskData, setTaskData] = useState<any[]>();
   const [taskGenreData, setTaskGenreData] = useState<any[]>();
@@ -313,7 +315,8 @@ const TaskList: React.FC<TaskListProps> = ({
 
   const handleSubmit = async (
     e: { preventDefault: () => void },
-    taskId: number
+    taskId: number,
+    taskGenreId: number
   ) => {
     e.preventDefault();
 
@@ -340,12 +343,43 @@ const TaskList: React.FC<TaskListProps> = ({
         throw taskResultUpdateError;
       }
 
-      setNotificationValue({
-        message: "Task Result was added.",
-        color: 0,
-      });
+      const taskGenreDataResult = taskGenreData!.map((taskGenre, index) =>
+        taskGenre.id === taskGenreId
+          ? {
+              ...taskGenre,
+              assignedUserTaskResultData: taskGenreData![
+                index
+              ].assignedUserTaskResultData.map(
+                (assignedUserTaskResult: {
+                  userId: number;
+                  userName: string;
+                  numberOfResultDays: number;
+                }) =>
+                  assignedUserTaskResult.userId === userId
+                    ? {
+                        ...assignedUserTaskResult,
+                        numberOfResultDays: numberOfResultDays,
+                      }
+                    : assignedUserTaskResult
+              ),
+            }
+          : taskGenre
+      );
+      setTaskGenreData(taskGenreDataResult);
+
+      const taskResult = taskData!.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              result_deadline_date: selectedResultDeadlineDate,
+              result_start_date: selectedResultStartDate,
+              number_of_result_days: numberOfResultDays,
+            }
+          : task
+      );
+      setTasks(taskResult);
+
       setPostLoading(true);
-      setPageUpdated(true);
     } catch (error) {
       console.error("Error Add Task Result ", error);
       setNotificationValue({
@@ -866,7 +900,9 @@ const TaskList: React.FC<TaskListProps> = ({
                                 )}
                               {userId === task.assigned_user_id && (
                                 <form
-                                  onSubmit={(e) => handleSubmit(e, task.id)}
+                                  onSubmit={(e) =>
+                                    handleSubmit(e, task.id, task.task_genre_id)
+                                  }
                                   className={styles[`task-result-form`]}
                                 >
                                   <div className={styles["form-container"]}>

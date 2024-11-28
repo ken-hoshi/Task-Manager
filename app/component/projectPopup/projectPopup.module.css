@@ -148,6 +148,10 @@
   max-height: 30vh;
 }
 
+.form-area::-webkit-scrollbar {
+  display: none;
+}
+
 .task-genre-area {
   margin-top: 1vh;
   display: flex;
