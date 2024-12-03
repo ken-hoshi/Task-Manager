@@ -322,6 +322,7 @@
   padding: 1.5vh 0;
   border-bottom: 1.5px dotted black;
   width: 80%;
+  max-width: 70vh;
 }
 
 .scrollable-content dd.dd-last {
