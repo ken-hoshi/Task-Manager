@@ -69,7 +69,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   const [selectedTaskGenre, setSelectedTaskGenre] = useState<Option | null>();
   const [selectedStatus, setSelectedStatus] = useState<Option>({
     value: 1,
-    label: "Not Status",
+    label: "Not Started",
   });
   const [selectedDeadlineDate, setSelectedDeadlineDate] = useState<
     Date | undefined
