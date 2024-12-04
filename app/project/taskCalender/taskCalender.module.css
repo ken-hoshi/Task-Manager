@@ -12,10 +12,10 @@
 
 .non-tasks {
   width: 130vh !important;
-  height: 71vh;
+  height: 80vh;
   font-size: 5vh;
-  color: #cccfd0;
-  background-color: white;
+  color: white;
+  background-color: #25bafa;
   margin: 0 auto;
   display: flex;
   justify-content: center;

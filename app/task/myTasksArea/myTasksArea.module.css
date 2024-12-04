@@ -83,7 +83,7 @@
   overflow-y: auto;
 }
 
-.my-task-area tbody::-webkit-scrollbar{
+.my-task-area tbody::-webkit-scrollbar {
   display: none;
 }
 
@@ -223,7 +223,7 @@
   width: 100%;
 }
 
-.scrollable-content::-webkit-scrollbar{
+.scrollable-content::-webkit-scrollbar {
   display: none;
 }
 
@@ -282,12 +282,16 @@
   padding: 0.5vh;
 }
 
+.task-genre-area {
+  display: flex;
+  justify-content: center;
+}
+
 .task-genre-block {
   background-color: #ffffff;
   border-radius: 1vh;
   width: 25vh;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
-  margin: 1vh;
 }
 
 .task-genre-name {
