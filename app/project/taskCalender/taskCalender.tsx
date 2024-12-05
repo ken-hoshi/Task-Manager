@@ -476,7 +476,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
             <table className={styles[`calender-table`]}>
               <thead>
                 <tr>
-                  <th className={styles[`task-name`]}>Task Name</th>
+                  <th className={classNames(styles[`task-name`],styles[`sticky-col`])}>Task Name</th>
                   {dates.map((date, index) => {
                     const dayOfWeek = date.getDay();
                     const isSaturday = dayOfWeek === 6;

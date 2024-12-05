@@ -703,16 +703,20 @@ const TaskList: React.FC<TaskListProps> = ({
                     {task.users.name}
                   </td>
                   <td className={styles[`col-actions`]}>
-                    <EditButton
-                      taskId={task.id}
-                      projectId={null}
-                      userId={userId}
-                    />
-                    <DeleteButton
-                      taskId={task.id}
-                      projectId={null}
-                      userId={userId}
-                    />
+                    <div className={styles[`actions-button-container`]}>
+                      <div>
+                        <EditButton
+                          taskId={task.id}
+                          projectId={null}
+                          userId={userId}
+                        />
+                        <DeleteButton
+                          taskId={task.id}
+                          projectId={null}
+                          userId={userId}
+                        />
+                      </div>
+                    </div>
                   </td>
                 </tr>
                 <tr

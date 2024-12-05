@@ -1,17 +1,16 @@
 .calender-area {
-  width: 130vh;
   margin: 0 auto;
   background-color: #25bafa;
   border-radius: 0 0 1vh 1vh;
   box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.8);
-  width: 130vh;
+  width: 70vw;
   height: 80vh;
   border: 1px solid #878788;
   position: relative;
 }
 
 .non-tasks {
-  width: 130vh !important;
+  width: 70vw !important;
   height: 80vh;
   font-size: 5vh;
   color: white;
@@ -92,28 +91,39 @@
 }
 
 .calender-container {
-  max-height: 55vh;
-  overflow-y: auto;
-  width: 127vh;
+  max-height: 60vh;
+  overflow: auto;
+  width: 100%;
   box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.8);
   margin: 0 auto;
+  max-width: 65vw;
+}
+
+.calender-container::-webkit-scrollbar {
+  width: 0;
+  background-color: white;
+}
+
+.calender-container::-webkit-scrollbar:horizontal {
+  height: 2vh !important;
+}
+
+.calender-container::-webkit-scrollbar-thumb:horizontal {
+  background-color: #d0d0d0;
+  border-radius: 1vh;
 }
 
 .calender-table {
-  width: 127vh;
+  width: 75vw;
   border-collapse: collapse;
   font-family: Arial, sans-serif;
   background-color: white;
 }
 
-.calender-container::-webkit-scrollbar {
-  display: none;
-}
-
 .calender-table thead {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2;
 }
 
 .calender-table th,
@@ -124,46 +134,55 @@
 
 .calender-table th {
   background-color: #dbdbdb;
+  width: 3vh !important;
 }
 
 .calender-table td {
-  width: 3vh;
+  width: 3vh !important;
 }
 
-.task-genre-name {
+td.task-genre-name {
   background-color: #5764f9;
   color: white;
-  width: 20vh;
+  width: 18vw !important;
   height: 3vh !important;
-  position: relative;
+  position: sticky;
+  z-index: 1;
+  left: 0;
 }
 
 .task-genre-name-area,
 .task-name-area {
-  width: 20vh;
   display: flex;
   justify-content: space-between;
 }
 
-.task-name {
-  width: 20vh;
+th.sticky-col {
+  z-index: 3 !important;
+}
+
+th.task-name,
+td.task-name {
   height: 3vh !important;
-  position: relative;
+  width: 18vw !important;
+  position: sticky;
+  z-index: 1;
+  left: 0;
 }
 
 .odd-color {
-  background-color: #d4d4d4;
+  background-color: white;
   border: none !important;
 }
 
 .even-color {
+  background-color: #d4d4d4;
   border: none !important;
 }
 
 .task-genre-name-area p,
 .task-name-area p {
-  text-align: center;
-  width: 18vh;
+  flex: 1;
   padding: 0 0.5vh 0 0.5vh;
   margin: 0;
   box-sizing: border-box;
@@ -174,7 +193,12 @@
   line-clamp: 2;
 }
 
+.task-genre-name-area p {
+  text-align: center;
+}
+
 .task-name-area p {
+  text-align: left;
   font-weight: 600;
 }
 
@@ -260,23 +284,23 @@
 }
 
 .result-task-name {
-  width: 20vh;
+  width: 18vw !important;
   height: 3vh !important;
-  position: relative;
+  position: sticky;
+  z-index: 1;
+  left: 0;
 }
 
 .result-area {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  width: 20vh;
 }
 
 .result-area p {
-  height: 2vh;
+  height: 2.5vh;
   font-size: 1.7vh;
-  text-align: center;
-  width: 18vh;
+  text-align: left;
   padding: 0 0.5vh 0 0.5vh;
   margin: 0;
   box-sizing: border-box;

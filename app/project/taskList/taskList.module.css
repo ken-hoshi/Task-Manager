@@ -3,7 +3,7 @@
 }
 
 .non-tasks {
-  width: 130vh;
+  width: 70vw;
   height: 65.5vh;
   font-size: 5vh;
   color: #cccfd0;
@@ -20,7 +20,7 @@
   text-align: center;
   align-items: center;
   vertical-align: middle;
-  width: 130vh;
+  width: 70vw;
   z-index: 0;
 }
 
@@ -50,25 +50,25 @@
 }
 
 .task-list th.col-task-name {
-  width: 43vh;
-  padding: 1vh;
+  width: 22vw;
+  padding: 0.5vw;
   box-sizing: border-box;
 }
 
 .task-list td.col-task-name {
-  width: 42vh;
+  width: 22vw;
   display: flex;
   justify-content: flex-start;
   text-align: start;
-  padding: 1vh 1vh 1vh 0;
+  padding: 0.5vw 0.5vw 0.5vw 0;
   box-sizing: border-box;
   word-wrap: break-word;
 }
 
 .task-list th.col-status,
 .task-list td.col-status {
-  width: 15vh;
-  padding: 0.5vh 0;
+  width: 8vw;
+  padding: 0.5vw 0;
   box-sizing: border-box;
 }
 
@@ -76,29 +76,29 @@
 .task-list td.col-start-date,
 .task-list th.col-deadline-date,
 .task-list td.col-deadline-date {
-  width: 18vh;
-  padding: 1vh;
+  width: 10vw;
+  padding: 0.5vw;
   box-sizing: border-box;
 }
 
 .task-list th.col-days,
 .task-list td.col-days {
-  width: 8vh;
-  padding: 1vh;
+  width: 5vw;
+  padding: 0.5vw;
   box-sizing: border-box;
 }
 
 .task-list th.col-assigned-person,
 .task-list td.col-assigned-person {
-  width: 24vh;
-  padding: 1vh;
+  width: 12vw;
+  padding: 0.5vw;
   box-sizing: border-box;
 }
 
 .task-list th.col-actions,
 .task-list td.col-actions {
-  width: 5vh;
-  padding: 1vh;
+  width: 3vw;
+  padding: 0.5vw;
   box-sizing: border-box;
 }
 
@@ -106,6 +106,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.actions-button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .col-task-name,

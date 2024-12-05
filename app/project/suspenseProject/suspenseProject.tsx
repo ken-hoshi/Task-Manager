@@ -32,6 +32,12 @@ interface Params {
   userId: number;
 }
 
+enum Switch {
+  list,
+  board,
+  calender,
+}
+
 const SuspenseProject: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isChecked, setIsChecked] = useState(false);
@@ -197,23 +203,23 @@ const SuspenseProject: React.FC = () => {
     setIsChecked(!isChecked);
   };
 
-  const handleTabSwitch = (target: number) => {
+  const handleTabSwitch = (target: Switch) => {
     switch (target) {
-      case 0:
+      case Switch.list:
         setTabJudgeList({
           list: true,
           board: false,
           calender: false,
         });
         break;
-      case 1:
+      case Switch.board:
         setTabJudgeList({
           list: false,
           board: true,
           calender: false,
         });
         break;
-      case 2:
+      case Switch.calender:
         setTabJudgeList({
           list: false,
           board: false,
@@ -265,7 +271,7 @@ const SuspenseProject: React.FC = () => {
                         styles[`tab-button`],
                         tabJudgeList.list && styles.active
                       )}
-                      onClick={() => handleTabSwitch(0)}
+                      onClick={() => handleTabSwitch(Switch.list)}
                     >
                       List
                     </button>
@@ -274,7 +280,7 @@ const SuspenseProject: React.FC = () => {
                         styles[`tab-button`],
                         tabJudgeList.board && styles.active
                       )}
-                      onClick={() => handleTabSwitch(1)}
+                      onClick={() => handleTabSwitch(Switch.board)}
                     >
                       Board
                     </button>
@@ -283,7 +289,7 @@ const SuspenseProject: React.FC = () => {
                         styles[`tab-button`],
                         tabJudgeList.calender && styles.active
                       )}
-                      onClick={() => handleTabSwitch(2)}
+                      onClick={() => handleTabSwitch(Switch.calender)}
                     >
                       Calender
                     </button>
