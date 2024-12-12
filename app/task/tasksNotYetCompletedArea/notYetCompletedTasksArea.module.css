@@ -325,12 +325,31 @@
   text-align: right;
 }
 
-.user-result-value-area {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin: 1vh 0 3vh 0;
+.result-area {
   font-size: 1.5vh;
+}
+
+.user-result-area {
+  overflow-y: auto;
+  max-height: 15vh;
+}
+
+.user-result-area::-webkit-scrollbar {
+  width: 0.8vh;
+  background-color: white;
+}
+
+.user-result-area::-webkit-scrollbar-thumb {
+  background-color: #a0a0a0;
+  border-radius: 0.5vh;
+}
+
+.user-result-area::-webkit-scrollbar-thumb:hover {
+  background-color: #6b6b6b;
+}
+
+.user-result-area::-webkit-scrollbar-track {
+  background-color: #f0f0f0;
 }
 
 .assigned-user-list {
@@ -339,25 +358,28 @@
   align-items: center;
   gap: 0.4vh;
   background-color: #ffffff;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+  box-shadow: 2px 1px 1px rgba(0, 0, 0, 0.5);
   border-radius: 0.5vh;
   padding: 0.5vh;
   margin: 0.5vh;
 }
 
-.result-area {
+.sum-result-area-container {
+  width: 15vh;
+  border-bottom: 0.1vh solid black;
+  margin: 0.5vh auto;
+}
+
+.sum-result-area {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 1vh;
   background-color: #ffffff;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
-  border-radius: 0.5vh;
   padding: 0.5vh;
-  margin: 0.5vh;
 }
 
-.result-value {
+.sum-value {
   display: flex;
   justify-content: center;
   align-items: center;

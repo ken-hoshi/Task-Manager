@@ -46,6 +46,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
   const { setPageUpdated, pageUpdated } = usePageUpdateContext();
   const { newItem } = useFlashDisplayContext();
 
+  const [myTaskList, setMyTaskList] = useState<any[]>([]);
   const [statusList, setStatusList] = useState<StatusProps[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<Option[]>([]);
   const [taskGenreList, setTaskGenreList] = useState<any[]>([]);
@@ -63,63 +64,97 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
     [],
   ]);
   const [postLoading, setPostLoading] = useState(true);
+  const [onFilter, setOnFiler] = useState(false);
+
+  const fetchTaskGenreData = async (myTasks: any[]) => {
+    const taskGenreIdList = myTasks.map((myTask) => myTask.task_genre_id);
+    const taskGenreDataArray = await Promise.all(
+      taskGenreIdList.map(async (taskGenreId, index) => {
+        if (!taskGenreId) {
+          return {
+            assignedUserTaskResultData: [
+              {
+                userName: myTasks[index].users.name,
+                numberOfResultDays: myTasks[index].number_of_result_days
+                  ? myTasks[index].number_of_result_days
+                  : 0,
+              },
+            ],
+          };
+        } else {
+          return await getTaskGenreData(taskGenreId);
+        }
+      })
+    );
+    setTaskGenreList(taskGenreDataArray);
+  };
+
+  const fetchAttachedFilesData = async (myTasks: any[]) => {
+    if (myTasks && myTasks.length > 0) {
+      const taskIdList = myTasks.map((myTask) => myTask.id);
+      const attachedFiles = await fetchAttachedFiles(1, taskIdList);
+      setAttachedFileList(attachedFiles);
+
+      if (attachedFiles.length > 0) {
+        const urlList = attachedFiles.map((subList) =>
+          subList.map((file) => {
+            try {
+              return URL.createObjectURL(file);
+            } catch (error) {
+              console.error("Failed to create object URL ", error);
+              return null;
+            }
+          })
+        );
+        setDownloadUrlList(urlList);
+      }
+    }
+  };
+
+  const handleFilter = () => {
+    if (!onFilter) {
+      const notCompletedMyTasks = myTasks.filter(
+        (tasks) => tasks.status_id !== 3
+      );
+
+      const myTaskStatuses = notCompletedMyTasks.map((myTask) => {
+        return {
+          value: myTask.status_id,
+          label: myTask.task_status.status,
+        };
+      });
+      setSelectedStatuses(myTaskStatuses);
+
+      setMyTaskList(notCompletedMyTasks);
+      fetchTaskGenreData(notCompletedMyTasks);
+      fetchAttachedFilesData(notCompletedMyTasks);
+      setMyTaskArrows(new Array(notCompletedMyTasks.length).fill(false));
+    } else {
+      setPageUpdated(true);
+    }
+    setOnFiler(!onFilter);
+  };
 
   useEffect(() => {
-    setStatusList(statuses);
+    let taskData: any[] = [];
+    if (onFilter) {
+      taskData = myTasks.filter((tasks) => tasks.status_id !== 3);
+    } else {
+      taskData = myTasks;
+    }
 
-    const myTaskStatuses = myTasks.map((myTask) => {
+    const myTaskStatuses = taskData.map((task) => {
       return {
-        value: myTask.status_id,
-        label: myTask.task_status.status,
+        value: task.status_id,
+        label: task.task_status.status,
       };
     });
     setSelectedStatuses(myTaskStatuses);
-    const fetchTaskGenreData = async () => {
-      const taskGenreIdList = myTasks.map((myTask) => myTask.task_genre_id);
-      const taskGenreDataArray = await Promise.all(
-        taskGenreIdList.map(async (taskGenreId, index) => {
-          if (!taskGenreId) {
-            return {
-              assignedUserTaskResultData: [
-                {
-                  userName: myTasks[index].users.name,
-                  numberOfResultDays: myTasks[index].number_of_result_days
-                    ? myTasks[index].number_of_result_days
-                    : 0,
-                },
-              ],
-            };
-          } else {
-            return await getTaskGenreData(taskGenreId);
-          }
-        })
-      );
-      setTaskGenreList(taskGenreDataArray);
-    };
-    fetchTaskGenreData();
 
-    const fetchAttachedFilesData = async () => {
-      if (myTasks && myTasks.length > 0) {
-        const taskIdList = myTasks.map((myTask) => myTask.id);
-        const attachedFiles = await fetchAttachedFiles(1, taskIdList);
-        setAttachedFileList(attachedFiles);
-
-        if (attachedFiles.length > 0) {
-          const urlList = attachedFiles.map((subList) =>
-            subList.map((file) => {
-              try {
-                return URL.createObjectURL(file);
-              } catch (error) {
-                console.error("Failed to create object URL ", error);
-                return null;
-              }
-            })
-          );
-          setDownloadUrlList(urlList);
-        }
-      }
-    };
-    fetchAttachedFilesData();
+    setMyTaskList(taskData);
+    setStatusList(statuses);
+    fetchTaskGenreData(taskData);
+    fetchAttachedFilesData(taskData);
   }, [pageUpdated]);
 
   const getStatusOptions = (selectedStatusId: number): Option[] => {
@@ -250,13 +285,33 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
               <div className={styles.separator}></div>
             </th>
             <th className={styles[`col-actions`]}>
+              <span
+                className={classNames(
+                  "material-symbols-outlined",
+                  {
+                    [styles[`on-filter`]]: onFilter,
+                    [styles[`off-filter`]]: !onFilter,
+                  },
+                  styles.tooltip
+                )}
+                onClick={handleFilter}
+              >
+                {" "}
+                filter_alt{" "}
+                <span className={styles[`tooltip-text`]}>
+                  未完了のタスクに絞り込みます。
+                </span>
+              </span>
+              <div className={styles.separator}></div>
+            </th>
+            <th className={styles[`col-actions`]}>
               <AddButton target={1} userId={userId} />
             </th>
           </tr>
         </thead>
         <tbody>
-          {myTasks.length > 0 ? (
-            myTasks?.map((myTask, index) => (
+          {myTaskList.length > 0 ? (
+            myTaskList?.map((myTask, index) => (
               <React.Fragment key={myTask.id}>
                 <tr
                   className={
@@ -301,16 +356,19 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
                     {myTask.users.name}
                   </td>
                   <td className={styles[`col-actions`]}>
-                    <EditButton
-                      taskId={myTask.id}
-                      projectId={null}
-                      userId={userId}
-                    />
-                    <DeleteButton
-                      taskId={myTask.id}
-                      projectId={null}
-                      userId={userId}
-                    />
+                    <div className={styles[`icon-area`]}>
+                      <EditButton
+                        taskId={myTask.id}
+                        projectId={null}
+                        userId={userId}
+                      />
+
+                      <DeleteButton
+                        taskId={myTask.id}
+                        projectId={null}
+                        userId={userId}
+                      />
+                    </div>
                   </td>
                 </tr>
                 <tr
@@ -433,94 +491,111 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
                                     0 &&
                                   taskGenreList[index]
                                     .assignedUserTaskResultData.length > 0 && (
-                                    <div
-                                      className={
-                                        styles["user-result-value-area"]
-                                      }
-                                    >
-                                      <div>
-                                        {taskGenreList[
-                                          index
-                                        ].assignedUserTaskResultData.map(
-                                          (
-                                            assignedUserTaskResult: {
-                                              userName: string;
-                                              numberOfResultDays: number;
-                                            },
-                                            i: number
-                                          ) => (
+                                    <div className={styles["result-area"]}>
+                                      <div
+                                        className={styles["user-result-area"]}
+                                      >
+                                        <div>
+                                          {taskGenreList[
+                                            index
+                                          ].assignedUserTaskResultData.map(
+                                            (
+                                              assignedUserTaskResult: {
+                                                userName: string;
+                                                taskName: string;
+                                                numberOfResultDays: number;
+                                              },
+                                              i: number
+                                            ) => (
+                                              <div
+                                                key={i}
+                                                className={
+                                                  styles["assigned-user-list"]
+                                                }
+                                              >
+                                                <div>
+                                                  {
+                                                    assignedUserTaskResult.userName
+                                                  }
+                                                </div>
+                                                <div>
+                                                  {
+                                                    assignedUserTaskResult.taskName
+                                                  }
+                                                </div>
+                                                <div>
+                                                  {(assignedUserTaskResult.numberOfResultDays
+                                                    ? assignedUserTaskResult.numberOfResultDays
+                                                    : 0
+                                                  ).toFixed(1)}
+                                                  {" days"}
+                                                </div>
+                                              </div>
+                                            )
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <div
+                                        className={
+                                          styles["sum-result-area-container"]
+                                        }
+                                      >
+                                        <div
+                                          className={styles["sum-result-area"]}
+                                        >
+                                          <div>Result</div>
+                                          <div className={styles["sum-value"]}>
                                             <div
-                                              key={i}
                                               className={
-                                                styles["assigned-user-list"]
+                                                taskGenreList[
+                                                  index
+                                                ].assignedUserTaskResultData.reduce(
+                                                  (
+                                                    acc: number,
+                                                    curr: {
+                                                      userName: string;
+                                                      numberOfResultDays: number;
+                                                    }
+                                                  ) =>
+                                                    acc +
+                                                    curr.numberOfResultDays,
+                                                  0
+                                                ) <=
+                                                (taskGenreList[index]
+                                                  .numberOfDays ?? 0) *
+                                                  (taskGenreList[index]
+                                                    .numberOfPersons ?? 0)
+                                                  ? styles[`value-green`]
+                                                  : styles[`value-red`]
                                               }
                                             >
-                                              <div>
-                                                {
-                                                  assignedUserTaskResult.userName
-                                                }
-                                              </div>
-                                              <div>
-                                                {(assignedUserTaskResult.numberOfResultDays
-                                                  ? assignedUserTaskResult.numberOfResultDays
-                                                  : 0
-                                                ).toFixed(1)}
-                                                {" days"}
-                                              </div>
-                                            </div>
-                                          )
-                                        )}
-                                      </div>
-                                      <div className={styles["result-area"]}>
-                                        <div>Result</div>
-                                        <div className={styles["result-value"]}>
-                                          <div
-                                            className={
-                                              taskGenreList[
+                                              {taskGenreList[
                                                 index
-                                              ].assignedUserTaskResultData.reduce(
-                                                (
-                                                  acc: number,
-                                                  curr: {
-                                                    userName: string;
-                                                    numberOfResultDays: number;
-                                                  }
-                                                ) =>
-                                                  acc + curr.numberOfResultDays,
-                                                0
-                                              ) <=
-                                              (taskGenreList[index]
-                                                .numberOfDays ?? 0) *
+                                              ].assignedUserTaskResultData
+                                                .reduce(
+                                                  (
+                                                    acc: number,
+                                                    curr: {
+                                                      userName: string;
+                                                      numberOfResultDays: number;
+                                                    }
+                                                  ) =>
+                                                    acc +
+                                                    curr.numberOfResultDays,
+                                                  0
+                                                )
+                                                .toFixed(1)}
+                                            </div>
+                                            <div>
+                                              {" / "}
+                                              {(
+                                                (taskGenreList[index]
+                                                  .numberOfDays ?? 0) *
                                                 (taskGenreList[index]
                                                   .numberOfPersons ?? 0)
-                                                ? styles[`value-green`]
-                                                : styles[`value-red`]
-                                            }
-                                          >
-                                            {taskGenreList[
-                                              index
-                                            ].assignedUserTaskResultData
-                                              .reduce(
-                                                (
-                                                  acc: number,
-                                                  curr: {
-                                                    userName: string;
-                                                    numberOfResultDays: number;
-                                                  }
-                                                ) =>
-                                                  acc + curr.numberOfResultDays,
-                                                0
-                                              )
-                                              .toFixed(1)}
-                                          </div>
-                                          <div>
-                                            {" / "}
-                                            {(
-                                              (taskGenreList[index]
-                                                .numberOfDays ?? 0) *
-                                              (taskGenreList[index]
-                                                .numberOfPersons ?? 0)
-                                            ).toFixed(1)}
+                                              ).toFixed(1)}
+                                            </div>
                                           </div>
                                         </div>
                                       </div>

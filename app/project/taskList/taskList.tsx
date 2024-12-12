@@ -813,16 +813,15 @@ const TaskList: React.FC<TaskListProps> = ({
                                 Object.keys(taskGenreData[index]).length > 0 &&
                                 taskGenreData[index].assignedUserTaskResultData
                                   .length > 0 && (
-                                  <div
-                                    className={styles["user-result-value-area"]}
-                                  >
-                                    <div>
+                                  <div className={styles["result-area"]}>
+                                    <div className={styles["user-result-area"]}>
                                       {taskGenreData[
                                         index
                                       ].assignedUserTaskResultData.map(
                                         (
                                           assignedUserTaskResult: {
                                             userName: string;
+                                            taskName: string;
                                             numberOfResultDays: number;
                                           },
                                           i: number
@@ -837,6 +836,9 @@ const TaskList: React.FC<TaskListProps> = ({
                                               {assignedUserTaskResult.userName}
                                             </div>
                                             <div>
+                                              {assignedUserTaskResult.taskName}
+                                            </div>
+                                            <div>
                                               {(assignedUserTaskResult.numberOfResultDays
                                                 ? assignedUserTaskResult.numberOfResultDays
                                                 : 0
@@ -847,56 +849,64 @@ const TaskList: React.FC<TaskListProps> = ({
                                         )
                                       )}
                                     </div>
-                                    <div className={styles["result-area"]}>
-                                      <div>Result</div>
-                                      <div className={styles["result-value"]}>
-                                        <div
-                                          className={
-                                            taskGenreData[
+                                    <div
+                                      className={
+                                        styles["sum-result-area-container"]
+                                      }
+                                    >
+                                      <div
+                                        className={styles["sum-result-area"]}
+                                      >
+                                        <div>Result</div>
+                                        <div className={styles["sum-value"]}>
+                                          <div
+                                            className={
+                                              taskGenreData[
+                                                index
+                                              ].assignedUserTaskResultData.reduce(
+                                                (
+                                                  acc: number,
+                                                  curr: {
+                                                    userName: string;
+                                                    numberOfResultDays: number;
+                                                  }
+                                                ) =>
+                                                  acc + curr.numberOfResultDays,
+                                                0
+                                              ) <=
+                                              (taskGenreData[index]
+                                                .numberOfDays ?? 0) *
+                                                (taskGenreData[index]
+                                                  .numberOfPersons ?? 0)
+                                                ? styles[`value-green`]
+                                                : styles[`value-red`]
+                                            }
+                                          >
+                                            {taskGenreData[
                                               index
-                                            ].assignedUserTaskResultData.reduce(
-                                              (
-                                                acc: number,
-                                                curr: {
-                                                  userName: string;
-                                                  numberOfResultDays: number;
-                                                }
-                                              ) =>
-                                                acc + curr.numberOfResultDays,
-                                              0
-                                            ) <=
-                                            (taskGenreData[index]
-                                              .numberOfDays ?? 0) *
+                                            ].assignedUserTaskResultData
+                                              .reduce(
+                                                (
+                                                  acc: number,
+                                                  curr: {
+                                                    userName: string;
+                                                    numberOfResultDays: number;
+                                                  }
+                                                ) =>
+                                                  acc + curr.numberOfResultDays,
+                                                0
+                                              )
+                                              .toFixed(1)}
+                                          </div>
+                                          <div>
+                                            {" / "}
+                                            {(
+                                              (taskGenreData[index]
+                                                .numberOfDays ?? 0) *
                                               (taskGenreData[index]
                                                 .numberOfPersons ?? 0)
-                                              ? styles[`value-green`]
-                                              : styles[`value-red`]
-                                          }
-                                        >
-                                          {taskGenreData[
-                                            index
-                                          ].assignedUserTaskResultData
-                                            .reduce(
-                                              (
-                                                acc: number,
-                                                curr: {
-                                                  userName: string;
-                                                  numberOfResultDays: number;
-                                                }
-                                              ) =>
-                                                acc + curr.numberOfResultDays,
-                                              0
-                                            )
-                                            .toFixed(1)}
-                                        </div>
-                                        <div>
-                                          {" / "}
-                                          {(
-                                            (taskGenreData[index]
-                                              .numberOfDays ?? 0) *
-                                            (taskGenreData[index]
-                                              .numberOfPersons ?? 0)
-                                          ).toFixed(1)}
+                                            ).toFixed(1)}
+                                          </div>
                                         </div>
                                       </div>
                                     </div>

@@ -109,8 +109,12 @@
 }
 
 .calender-container::-webkit-scrollbar-thumb:horizontal {
-  background-color: #d0d0d0;
+  background-color: #b4b4b4;
   border-radius: 1vh;
+}
+
+.calender-container::-webkit-scrollbar-thumb:horizontal:hover {
+  background-color: #8d8d8d;
 }
 
 .calender-table {
