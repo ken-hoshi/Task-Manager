@@ -32,6 +32,7 @@ export async function getTaskGenreData(taskGenreId: number) {
     let assignedUserTaskResults: {
       userId: number;
       userName: string;
+      taskName: string;
       numberOfResultDays: number;
     }[] = [];
 
@@ -40,6 +41,7 @@ export async function getTaskGenreData(taskGenreId: number) {
         return {
           userId: task.assigned_user_id,
           userName: task.users.name,
+          taskName: task.task_name,
           numberOfResultDays: task.number_of_result_days,
         };
       });

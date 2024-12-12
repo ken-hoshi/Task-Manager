@@ -120,6 +120,7 @@ const SuspenseProject: React.FC = () => {
                           projectDetailsData.tasksData[index].assigned_user_id,
                         userName:
                           projectDetailsData.tasksData[index].users.name,
+                        taskName: projectDetailsData.tasksData[index].task_name,
                         numberOfResultDays: projectDetailsData.tasksData[index]
                           .number_of_result_days
                           ? projectDetailsData.tasksData[index]
