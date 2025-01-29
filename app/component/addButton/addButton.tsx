@@ -8,9 +8,17 @@ interface AddButtonProps {
   target: number;
   userId: number;
   projectId?: number;
+  smallProjectId?: number|null;
+  taskGenreId?:number;
 }
 
-const AddButton: React.FC<AddButtonProps> = ({ target, userId, projectId }) => {
+const AddButton: React.FC<AddButtonProps> = ({
+  target,
+  userId,
+  projectId,
+  smallProjectId,
+  taskGenreId,
+}) => {
   const [showProjectPopup, setShowProjectPopup] = useState(false);
   const [showTaskPopup, setShowTaskPopup] = useState(false);
 
@@ -34,8 +42,8 @@ const AddButton: React.FC<AddButtonProps> = ({ target, userId, projectId }) => {
       {showProjectPopup && (
         <ProjectPopup
           onClose={toggleProjectPopup}
-          projectId={projectId || null}
           userId={userId}
+          projectId={null}
         />
       )}
       {showTaskPopup && (
@@ -43,7 +51,9 @@ const AddButton: React.FC<AddButtonProps> = ({ target, userId, projectId }) => {
           onClose={toggleTaskPopup}
           userId={userId}
           projectId={projectId || null}
+          smallProjectId={smallProjectId || null}
           taskId={null}
+          taskGenreId={taskGenreId||null}
         />
       )}
     </div>

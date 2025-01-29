@@ -6,6 +6,7 @@ import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import holidayJp from "holiday-jp";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
+import { useRouter } from "next/navigation";
 
 interface TasksPeriodList {
   id: number;
@@ -13,11 +14,32 @@ interface TasksPeriodList {
   deadlineDate: Date | null;
 }
 
+interface TasksDividedBySmallProjectIdProps {
+  smallProjectId: number;
+  taskDataArray: any[];
+}
+
+interface TaskGenreProps {
+  taskGenreId: number;
+  taskGenreName: string;
+  numberOfPersons: number;
+  startDate: string;
+  deadlineDate: string;
+  numberOfDays: number;
+}
+
+interface SmallProjectTaskGenreProps {
+  smallProjectId: number;
+  taskGenreDataArray: TaskGenreProps[];
+}
+
 interface TaskCalenderProps {
   userId: number;
-  tasks: any[];
-  projectTaskGenreList: any[];
-  isChecked: boolean;
+  smallProjectIdList: number[];
+  displaySmallProjectId: number | null;
+  taskData: TasksDividedBySmallProjectIdProps[];
+  smallProjectTaskGenreData: SmallProjectTaskGenreProps[];
+  filterMyTasks: boolean;
 }
 
 enum Target {
@@ -28,11 +50,15 @@ enum Target {
 
 const TaskCalender: React.FC<TaskCalenderProps> = ({
   userId,
-  tasks,
-  projectTaskGenreList,
-  isChecked,
+  smallProjectIdList,
+  displaySmallProjectId,
+  taskData,
+  smallProjectTaskGenreData,
+  filterMyTasks,
 }) => {
-  const [taskData, setTaskData] = useState<any[]>();
+  const [useDisplaySmallProjectId, setUseDisplaySmallProjectId] = useState(0);
+  const [smallProjectTask, setSmallProjectTask] = useState<any[]>([]);
+
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [dates, setDates] = useState<Date[]>([]);
   const [holidays, setHolidays] = useState<Date[]>([]);
@@ -57,7 +83,8 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
   const [updateTaskResultEndDate, setUpdateTaskResultEndDate] =
     useState<Date | null>(null);
 
-  const [taskGenreData, setTaskGenreData] = useState<any[]>();
+  const [smallProjectTaskGenre, setSmallProjectTaskGenre] =
+    useState<TaskGenreProps[]>();
   const [tasksGenrePeriodList, setTasksGenrePeriodList] = useState<
     TasksPeriodList[]
   >([]);
@@ -71,39 +98,67 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
 
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { setNotificationValue } = useNotificationContext();
+  const router = useRouter();
 
   useEffect(() => {
-    if (tasks.length > 0) {
-      const taskList = isChecked
-        ? tasks.filter((task) => task.assigned_user_id === userId)
-        : tasks;
+    const changedDisplaySmallProjectId =
+      displaySmallProjectId &&
+      smallProjectIdList.includes(displaySmallProjectId)
+        ? displaySmallProjectId!
+        : smallProjectIdList[0];
+
+    setUseDisplaySmallProjectId(changedDisplaySmallProjectId);
+
+    const smallProjectTask = taskData.find(
+      (task) => task.smallProjectId === changedDisplaySmallProjectId
+    );
+
+    const smallProjectTaskGenreListData = smallProjectTaskGenreData.find(
+      (smallProjectTaskGenre) =>
+        smallProjectTaskGenre.smallProjectId === changedDisplaySmallProjectId
+    );
+
+    if (!smallProjectTask || !smallProjectTaskGenreListData) {
+      console.error("Data associated with displaySmallProjectId not found.");
+      setNotificationValue({
+        message: "Couldn't get Project Data.",
+        color: 1,
+      });
+      router.push("/task");
+    }
+
+    const formatTaskPeriod = (
+      list: any[],
+      startField: string,
+      deadlineField: string
+    ) => {
+      return list.map((item) => {
+        const startDate = new Date(item[startField]);
+        startDate.setHours(0, 0, 0, 0);
+
+        const deadlineDate = new Date(item[deadlineField]);
+        deadlineDate.setHours(0, 0, 0, 0);
+
+        return {
+          id: item.id ?? item.taskGenreId,
+          startDate: startDate,
+          deadlineDate: deadlineDate,
+        };
+      });
+    };
+
+    if (smallProjectTask!.taskDataArray.length > 0) {
+      const taskList = filterMyTasks
+        ? smallProjectTask!.taskDataArray.filter(
+            (task) => task.assigned_user_id === userId
+          )
+        : smallProjectTask!.taskDataArray;
       const sortedTaskList = [...taskList].sort((a, b) => {
         const dateA = new Date(a.start_date).getTime();
         const dateB = new Date(b.start_date).getTime();
         return dateA - dateB;
       });
-
-      setTaskData(sortedTaskList);
-
-      const formatTaskPeriod = (
-        list: any[],
-        startField: string,
-        deadlineField: string
-      ) => {
-        return list.map((item) => {
-          const startDate = new Date(item[startField]);
-          startDate.setHours(0, 0, 0, 0);
-
-          const deadlineDate = new Date(item[deadlineField]);
-          deadlineDate.setHours(0, 0, 0, 0);
-
-          return {
-            id: item.id,
-            startDate: startDate,
-            deadlineDate: deadlineDate,
-          };
-        });
-      };
+      setSmallProjectTask(sortedTaskList);
 
       if (taskList.length > 0) {
         const tasksPeriod = formatTaskPeriod(
@@ -120,22 +175,33 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
         );
         setTasksResultPeriodList(tasksResultPeriod);
       }
+    } else {
+      setSmallProjectTask([]);
+      setTasksPeriodList([]);
+      setTasksResultPeriodList([]);
+    }
 
-      if (projectTaskGenreList.length > 0) {
-        setTaskGenreData(projectTaskGenreList);
+    if (smallProjectTaskGenreListData!.taskGenreDataArray.length > 0) {
+      setSmallProjectTaskGenre(
+        smallProjectTaskGenreListData!.taskGenreDataArray
+      );
 
-        const tasksGenrePeriod = formatTaskPeriod(
-          projectTaskGenreList,
-          "startDate",
-          "deadlineDate"
-        );
-        setTasksGenrePeriodList(tasksGenrePeriod);
-      }
+      const tasksGenrePeriod = formatTaskPeriod(
+        smallProjectTaskGenreListData!.taskGenreDataArray,
+        "startDate",
+        "deadlineDate"
+      );
+      setTasksGenrePeriodList(tasksGenrePeriod);
+    } else {
+      setSmallProjectTaskGenre([]);
+      setTasksGenrePeriodList([]);
     }
 
     if (
-      (tasks && tasks.length > 0) ||
-      (projectTaskGenreList && projectTaskGenreList.length > 0)
+      (smallProjectTask!.taskDataArray &&
+        smallProjectTask!.taskDataArray.length > 0) ||
+      (smallProjectTaskGenreListData!.taskGenreDataArray &&
+        smallProjectTaskGenreListData!.taskGenreDataArray.length > 0)
     ) {
       const currentYear = currentMonth.getFullYear();
       const currentHolidays = holidayJp.between(
@@ -165,7 +231,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
       }
       setDates(dates);
     }
-  }, [pageUpdated, currentMonth, isChecked]);
+  }, [pageUpdated, currentMonth, filterMyTasks, displaySmallProjectId]);
 
   const goToPreviousMonth = () => {
     setCurrentMonth(
@@ -332,6 +398,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
             userId,
             taskId,
             null,
+            null,
             1,
             []
           );
@@ -422,8 +489,8 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
 
   return (
     <>
-      {(taskData && taskData.length > 0) ||
-      (taskGenreData && taskGenreData.length > 0) ? (
+      {(smallProjectTask && smallProjectTask.length > 0) ||
+      (smallProjectTaskGenre && smallProjectTaskGenre.length > 0) ? (
         <div className={styles[`calender-area`]}>
           <div className={styles.navigation}>
             <button onClick={goToPreviousMonth}>
@@ -476,7 +543,14 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
             <table className={styles[`calender-table`]}>
               <thead>
                 <tr>
-                  <th className={classNames(styles[`task-name`],styles[`sticky-col`])}>Task Name</th>
+                  <th
+                    className={classNames(
+                      styles[`task-name`],
+                      styles[`sticky-col`]
+                    )}
+                  >
+                    Task Name
+                  </th>
                   {dates.map((date, index) => {
                     const dayOfWeek = date.getDay();
                     const isSaturday = dayOfWeek === 6;
@@ -505,21 +579,21 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {taskGenreData?.map((taskGenre, index) => (
+                {smallProjectTaskGenre?.map((taskGenre, index) => (
                   <React.Fragment key={index}>
                     <tr>
                       <td className={styles[`task-genre-name`]}>
                         <div className={styles[`task-genre-name-area`]}>
                           <p>{taskGenre.taskGenreName}</p>
                           <div className={styles[`button-area`]}>
-                            {taskGenre.id !== onEditTaskGenreId && (
+                            {taskGenre.taskGenreId !== onEditTaskGenreId && (
                               <span
                                 className={classNames(
                                   "material-symbols-outlined",
                                   styles.edit
                                 )}
                                 onClick={() =>
-                                  setOnEditTaskGenreId(taskGenre.id)
+                                  setOnEditTaskGenreId(taskGenre.taskGenreId)
                                 }
                               >
                                 edit
@@ -527,11 +601,13 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                             )}
                           </div>
                         </div>
-                        {taskGenre.id == onEditTaskGenreId && (
+                        {taskGenre.taskGenreId == onEditTaskGenreId && (
                           <div className={styles[`button-container`]}>
                             <button
                               className={styles[`check-button`]}
-                              onClick={() => updateTaskPeriod(taskGenre.id, 2)}
+                              onClick={() =>
+                                updateTaskPeriod(taskGenre.taskGenreId, 2)
+                              }
                             >
                               <span
                                 className={classNames(
@@ -561,9 +637,10 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                       </td>
                       {dates.map((date, index) => {
                         const taskPeriod = tasksGenrePeriodList.find(
-                          (tasksPeriod) => tasksPeriod.id === taskGenre.id
+                          (tasksPeriod) =>
+                            tasksPeriod.id === taskGenre.taskGenreId
                         );
-                        if (taskGenre.id == onEditTaskGenreId) {
+                        if (taskGenre.taskGenreId == onEditTaskGenreId) {
                           return (
                             <td
                               key={index}
@@ -592,8 +669,10 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                         }
                       })}
                     </tr>
-                    {taskData
-                      ?.filter((task) => task.task_genre_id === taskGenre.id)
+                    {smallProjectTask
+                      ?.filter(
+                        (task) => task.task_genre_id === taskGenre.taskGenreId
+                      )
                       .map((task, index) => (
                         <React.Fragment key={index}>
                           <tr>
@@ -789,14 +868,14 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                   </React.Fragment>
                 ))}
 
-                {taskData &&
-                  taskData?.filter((task) => !task.task_genre_id).length >
-                    0 && (
+                {smallProjectTask &&
+                  smallProjectTask?.filter((task) => !task.task_genre_id)
+                    .length > 0 && (
                     <>
                       <tr>
                         <td className={styles[`task-genre-name`]}>
                           <div className={styles[`task-genre-name-area`]}>
-                            <p>Other</p>
+                            <p>No Task Genre</p>
                           </div>
                         </td>
                         {dates.map((_, index) => (
@@ -804,7 +883,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                         ))}
                       </tr>
 
-                      {taskData
+                      {smallProjectTask
                         ?.filter((task) => !task.task_genre_id)
                         .map((task, index) => (
                           <React.Fragment key={index}>

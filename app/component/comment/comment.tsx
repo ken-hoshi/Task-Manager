@@ -2,7 +2,7 @@ import classNames from "classnames";
 import styles from "./comment.module.css";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { fetchCommentData } from "@/app/lib/fetchCommentData";
+import { fetchCommentData } from "@/app/lib/api/fetchCommentData";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { formatDateTime } from "@/app/lib/formatDateTime";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
@@ -41,7 +41,7 @@ const Comment: React.FC<CommentProps> = ({
         setCommentData(commentData);
         setEditComment(commentData.map((comment) => comment.comment_text));
       } else {
-        throw new Error("Fetch CommentData is null.");
+        throw new Error("Fetch CommentData couldn't get.");
       }
     };
     getCommentData();
@@ -146,6 +146,7 @@ const Comment: React.FC<CommentProps> = ({
       const postEmailNotificationsError = await postMailNotifications(
         userId,
         taskId,
+        null,
         null,
         3,
         []

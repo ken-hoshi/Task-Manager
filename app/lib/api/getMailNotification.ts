@@ -1,4 +1,4 @@
-import { clientSupabase } from "./supabase/client";
+import { clientSupabase } from "../supabase/client";
 
 export async function getMailNotifications(userId: number) {
   try {

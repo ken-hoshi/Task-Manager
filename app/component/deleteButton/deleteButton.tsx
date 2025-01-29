@@ -25,18 +25,24 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
   const handleDelete = async () => {
     try {
       if (projectId && !taskId) {
-        const { data: taskIdsData, error: selectTaskIdsDataError } =
+        const { data: smallProjectData, error: selectTaskIdsDataError } =
           await clientSupabase
-            .from("tasks")
-            .select("id")
+            .from("small_projects")
+            .select("id,tasks(id)")
             .eq("project_id", projectId);
 
         if (selectTaskIdsDataError) {
           throw selectTaskIdsDataError;
         }
 
-        if (taskIdsData && taskIdsData.length > 0) {
-          const taskIdList = taskIdsData.map((taskIdData) => taskIdData.id);
+        if (
+          smallProjectData &&
+          smallProjectData.length > 0 &&
+          smallProjectData.some((taskIds) => taskIds.tasks.length > 0)
+        ) {
+          const taskIdList = smallProjectData.flatMap((smallProject) =>
+            smallProject.tasks.map((task) => task.id)
+          );
           const {
             data: deleteTaskFilePathList,
             error: selectDeleteTaskFilePathListError,
@@ -63,13 +69,16 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
           }
         }
 
+        const smallProjectIdList = smallProjectData.map(
+          (smallProject) => smallProject.id
+        );
         const {
           data: deleteFilePathList,
           error: selectDeleteFilePathDataError,
         } = await clientSupabase
-          .from("project_attachments")
+          .from("small_project_attachments")
           .select("file_path")
-          .eq("project_id", projectId);
+          .in("small_project_id", smallProjectIdList);
 
         if (selectDeleteFilePathDataError) {
           throw selectDeleteFilePathDataError;
@@ -78,27 +87,12 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
         if (deleteFilePathList && deleteFilePathList.length > 0) {
           const deletePaths = deleteFilePathList.map((path) => path.file_path);
           const { error: removeError } = await clientSupabase.storage
-            .from("project_attachments")
+            .from("small_project_attachments")
             .remove(deletePaths);
 
           if (removeError) {
             throw removeError;
           }
-        }
-
-        const postEmailNotificationsError = await postMailNotifications(
-          userId,
-          null,
-          projectId,
-          3,
-          []
-        );
-
-        if (postEmailNotificationsError) {
-          console.error(
-            "Error post mail notifications ",
-            postEmailNotificationsError
-          );
         }
 
         const { error: projectDeleteError } = await clientSupabase
@@ -137,6 +131,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
           userId,
           taskId,
           null,
+          null,
           2,
           []
         );
@@ -157,7 +152,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
           throw taskDeleteError;
         }
       } else {
-        throw new Error("Task ID or Project ID is null.");
+        throw new Error("Task ID or Project ID couldn't get.");
       }
 
       setNotificationValue({

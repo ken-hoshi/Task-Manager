@@ -23,7 +23,7 @@ const SuspenseComplete: React.FC = () => {
 
   useEffect(() => {
     if (!paramsName || !paramsEmail) {
-      console.error("Error register: Params Name or Params Email is null");
+      console.error("Error register: Params Name or Params Email couldn't get.");
       setNotificationValue({
         message: "Couldn't get Registered Data.",
         color: 1,

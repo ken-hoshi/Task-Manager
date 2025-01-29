@@ -39,7 +39,7 @@ export const signUp = () => {
           );
         }
       } else {
-        throw new Error("User Id is null");
+        throw new Error("User Id couldn't get.");
       }
     } catch (error) {
       return error;

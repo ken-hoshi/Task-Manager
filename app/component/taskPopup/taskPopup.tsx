@@ -6,20 +6,22 @@ import { selectBoxStyles } from "./selectBoxStyles";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import { useFlashDisplayContext } from "@/app/provider/flashDisplayProvider";
-import { getProjects } from "@/app/lib/getProject";
-import { getStatus } from "@/app/lib/getStatus";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { getProjectMember } from "@/app/lib/getProjectMember";
 import classNames from "classnames";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
-import { fetchAttachedFiles } from "@/app/lib/fetchAttachedFiles";
+import { fetchAttachedFiles } from "@/app/lib/api/fetchAttachedFiles";
+import { getProjectData } from "@/app/lib/api/getProjectData";
+import { getSmallProjectData } from "@/app/lib/api/getSmallProjectData";
+import { getSmallProjectMember } from "@/app/lib/api/getSmallProjectMember";
 
 interface TaskPopupProps {
   onClose: () => void;
   userId: number;
   taskId: number | null;
+  taskGenreId: number | null;
   projectId: number | null;
+  smallProjectId: number | null;
 }
 
 interface UserProps {
@@ -30,7 +32,13 @@ interface UserProps {
 interface ProjectProps {
   id: number;
   project_name: string;
+}
+
+interface SmallProjectProps {
+  id: number;
+  small_project_name: string;
   details: string;
+  project_id: string;
 }
 
 interface TaskGenreDataProps {
@@ -38,11 +46,6 @@ interface TaskGenreDataProps {
   taskGenreName: string;
   selectedStartDate: Date | undefined;
   selectedDeadlineDate: Date | undefined;
-}
-
-interface StatusProps {
-  id: number;
-  status: string;
 }
 
 interface Option {
@@ -54,23 +57,23 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   onClose,
   userId,
   taskId,
+  taskGenreId,
   projectId,
+  smallProjectId,
 }) => {
   const [taskName, setTaskName] = useState("");
   const [details, setDetails] = useState("");
   const [projects, setProjects] = useState<ProjectProps[]>([]);
+  const [smallProjects, setSmallProjects] = useState<SmallProjectProps[]>([]);
   const [taskGenreDataArray, setTaskGenreDataArray] = useState<
     TaskGenreDataProps[]
   >([]);
-  const [projectMember, setProjectMember] = useState<UserProps[]>([]);
-  const [statuses, setStatuses] = useState<StatusProps[]>([]);
-  const [selectedUser, setSelectedUser] = useState<Option>();
+  const [smallProjectMember, setSmallProjectMember] = useState<UserProps[]>([]);
+  const [selectedUser, setSelectedUser] = useState<Option | null>();
   const [selectedProject, setSelectedProject] = useState<Option>();
+  const [selectedSmallProject, setSelectedSmallProject] =
+    useState<Option | null>();
   const [selectedTaskGenre, setSelectedTaskGenre] = useState<Option | null>();
-  const [selectedStatus, setSelectedStatus] = useState<Option>({
-    value: 1,
-    label: "Not Started",
-  });
   const [selectedDeadlineDate, setSelectedDeadlineDate] = useState<
     Date | undefined
   >(undefined);
@@ -85,7 +88,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [getLoading, setGetLoading] = useState(true);
-  const [postLoading, setPostLoading] = useState(true);
+  const [postLoading, setPostLoading] = useState(false);
 
   const { setPageUpdated } = usePageUpdateContext();
   const { setNotificationValue } = useNotificationContext();
@@ -98,13 +101,17 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           const [
             { data: taskData, error: selectTaskError },
             projects,
-            statuses,
+            smallProjects,
             { data: taskGenreData, error: selectTaskGenreDataError },
             taskAttachmentsData,
           ] = await Promise.all([
-            clientSupabase.from("tasks").select("*").eq("id", taskId).single(),
-            getProjects(),
-            getStatus(),
+            clientSupabase
+              .from("tasks")
+              .select("*, small_projects (project_id)")
+              .eq("id", taskId)
+              .single(),
+            getProjectData(),
+            getSmallProjectData(),
             clientSupabase.from("task_genre").select("*"),
             fetchAttachedFiles(1, [taskId]),
           ]);
@@ -114,7 +121,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           }
 
           if (!taskData || taskData.length === 0)
-            throw new Error("Task Data is null.");
+            throw new Error("Task Data couldn't get.");
 
           if (selectTaskGenreDataError) {
             throw selectTaskGenreDataError;
@@ -126,16 +133,39 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           setNumberOfDays(taskData.number_of_days);
           setDetails(taskData.details);
 
-          const selectedProjectName = projects.find(
-            (project) => project.id === taskData.project_id
+          const selectedProject = projects.find(
+            (project) => project.id === taskData.small_projects.project_id
           );
-          if (selectedProjectName) {
+
+          if (selectedProject) {
             setSelectedProject({
-              value: taskData.project_id,
-              label: selectedProjectName.project_name,
+              value: selectedProject.id,
+              label: selectedProject.project_name,
             });
           }
-          setProjects(await getProjects(taskData.assigned_user_id));
+          setProjects(await getProjectData(taskData.assigned_user_id));
+
+          const selectedSmallProject = smallProjects.find(
+            (smallProject) => smallProject.id === taskData.small_project_id
+          );
+          if (selectedSmallProject) {
+            setSelectedSmallProject({
+              value: taskData.small_project_id,
+              label: selectedSmallProject.small_project_name,
+            });
+          }
+
+          const smallProjectList = await getSmallProjectData(
+            taskData.assigned_user_id
+          );
+          setSmallProjects(
+            smallProjectList.map((smallProject) => ({
+              id: smallProject.id,
+              small_project_name: smallProject.small_project_name,
+              details: smallProject.details,
+              project_id: smallProject.project_id,
+            }))
+          );
 
           const { data: userName, error: selectUserNameError } =
             await clientSupabase
@@ -146,7 +176,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
           if (selectUserNameError) throw selectUserNameError;
 
-          if (!userName) throw new Error("User is null.");
+          if (!userName) throw new Error("User couldn't get.");
 
           setSelectedUser({
             value: taskData.assigned_user_id,
@@ -165,21 +195,12 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
               });
             }
           }
-          setProjects(await getProjects(taskData.assigned_user_id));
 
-          const selectedStatus = statuses.find(
-            (status) => status.id === taskData.status_id
+          const fileData = taskAttachmentsData[0].fileDataArray.map(
+            (fileData) => fileData.file
           );
-          if (selectedStatus) {
-            setSelectedStatus({
-              value: taskData.status_id,
-              label: selectedStatus.status,
-            });
-          }
-          setStatuses(statuses);
-
-          setSelectedFiles(taskAttachmentsData[0]);
-          setBeforeChangeFiles(taskAttachmentsData[0]);
+          setSelectedFiles(fileData);
+          setBeforeChangeFiles(fileData);
 
           setGetLoading(false);
         } catch (error) {
@@ -196,41 +217,105 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
       const fetchData = async () => {
         try {
           let projectList;
+          let smallProjectList;
 
-          if (!projectId) {
+          if (!projectId && !smallProjectId) {
+            const [userNameResult, projects, smallProjects] = await Promise.all(
+              [
+                clientSupabase
+                  .from("users")
+                  .select("name")
+                  .eq("id", userId)
+                  .single(),
+                getProjectData(userId),
+                getSmallProjectData(userId),
+              ]
+            );
+
             const { data: userName, error: selectUserNameError } =
-              await clientSupabase
-                .from("users")
-                .select("name")
-                .eq("id", userId)
-                .single();
-
-            if (selectUserNameError) {
-              throw selectUserNameError;
-            }
-
-            if (!userName) {
-              throw new Error("User is null.");
+              userNameResult;
+            if (selectUserNameError || !userName) {
+              throw new Error("User data couldn't get.");
             }
 
             setSelectedUser({
               value: userId,
               label: userName.name,
             });
-            projectList = await getProjects(userId);
+
+            projectList = projects;
+            smallProjectList = smallProjects;
           } else {
-            projectList = (await getProjects()).filter(
-              (project) => project.id == projectId
+            const [projects, smallProjects] = await Promise.all([
+              getProjectData(),
+              getSmallProjectData(),
+            ]);
+
+            projectList = projects.filter(
+              (project) => project.id === projectId
             );
+            const selectedProject = projectList.find(
+              (project) => project.id === projectId
+            );
+            if (!selectedProject) throw new Error("Project not found.");
+
             setSelectedProject({
-              value: projectId,
-              label: projectList[0].project_name,
+              value: projectId!,
+              label: selectedProject.project_name,
             });
+
+            smallProjectList = smallProjects.filter(
+              (smallProject) => smallProject.project_id === projectId
+            );
+            const selectedSmallProject = smallProjectList.find(
+              (smallProject) => smallProject.id === smallProjectId
+            );
+
+            if (!selectedSmallProject)
+              throw new Error("Small Project couldn't get.");
+
+            setSelectedSmallProject({
+              value: smallProjectId!,
+              label: selectedSmallProject.small_project_name,
+            });
+
+            if (taskGenreId) {
+              const { data: taskGenreData, error: selectTaskGenreDataError } =
+                await clientSupabase
+                  .from("task_genre")
+                  .select("*")
+                  .eq("id", taskGenreId)
+                  .single();
+
+              if (selectTaskGenreDataError || !taskGenreData) {
+                throw new Error("Task Genre data couldn't get.");
+              }
+
+              setSelectedTaskGenre({
+                value: taskGenreId!,
+                label: taskGenreData.task_genre_name,
+              });
+              setSelectedDeadlineDate(taskGenreData.deadline_date);
+              setSelectedStartDate(taskGenreData.start_date);
+              setNumberOfDays(
+                Math.ceil(
+                  (new Date(taskGenreData.deadline_date).getTime() -
+                    new Date(taskGenreData.start_date).getTime()) /
+                    (1000 * 60 * 60 * 24) +
+                    1
+                )
+              );
+            }
           }
           setProjects(projectList);
-
-          const statusList = await getStatus();
-          setStatuses(statusList);
+          setSmallProjects(
+            smallProjectList.map((smallProject) => ({
+              id: smallProject.id,
+              small_project_name: smallProject.small_project_name,
+              details: smallProject.details,
+              project_id: smallProject.project_id,
+            }))
+          );
 
           setGetLoading(false);
         } catch (error) {
@@ -247,18 +332,80 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   }, []);
 
   useEffect(() => {
-    const fetchProjectMembersAndTaskGenre = async () => {
-      if (selectedProject) {
-        const projectMembersList = await getProjectMember(
-          selectedProject.value
+    const fetchSmallProject = async () => {
+      try {
+        const { data: smallProjectList, error: selectSmallProjectListError } =
+          await clientSupabase
+            .from("small_projects")
+            .select("*, small_project_users(user_id)")
+            .eq("project_id", selectedProject!.value);
+
+        if (selectSmallProjectListError) {
+          throw selectSmallProjectListError;
+        }
+
+        if (!smallProjectList || smallProjectList.length === 0) {
+          throw new Error("Small Project Data couldn't get.");
+        }
+
+        setSmallProjects(
+          smallProjectList
+            .filter((smallProject) =>
+              selectedUser
+                ? smallProject.small_project_users.some(
+                    (user: any) => user.user_id === selectedUser.value
+                  )
+                : true
+            )
+            .map((smallProject) => ({
+              id: smallProject.id,
+              small_project_name: smallProject.small_project_name,
+              details: smallProject.details,
+              project_id: smallProject.project_id,
+            }))
         );
-        setProjectMember(projectMembersList);
+      } catch (error) {
+        console.error("Error Fetch Task Details ", error);
+        onClose();
+        setNotificationValue({
+          message: "Couldn't get the Task data.",
+          color: 1,
+        });
+      }
+    };
+    if (selectedProject) {
+      fetchSmallProject();
+    }
+  }, [selectedProject]);
+
+  useEffect(() => {
+    const fetchSmallProjectMembersAndTaskGenre = async () => {
+      try {
+        const smallProjectMembersList = await getSmallProjectMember([
+          selectedSmallProject!.value,
+        ]);
+
+        if (
+          selectedUser &&
+          !smallProjectMembersList[0].membersDataArray.some(
+            (membersData) => membersData.id === selectedUser.value
+          )
+        ) {
+          setSelectedUser(null);
+        }
+
+        setSmallProjectMember(
+          smallProjectMembersList[0].membersDataArray.map((membersData) => ({
+            id: membersData.id,
+            name: membersData.name,
+          }))
+        );
 
         const { data: taskGenreData, error: selectTaskGenreError } =
           await clientSupabase
             .from("task_genre")
             .select("id,task_genre_name, start_date, deadline_date")
-            .eq("project_id", selectedProject.value);
+            .eq("small_project_id", selectedSmallProject!.value);
 
         if (selectTaskGenreError) {
           throw selectTaskGenreError;
@@ -271,13 +418,23 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           selectedDeadlineDate: taskGenre.deadline_date,
         }));
         setTaskGenreDataArray(taskGenreArray);
+      } catch (error) {
+        console.error("Error Fetch Task Details ", error);
+        onClose();
+        setNotificationValue({
+          message: "Couldn't get the Task data.",
+          color: 1,
+        });
       }
     };
-    fetchProjectMembersAndTaskGenre();
-  }, [selectedProject]);
+    if (selectedSmallProject) {
+      fetchSmallProjectMembersAndTaskGenre();
+    }
+  }, [selectedSmallProject]);
 
   const handleProjectChange = (selectedOptions: SingleValue<Option>) => {
     setSelectedProject(selectedOptions as Option);
+    setSelectedSmallProject(null);
     setSelectedTaskGenre(null);
     setSelectedStartDate(undefined);
     setSelectedDeadlineDate(undefined);
@@ -293,11 +450,29 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
       label: project.project_name,
     }));
 
+  const handleSmallProjectChange = (selectedOptions: SingleValue<Option>) => {
+    setSelectedSmallProject(selectedOptions as Option);
+    setSelectedTaskGenre(null);
+    setSelectedStartDate(undefined);
+    setSelectedDeadlineDate(undefined);
+    setNumberOfDays("");
+  };
+
+  const smallProjectOptions = smallProjects
+    .filter(
+      (smallProject) =>
+        !selectedSmallProject || selectedSmallProject.value !== smallProject.id
+    )
+    .map((smallProject) => ({
+      value: smallProject.id,
+      label: smallProject.small_project_name,
+    }));
+
   const handleUserChange = (selectedOptions: SingleValue<Option>) => {
     setSelectedUser(selectedOptions as Option);
   };
 
-  const userOptions = projectMember
+  const userOptions = smallProjectMember
     .filter((user) => !selectedUser || selectedUser.value !== user.id)
     .map((user) => ({
       value: user.id,
@@ -351,17 +526,6 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
     }
   };
 
-  const handleStatusChange = (selectedOptions: SingleValue<Option>) => {
-    setSelectedStatus(selectedOptions as Option);
-  };
-
-  const statusOptions = statuses
-    .filter((status) => !selectedStatus || selectedStatus.value !== status.id)
-    .map((status) => ({
-      value: status.id,
-      label: status.status,
-    }));
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
@@ -388,8 +552,8 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
 
-    if (!postLoading) return;
-    setPostLoading(false);
+    if (postLoading) return;
+    setPostLoading(true);
 
     const startDateWithTime = new Date(selectedStartDate!);
     startDateWithTime.setHours(9, 0, 0, 0);
@@ -399,13 +563,12 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
     const payloadValue = {
       task_name: taskName,
-      project_id: selectedProject!.value,
+      small_project_id: selectedSmallProject!.value,
       assigned_user_id: selectedUser!.value,
       task_genre_id: selectedTaskGenre?.value,
       start_date: startDateWithTime,
       deadline_date: deadlineDateWithTime,
       number_of_days: numberOfDays,
-      status_id: selectedStatus!.value,
       details: details,
     };
 
@@ -501,6 +664,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           userId,
           taskId,
           null,
+          null,
           1,
           []
         );
@@ -516,7 +680,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           message: "Task was updated.",
           color: 0,
         });
-        setPostLoading(true);
+        setPostLoading(false);
         setPageUpdated(true);
         onClose();
       } else {
@@ -563,6 +727,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           userId,
           taskId,
           null,
+          null,
           0,
           []
         );
@@ -578,7 +743,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           message: "Task was added.",
           color: 0,
         });
-        setPostLoading(true);
+        setPostLoading(false);
         setPageUpdated(true);
         onClose();
       }
@@ -588,7 +753,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         message: taskId ? "Task was not edited." : "Task was not added.",
         color: 1,
       });
-      setPostLoading(true);
+      setPostLoading(false);
       setPageUpdated(true);
     }
   };
@@ -609,19 +774,19 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             </div>
 
             <form onSubmit={handleSubmit}>
-              <div className={styles["form-container"]}>
-                <div>
-                  <input
-                    type="text"
-                    value={taskName}
-                    onChange={(e) => setTaskName(e.target.value)}
-                    placeholder="Task Name"
-                    required
-                    className={styles[`task-name`]}
-                  />
-                  <p className={styles.instruction}>※Enter Task Name</p>
-                </div>
+              <div>
+                <input
+                  type="text"
+                  value={taskName}
+                  onChange={(e) => setTaskName(e.target.value)}
+                  placeholder="Task Name"
+                  required
+                  className={styles[`task-name`]}
+                />
+                <p className={styles.instruction}>※Enter Task Name</p>
+              </div>
 
+              <div className={styles["form-container"]}>
                 <div>
                   <Select
                     options={projectOptions}
@@ -632,6 +797,18 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                     styles={selectBoxStyles}
                   />
                   <p className={styles.instruction}>※Select Project</p>
+                </div>
+
+                <div>
+                  <Select
+                    options={smallProjectOptions}
+                    value={selectedSmallProject}
+                    onChange={handleSmallProjectChange}
+                    placeholder="-- Small Project --"
+                    required
+                    styles={selectBoxStyles}
+                  />
+                  <p className={styles.instruction}>※Select Small Project</p>
                 </div>
               </div>
 
@@ -699,20 +876,6 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                 </div>
               </div>
 
-              <div className={styles["form-container"]}>
-                <div>
-                  <Select
-                    options={statusOptions}
-                    value={selectedStatus}
-                    onChange={handleStatusChange}
-                    placeholder="-- Status --"
-                    required
-                    styles={selectBoxStyles}
-                  />
-                  <p className={styles.instruction}>※Select Status</p>
-                </div>
-              </div>
-
               <div>
                 <textarea
                   value={details}
@@ -730,14 +893,16 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                 {selectedFiles.length === 0 ? (
                   <div className={styles["none-attached-file-area"]}>
                     <p>Drag & Drop Files</p>
-                    <span
-                      className={classNames(
-                        "material-symbols-outlined",
-                        styles[`clip-icon`]
-                      )}
-                    >
-                      attach_file
-                    </span>
+                    <div className={styles["clip-icon-container"]}>
+                      <span
+                        className={classNames(
+                          "material-symbols-outlined",
+                          styles[`clip-icon`]
+                        )}
+                      >
+                        attach_file
+                      </span>
+                    </div>
                   </div>
                 ) : (
                   <div className={styles["display-attached-file-area"]}>
@@ -794,13 +959,11 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                 </button>
                 <button className={styles.add} type="submit">
                   {postLoading ? (
-                    taskId ? (
-                      "Update"
-                    ) : (
-                      "Add"
-                    )
-                  ) : (
                     <div className={styles[`button-spinner`]}></div>
+                  ) : taskId ? (
+                    "Update"
+                  ) : (
+                    "Add"
                   )}
                 </button>
               </div>

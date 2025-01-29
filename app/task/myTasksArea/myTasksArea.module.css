@@ -3,7 +3,7 @@
 }
 
 .non-tasks {
-  width: 75vh;
+  width: 42vw;
   height: 25vh;
   font-size: 5vh;
   color: #cccfd0;
@@ -63,7 +63,7 @@
 }
 
 .my-task-area table {
-  width: 75vh;
+  width: 42vw;
   border-collapse: collapse;
   background-color: #ffffff;
   box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.8);
@@ -92,58 +92,91 @@
 }
 
 .my-task-area th.col-task-name {
-  width: 33.5vh;
-  padding: 0.5 1.5vh 0.5vh;
+  width: 15.5vw;
+  padding: 0;
   box-sizing: border-box;
 }
 
 .my-task-area td.col-task-name {
-  width: 30.5vh;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  text-align: start;
-  padding: 0.5vh 0.5vh 0.5vh 0;
+  width: 15.2vw;
+  padding: 0 0.5vh 0 0;
   box-sizing: border-box;
-  word-wrap: break-word;
 }
 
 .my-task-area th.col-status,
 .my-task-area td.col-status {
-  width: 9vh;
+  width: 5vw;
   padding: 0;
 }
 
 .my-task-area th.col-deadline,
 .my-task-area td.col-deadline {
-  width: 14.5vh;
-  padding: 0.5vh;
+  width: 8vw;
+  padding: 0 0.5vh;
   box-sizing: border-box;
+}
+
+.my-task-area td.col-deadline {
+  font-size: 1.7vh !important;
+}
+
+.deadline-date-container,
+.assigned-person-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-icon {
+  width: 2.5vh;
+  height: 2.5vh;
+  background-image: url("/img/calendar.png");
+  background-size: cover;
+}
+
+.alarm-icon {
+  width: 2.5vh;
+  height: 2.5vh;
+  background-image: url("/img/alarm.png");
+  background-size: cover;
+}
+
+.near-deadline {
+  background-color: #ffe5e5;
+  color: #d32f2f;
 }
 
 .my-task-area th.col-assigned-person,
 .my-task-area td.col-assigned-person {
-  width: 13.5vh;
-  padding: 0.5vh;
+  width: 9vw;
+  padding: 0 0.5vh;
   box-sizing: border-box;
 }
 
+.person-icon {
+  width: 2.5vh;
+  height: 2.5vh;
+  background-image: url("/img/person.png");
+  background-size: cover;
+}
+
 .my-task-area th.col-actions {
-  width: 1.5vh;
-  padding: 0.5vh;
+  width: 2.5vw;
+  padding: 0 0.5vh;
   box-sizing: border-box;
 }
+
 .my-task-area td.col-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  width: 8vh;
-  padding: 0.5vh;
+  width: 5vw;
+  padding: 0 0.5vh;
   box-sizing: border-box;
 }
 
 .icon-area {
-  width: 5vh;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  width: 100% !important;
 }
 
 .separator {
@@ -153,6 +186,13 @@
   right: 0;
   width: 1px;
   background-color: #878788;
+}
+
+.filter-button-container,
+.add-button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .off-filter {
@@ -225,7 +265,6 @@
 
 .details-open {
   display: table-row;
-  background-color: #efefef;
   animation: open 0.3s ease-in-out forwards;
   transform-origin: top;
 }
@@ -246,6 +285,13 @@
   position: relative;
 }
 
+.task-name-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: start;
+}
+
 .arrow-container {
   display: flex;
   justify-content: flex-start;
@@ -253,10 +299,23 @@
   width: 4vh;
 }
 
+.arrow {
+  float: left;
+  font-size: 5vh !important;
+  cursor: pointer;
+  margin: 0;
+}
+
+.arrow:hover {
+  color: #357ae8;
+}
+
 .task-name {
-  max-width: 27vh;
+  max-width: 12vw;
   box-sizing: border-box;
   word-wrap: break-word;
+  font-weight: 600;
+  margin: 0;
 }
 
 .status-situation-part {
@@ -278,9 +337,13 @@
   color: #357ae8;
 }
 
+.background-image2 {
+  opacity: 0.3;
+  filter: blur(3px);
+  z-index: -1;
+}
+
 .scrollable-content {
-  max-height: 30vh;
-  overflow-y: auto;
   width: 100%;
 }
 
@@ -333,6 +396,27 @@
   box-sizing: border-box;
   word-wrap: break-word;
   text-align: center !important;
+}
+
+.project-name-container,
+.small-project-name-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 1vh;
+}
+
+.project-element,
+.small-project-element {
+  width: 10vh;
+  font-size: 1.5vh !important;
+}
+
+.white-text-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .white-text {
@@ -410,6 +494,7 @@
 
 .result-area {
   font-size: 1.5vh;
+  width: 100%;
 }
 
 .user-result-area {
@@ -445,6 +530,18 @@
   border-radius: 0.5vh;
   padding: 0.5vh;
   margin: 0.5vh;
+}
+
+.result-task-name {
+  max-width: 5vw;
+  margin: 0 auto;
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .sum-result-area-container {
@@ -490,7 +587,7 @@
   font-size: 1.5vh;
   font-family: "Roboto", sans-serif;
   text-align: center;
-  width: 28.5vh;
+  width: 16vw !important;
   top: 0;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
 }

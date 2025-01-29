@@ -72,6 +72,7 @@
 
 .title-area {
   position: relative;
+  text-align: center;
 }
 
 .title-area h1 {
@@ -98,7 +99,7 @@
   transition: border-color 0.3s;
   padding-left: 1vh;
   height: 6.5vh;
-  width: 35vh;
+  width: 100%;
   background-color: #d9d9d9;
   font-size: 2vh;
   font-family: "Roboto", sans-serif;
@@ -191,6 +192,7 @@
 
 .attached-file-area p {
   margin: 1vh auto 0;
+  text-align: center;
 }
 
 .display-attached-file-area {
@@ -222,9 +224,16 @@
   margin: 0;
 }
 
+.clip-icon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1vh auto;
+}
+
 .clip-icon {
   font-size: 5vh !important;
-  margin: 1vh auto;
+  color: #000000 !important;
 }
 
 .attached-file-icon {

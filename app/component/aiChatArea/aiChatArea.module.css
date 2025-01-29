@@ -11,7 +11,7 @@
   z-index: 1000;
 }
 
-.cancel-button-container{
+.cancel-button-container {
   margin: 6vh 0.5vh auto;
 }
 .cancel {
@@ -59,7 +59,7 @@
 }
 
 .background-image1 {
-  opacity: 0.1;
+  opacity: 0.2;
 }
 
 .message-area {

@@ -5,7 +5,7 @@ import BackgroundImage1 from "@/app/component/backgroundImage1/backgroundImage1"
 import Header from "@/app/component/header/header";
 import Loading from "@/app/component/loading/loading";
 import NotificationBanner from "@/app/component/notificationBanner/notificationBanner";
-import { getStatus } from "@/app/lib/getStatus";
+import { getStatus } from "@/app/lib/api/getStatus";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import classNames from "classnames";
@@ -17,10 +17,9 @@ import TaskList from "../taskList/taskList";
 import { useRouter, useSearchParams } from "next/navigation";
 import RobotButton from "@/app/component/robotButton/robotButton";
 import { useSessionTimeout } from "@/app/hooks/sessionTimeout";
-import { fetchAttachedFiles } from "@/app/lib/fetchAttachedFiles";
-import { fetchProjectDetailsData } from "@/app/lib/fetchProjectDetailsData";
-import { getProjectTaskGenre } from "@/app/lib/getProjectTaskGenre";
-import { getTaskGenreData } from "@/app/lib/getTaskGenre";
+import { fetchProjectDetailsData } from "@/app/lib/api/fetchProjectDetailsData";
+import { getTaskGenreData } from "@/app/lib/api/getTaskGenreData";
+import { getSmallProjectIdList } from "@/app/lib/api/getSmallProjectIdList";
 
 interface StatusProps {
   id: number;
@@ -32,6 +31,63 @@ interface Params {
   userId: number;
 }
 
+interface SmallProjectMembersProps {
+  smallProjectId: number;
+  membersDataArray: {
+    id: number;
+    name: string;
+  }[];
+}
+
+interface SmallProjectStatusProps {
+  smallProjectId: number;
+  projectId: number;
+  notStarted: number;
+  processing: number;
+  completed: number;
+}
+
+interface SmallProjectTaskGenreProps {
+  smallProjectId: number;
+  taskGenreDataArray: {
+    taskGenreId: number;
+    taskGenreName: string;
+    numberOfPersons: number;
+    startDate: string;
+    deadlineDate: string;
+    numberOfDays: number;
+  }[];
+}
+
+interface TasksDividedBySmallProjectIdProps {
+  smallProjectId: number;
+  taskDataArray: any[];
+}
+
+interface TaskGenreProps {
+  smallProjectId: number;
+  taskGenreDataArray: { taskId: number; taskGenre: any }[];
+}
+
+interface SmallProjectAttachedFileProps {
+  id: number;
+  fileDataArray: {
+    file: File;
+    url: string;
+  }[];
+}
+
+interface TaskAttachedFileProps {
+  smallProjectId: number;
+  fileDataList: {
+    id: number;
+    fileDataArray: {
+      file: File;
+      url: string;
+    }[];
+  }[];
+}
+
 enum Switch {
   list,
   board,
@@ -40,8 +96,8 @@ enum Switch {
 
 const SuspenseProject: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [isChecked, setIsChecked] = useState(false);
-  const [statuses, setStatuses] = useState<StatusProps[]>([]);
+  const [filterMyTasks, setFilterMyTasks] = useState(false);
+  const [statusData, setStatusData] = useState<StatusProps[]>([]);
   const [params, setParams] = useState<Params>({ projectId: 0, userId: 0 });
   const [tabJudgeList, setTabJudgeList] = useState({
     list: true,
@@ -50,28 +106,59 @@ const SuspenseProject: React.FC = () => {
   });
 
   const [projectData, setProjectData] = useState<any>({});
-  const [projectStatus, setProjectStatus] = useState<any>({});
-  const [projectTaskGenreList, setProjectTaskGenreList] = useState<any>([]);
-  const [taskGenreList, setTaskGenreList] = useState<any[]>([]);
-  const [projectMembers, setProjectMembers] = useState<string[]>([]);
-  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-  const [downloadUrls, setDownloadUrls] = useState<(string | null)[]>([]);
+  const [smallProjectData, setSmallProjectData] = useState<any[]>([]);
+  const [smallProjectIds, setSmallProjectIds] = useState<number[]>([]);
+  const [smallProjectMemberData, setSmallProjectMemberData] = useState<
+    SmallProjectMembersProps[]
+  >([]);
+  const [smallProjectStatusData, setSmallProjectStatusData] = useState<
+    SmallProjectStatusProps[]
+  >([]);
+  const [smallProjectTaskGenreData, setSmallProjectTaskGenreData] = useState<
+    SmallProjectTaskGenreProps[]
+  >([]);
 
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [projectDetailsArrows, setProjectDetailsArrows] = useState<boolean[]>(
+  const [taskData, setTaskData] = useState<TasksDividedBySmallProjectIdProps[]>(
     []
   );
-  const [attachedFileList, setAttachedFileList] = useState<File[][]>([[]]);
-  const [downloadUrlList, setDownloadUrlList] = useState<(string | null)[][]>([
-    [],
-  ]);
+  const [taskGenreData, setTaskGenreData] = useState<TaskGenreProps[]>([]);
+  const [smallProjectAttachedFileData, setSmallProjectAttachedFileData] =
+    useState<SmallProjectAttachedFileProps[]>([]);
+
+  const [taskAttachedFileData, setTaskAttachedFileData] = useState<
+    TaskAttachedFileProps[]
+  >([]);
+
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { notificationValue, setNotificationValue } = useNotificationContext();
+  const [displaySmallProjectId, setDisplaySmallProjectId] = useState<
+    number | null
+  >(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramsProjectId = searchParams.get("id");
   const paramsUserId = searchParams.get("userId");
+
+  const getTaskGenre = async (
+    tasksDividedBySmallProjectId: TasksDividedBySmallProjectIdProps[]
+  ) => {
+    const allTaskIds = tasksDividedBySmallProjectId.flatMap((taskDivided) =>
+      taskDivided.taskDataArray.map((taskData) => taskData.id)
+    );
+    const allTaskGenreData = await getTaskGenreData(allTaskIds);
+
+    const taskGenreDataBySmallProject = tasksDividedBySmallProjectId.map(
+      (taskData) => ({
+        smallProjectId: taskData.smallProjectId,
+        taskGenreDataArray: allTaskGenreData.map((allTaskGenre) => ({
+          taskId: allTaskGenre.taskId,
+          taskGenre: allTaskGenre,
+        })),
+      })
+    );
+    setTaskGenreData(taskGenreDataBySmallProject);
+  };
 
   useEffect(() => {
     const projectId = Number(paramsProjectId);
@@ -80,107 +167,66 @@ const SuspenseProject: React.FC = () => {
 
     const fetchProjectDetails = async () => {
       try {
-        const [projectDetailsData, projectTaskGenreData] = await Promise.all([
-          fetchProjectDetailsData(projectId),
-          getProjectTaskGenre([projectId]),
-        ]);
+        const {
+          projectData,
+          smallProjectIdList,
+          smallProjectData,
+          smallProjectMembersData,
+          smallProjectStatusData,
+          smallProjectTaskGenreData,
+          tasksDividedBySmallProjectId,
+          smallProjectAttachedFileData,
+          taskAttachedFileData,
+        } = await fetchProjectDetailsData(projectId);
+
         if (
-          !projectDetailsData.projectData ||
-          !projectDetailsData.projectMembersData ||
-          !projectDetailsData.projectStatusData
+          !projectData ||
+          !smallProjectIdList ||
+          !smallProjectData ||
+          !smallProjectMembersData ||
+          !smallProjectStatusData ||
+          !smallProjectTaskGenreData ||
+          !tasksDividedBySmallProjectId ||
+          !smallProjectAttachedFileData ||
+          !taskAttachedFileData
         ) {
-          throw new Error("Project Details Data are null");
-        } else {
-          setProjectTaskGenreList(projectTaskGenreData[0]);
-
-          const projectMembers = projectDetailsData.projectMembersData.map(
-            (projectMember) => projectMember.name
-          );
-          setProjectMembers(projectMembers);
-          setProjectData(projectDetailsData.projectData[0]);
-          setProjectStatus(projectDetailsData.projectStatusData);
-          setAttachedFiles(projectDetailsData.attachedFiles[0]);
-          setProjectDetailsArrows(
-            new Array(projectDetailsData.tasksData.length).fill(false)
-          );
-          setTasks(projectDetailsData.tasksData);
-
-          if (projectDetailsData.tasksData) {
-            const taskGenreIdList = projectDetailsData.tasksData.map(
-              (task) => task.task_genre_id
-            );
-
-            const taskGenreDataArray = await Promise.all(
-              taskGenreIdList.map(async (taskGenreId, index) => {
-                if (!taskGenreId) {
-                  return {
-                    assignedUserTaskResultData: [
-                      {
-                        userId:
-                          projectDetailsData.tasksData[index].assigned_user_id,
-                        userName:
-                          projectDetailsData.tasksData[index].users.name,
-                        taskName: projectDetailsData.tasksData[index].task_name,
-                        numberOfResultDays: projectDetailsData.tasksData[index]
-                          .number_of_result_days
-                          ? projectDetailsData.tasksData[index]
-                              .number_of_result_days
-                          : 0,
-                      },
-                    ],
-                  };
-                } else {
-                  return await getTaskGenreData(taskGenreId);
-                }
-              })
-            );
-            setTaskGenreList(taskGenreDataArray);
-          }
-
-          if (projectDetailsData.attachedFiles.length > 0) {
-            const urlList = projectDetailsData.attachedFiles[0].map((file) => {
-              try {
-                return URL.createObjectURL(file);
-              } catch (error) {
-                console.error("Failed to create object URL ", error);
-                return null;
-              }
-            });
-            setDownloadUrls(urlList);
-          }
-
-          const statusData = await getStatus();
-          if (!statuses || statuses.length < 0) {
-            throw new Error("Fetch StatusData is null.");
-          } else {
-            setStatuses(statusData);
-          }
-
-          if (
-            projectDetailsData.tasksData &&
-            projectDetailsData.tasksData.length > 0
-          ) {
-            const taskIdList = projectDetailsData.tasksData.map(
-              (task) => task.id
-            );
-            const attachedFiles = await fetchAttachedFiles(1, taskIdList);
-            setAttachedFileList(attachedFiles);
-
-            if (attachedFiles.length > 0) {
-              const urlList = attachedFiles.map((subList) =>
-                subList.map((file) => {
-                  try {
-                    return URL.createObjectURL(file);
-                  } catch (error) {
-                    console.error("Failed to create object URL ", error);
-                    return null;
-                  }
-                })
-              );
-              setDownloadUrlList(urlList);
-            }
-          }
+          throw new Error("Project Data couldn't get.");
         }
+        setProjectData(projectData);
+        setSmallProjectData(smallProjectData);
+        setSmallProjectIds(smallProjectIdList);
+        setSmallProjectMemberData(smallProjectMembersData);
+        setSmallProjectStatusData(smallProjectStatusData);
+        setSmallProjectTaskGenreData(smallProjectTaskGenreData);
+        setSmallProjectAttachedFileData(smallProjectAttachedFileData);
+
+        if (filterMyTasks) {
+          const filteredTask = tasksDividedBySmallProjectId.map((taskData) => ({
+            ...taskData,
+            taskDataArray: taskData.taskDataArray.filter(
+              (task) => task.assigned_user_id == paramsUserId
+            ),
+          }));
+          setTaskData(filteredTask);
+        } else {
+          setTaskData(tasksDividedBySmallProjectId);
+        }
+        await getTaskGenre(tasksDividedBySmallProjectId);
+        setTaskAttachedFileData(taskAttachedFileData);
+
+        const statusData = await getStatus();
+        if (!statusData || statusData.length < 0) {
+          throw new Error("Fetch StatusData couldn't get.");
+        }
+        setStatusData(statusData);
+
+        if (
+          !displaySmallProjectId ||
+          !smallProjectIdList.includes(displaySmallProjectId)
+        ) {
+          setDisplaySmallProjectId(smallProjectIdList[0]);
+        }
+
         setPageUpdated(false);
         setLoading(false);
       } catch (error) {
@@ -193,15 +239,13 @@ const SuspenseProject: React.FC = () => {
       }
     };
     fetchProjectDetails();
-  }, [pageUpdated]);
+  }, [pageUpdated, displaySmallProjectId]);
 
   useSessionTimeout();
 
-  const handleToggle = () => {
-    if (!isChecked) {
-      setPageUpdated(false);
-    }
-    setIsChecked(!isChecked);
+  const handleToggleFilterTask = () => {
+    setFilterMyTasks(!filterMyTasks);
+    setPageUpdated(true);
   };
 
   const handleTabSwitch = (target: Switch) => {
@@ -251,17 +295,22 @@ const SuspenseProject: React.FC = () => {
         ) : (
           <div className={styles.project}>
             <BackgroundImage1 />
-            <Header isBackButton={true} userId={params.userId} />
+            <Header
+              projectId={projectData.id}
+              projectName={projectData.project_name}
+              userId={params.userId}
+            />
             <div className={styles[`project-container`]}>
               <ProjectDetails
                 userId={params.userId}
-                projectId={params.projectId}
-                projectData={projectData}
-                projectStatus={projectStatus}
-                projectMembers={projectMembers}
-                projectTaskGenreList={projectTaskGenreList}
-                attachedFiles={attachedFiles}
-                downloadUrls={downloadUrls}
+                smallProjectData={smallProjectData}
+                smallProjectStatusData={smallProjectStatusData}
+                smallProjectMemberData={smallProjectMemberData}
+                smallProjectTaskGenreData={smallProjectTaskGenreData}
+                smallProjectAttachedFileData={smallProjectAttachedFileData}
+                smallProjectIdList={smallProjectIds}
+                displaySmallProjectId={displaySmallProjectId}
+                setDisplaySmallProjectId={setDisplaySmallProjectId}
               />
 
               <div className={styles[`task-area`]}>
@@ -300,15 +349,15 @@ const SuspenseProject: React.FC = () => {
                       <p>My Tasks</p>
                       <div
                         className={classNames(styles.toggle, {
-                          [styles.checked]: isChecked,
+                          [styles.checked]: filterMyTasks,
                         })}
-                        onClick={handleToggle}
+                        onClick={handleToggleFilterTask}
                       >
                         <input
                           type="checkbox"
                           name="check"
-                          checked={isChecked}
-                          onChange={handleToggle}
+                          checked={filterMyTasks}
+                          onChange={handleToggleFilterTask}
                           className={styles.input}
                         />
                       </div>
@@ -321,36 +370,36 @@ const SuspenseProject: React.FC = () => {
                     <TaskList
                       userId={params.userId}
                       projectId={params.projectId}
-                      tasks={tasks}
-                      setTasks={setTasks}
-                      taskGenreList={taskGenreList}
-                      projectTaskGenreList={projectTaskGenreList}
-                      statuses={statuses}
-                      projectDetailsArrows={projectDetailsArrows}
-                      setProjectDetailsArrows={setProjectDetailsArrows}
-                      attachedFileList={attachedFileList}
-                      downloadUrlList={downloadUrlList}
-                      isChecked={isChecked}
+                      smallProjectIdList={smallProjectIds}
+                      displaySmallProjectId={displaySmallProjectId}
+                      taskData={taskData}
+                      taskGenreData={taskGenreData}
+                      smallProjectTaskGenreData={smallProjectTaskGenreData}
+                      statusData={statusData}
+                      taskAttachedFileData={taskAttachedFileData}
+                      filterMyTasks={filterMyTasks}
                     />
                   )}
-
                   {tabJudgeList.board && (
                     <TaskBoard
                       userId={params.userId}
-                      tasks={tasks}
-                      statuses={statuses}
-                      attachedFileList={attachedFileList}
-                      downloadUrlList={downloadUrlList}
-                      isChecked={isChecked}
+                      smallProjectIdList={smallProjectIds}
+                      displaySmallProjectId={displaySmallProjectId}
+                      taskData={taskData}
+                      statusData={statusData}
+                      taskAttachedFileData={taskAttachedFileData}
+                      filterMyTasks={filterMyTasks}
                     />
                   )}
 
                   {tabJudgeList.calender && (
                     <TaskCalender
                       userId={params.userId}
-                      tasks={tasks}
-                      projectTaskGenreList={projectTaskGenreList}
-                      isChecked={isChecked}
+                      smallProjectIdList={smallProjectIds}
+                      displaySmallProjectId={displaySmallProjectId}
+                      taskData={taskData}
+                      smallProjectTaskGenreData={smallProjectTaskGenreData}
+                      filterMyTasks={filterMyTasks}
                     />
                   )}
                 </div>

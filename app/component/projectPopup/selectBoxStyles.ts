@@ -7,14 +7,19 @@ export const selectBoxStyles = {
     border: "none",
     borderBottom: "1px solid #000000",
     borderRadius: 0,
-    height: "6.5vh",
-    minHeight: "6.5vh",
+    height: "5vh",
+    minHeight: "5vh",
     overflow: "hidden",
+    alignItems: "start",
+  }),
+  multiValue: (baseStyles: any) => ({
+    ...baseStyles,
+    margin: "0 0 0 1vh",
   }),
   valueContainer: (baseStyles: any) => ({
     ...baseStyles,
-    height: "5vh",
-    maxHeight: "5vh",
+    height: "4vh",
+    maxHeight: "4vh",
     overflowY: "auto",
   }),
   input: (baseStyles: any) => ({
@@ -22,9 +27,14 @@ export const selectBoxStyles = {
     margin: 0,
     padding: 0,
   }),
+  clearIndicator: (baseStyles: any) => ({
+    ...baseStyles,
+    padding: "0",
+  }),
   indicatorSeparator: (baseStyles: any) => ({
     ...baseStyles,
     backgroundColor: "black",
+    margin: "1vh 0",
   }),
   dropdownIndicator: (baseStyles: any) => ({
     ...baseStyles,

@@ -72,7 +72,7 @@ const SuspenseAccount: React.FC = () => {
             password: "",
           });
         } else {
-          throw new Error("User ID is null");
+          throw new Error("User ID couldn't get.");
         }
       } catch (error) {
         console.error("Error Fetch User Data ", error);

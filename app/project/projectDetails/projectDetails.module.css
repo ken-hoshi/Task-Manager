@@ -1,4 +1,8 @@
-.project-area table {
+.small-project-area {
+  position: relative;
+}
+
+.small-project-area table {
   border-collapse: collapse;
   background-color: #ffffff;
   box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.8);
@@ -10,11 +14,11 @@
   max-height: 50vh;
 }
 
-.project-area tr {
+.small-project-area tr {
   border: 1px solid #878788;
 }
 
-.project-area th {
+.small-project-area th {
   background-color: #0aa9ec;
   color: white;
   font-weight: normal;
@@ -23,18 +27,55 @@
   padding: 1vh;
 }
 
-.project-name {
+.small-project-name {
   max-width: 30vh;
   margin: 0 auto;
-  padding: 0 1vh 0 1vh;
+  padding: 0 0.5vh 0 0.5vh;
   text-align: start;
   box-sizing: border-box;
   word-wrap: break-word;
+  font-weight: 600;
 }
 
-.edit-button-container {
+.pull-down-container {
   display: flex;
   align-items: center;
+  justify-content: center;
+  margin: 0;
+  width: 3vh;
+  height: 3vh;
+}
+
+.pull-down {
+  float: right;
+  font-size: 4.5vh !important;
+  cursor: pointer;
+}
+
+.pull-down:hover {
+  color: dimgrey;
+}
+
+.dropdown-menu {
+  color: #000000;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: #fff;
+  box-shadow: 0 5px 5px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  width: 29.8vh;
+  box-sizing: border-box;
+}
+
+.dropdown-item {
+  padding: 1vh;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: #007bff;
+  color: #ffffff;
 }
 
 td.col-status-situation {
@@ -102,13 +143,13 @@ td.col-status-situation {
   margin: 0;
 }
 
-.project-area dt {
+.small-project-area dt {
   text-align: left;
   font-weight: 600;
   display: flex;
 }
 
-.project-area dd {
+.small-project-area dd {
   margin: 0 auto 2vh;
   padding: 1vh 0;
   width: 90%;
@@ -303,4 +344,48 @@ td.col-status-situation {
   text-overflow: ellipsis;
   -webkit-line-clamp: 2;
   line-clamp: 2;
+}
+
+.col-finished-button{
+  display: flex;
+  justify-content: center;
+}
+
+.finished-button-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  padding: 0.5vh;
+  border-radius: 0.8vh;
+  box-shadow: 2px 2px 1px rgba(0, 0, 0, 0.3);
+  margin: 1vh;
+  cursor: pointer;
+}
+
+.finished-button-black {
+  background-color: #ebebeb;
+}
+
+.finished-button-black:hover {
+  background-color: #d9d9d9;
+  color: white;
+}
+
+.finished-button-green {
+  color: #ffffff;
+  background-color: #5bcc79;
+}
+
+.finished-button-green:hover {
+  background-color: #8ce6a4;
+  color: white;
+}
+
+.finished-button-area p {
+  margin: 0;
+}
+
+.check {
+  font-size: 3vh !important;
 }

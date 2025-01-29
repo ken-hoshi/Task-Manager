@@ -4,12 +4,14 @@ import styles from "./header.module.css";
 import classNames from "classnames";
 import { useEffect, useRef, useState } from "react";
 import MailNotificationList from "../mailNotificationList/mailNotificationList";
-import { getMailNotifications } from "@/app/lib/getMailNotification";
+import { getMailNotifications } from "@/app/lib/api/getMailNotification";
 import { formatDateTime } from "@/app/lib/formatDateTime";
 import { Logout } from "@/app/hooks/logout";
+import EditButton from "../editButton/editButton";
 
 interface HeaderProps {
-  isBackButton?: boolean;
+  projectId: number | null;
+  projectName: string | null;
   userId: number;
 }
 
@@ -20,7 +22,7 @@ type Notification = {
   timestamp: string;
 };
 
-const Header: React.FC<HeaderProps> = ({ isBackButton, userId }) => {
+const Header: React.FC<HeaderProps> = ({ projectId, projectName, userId }) => {
   const router = useRouter();
   const { useLogout } = Logout();
 
@@ -108,7 +110,7 @@ const Header: React.FC<HeaderProps> = ({ isBackButton, userId }) => {
   };
 
   const handleBack = () => {
-    if (isBackButton) router.push("/task");
+    if (projectName) router.push("/task");
   };
 
   const logout = async () => {
@@ -121,16 +123,21 @@ const Header: React.FC<HeaderProps> = ({ isBackButton, userId }) => {
 
   return (
     <>
-      <div
-        className={isBackButton ? styles[`none-back-header`] : styles.header}
-      >
-        {isBackButton && (
+      <div className={projectName ? styles[`none-back-header`] : styles.header}>
+        {projectName && (
           <span
             className={classNames("material-symbols-outlined", styles.back)}
             onClick={handleBack}
           >
             arrow_back
           </span>
+        )}
+
+        {projectName && (
+          <div className={styles[`project-name-area`]}>
+            <div className={styles[`project-name`]}>{projectName}</div>
+            <EditButton projectId={projectId} taskId={null} userId={userId} />
+          </div>
         )}
 
         <div className={styles.container}>

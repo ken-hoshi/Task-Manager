@@ -28,7 +28,7 @@ const EditButton: React.FC<EditButtonProps> = ({
       setShowTaskPopup(!showTaskPopup);
     } else {
       console.error(
-        "Error get Task ID Project ID: Task ID or Project ID is null."
+        "Error get Task ID Project ID: Task ID or Project ID couldn't get."
       );
       setNotificationValue({
         message: "Couldn't get the data.",
@@ -57,8 +57,10 @@ const EditButton: React.FC<EditButtonProps> = ({
         <TaskPopup
           onClose={togglePopup}
           taskId={taskId}
+          taskGenreId={null}
           projectId={projectId}
           userId={userId}
+          smallProjectId={null}
         />
       )}
     </div>

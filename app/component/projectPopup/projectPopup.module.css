@@ -8,7 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 2000;
 }
 
 .popup-inner {
@@ -75,6 +75,7 @@
 
 .title-area h1 {
   margin: 2vh 0 2vh 0;
+  text-align: center;
 }
 
 .required-form {
@@ -88,14 +89,6 @@
 .form-group {
   margin-bottom: 1.5vh;
   width: 100%;
-}
-
-.exist-margin-right {
-  margin-right: 1vh;
-}
-
-.exist-margin-left {
-  margin-left: 1vh;
 }
 
 .form-group input:-webkit-autofill {
@@ -116,26 +109,101 @@
   border: none;
   border-bottom: 1px solid #000000;
   transition: border-color 0.3s;
-  height: 6.5vh;
+  height: 5vh;
   background-color: #d9d9d9;
   font-size: 2vh;
   box-sizing: border-box;
 }
 
-.project-name-members-area {
+.small-project-area {
+  border: 0.1vh solid #d4d4d4;
+  border-radius: 0 1vh 1vh 1vh;
+  padding: 1vh;
+  box-shadow: 3px 3px 3px 2px rgba(0, 0, 0, 0.3);
+}
+
+.tab-area {
+  margin: 0 auto;
   display: flex;
+  justify-content: flex-start;
+  align-items: flex-end;
+}
+
+.tab-minus-container {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tab-minus {
+  cursor: pointer;
+  font-size: 2.5vh !important;
+  display: block !important;
+}
+
+.tab-minus:hover {
+  color: dimgrey;
+}
+
+.minus-button-space {
+  padding: 1.2vh;
+}
+
+.tab-button {
+  width: 18vh;
+  height: 4vh;
+  cursor: url("/img/edit.png"), text;
+  border: none;
+  box-shadow: 1.5px -0.5px 1px 0px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.3s;
+  font-size: 1.5vh;
+  z-index: 1;
+  padding: 0;
+  border-top-left-radius: 1vh;
+  border-top-right-radius: 1vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-input {
+  width: 17vh !important;
+  height: 3vh !important;
+  font-size: 1.5vh !important;
+  padding: 0.5vh !important;
+}
+
+.tab-plus {
+  cursor: pointer;
+  font-size: 4vh !important;
+}
+
+.tab-plus:hover {
+  color: dimgrey;
+}
+
+.tab-button.active {
+  background-color: #eae9e9;
+  border: none;
+  box-shadow: 1.5px -0.5px 2px 1px rgba(0, 0, 0, 0.3) !important;
+}
+
+.flex-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
 }
 
 .production-costs-area {
   display: flex;
   border: 1px dotted #000000;
-  background-color: #f3f3f3;
+  background-color: #d9d9d9;
+  width: 43vh;
 }
 
 .plus {
   cursor: pointer;
-  margin-top: 5vh;
-  font-size: 5vh !important;
+  margin-top: 1vh;
+  font-size: 4vh !important;
 }
 
 .plus:hover {
@@ -145,7 +213,7 @@
 .form-area {
   flex: 1;
   overflow-y: auto;
-  max-height: 30vh;
+  height: 24.5vh;
 }
 
 .form-area::-webkit-scrollbar {
@@ -163,7 +231,12 @@
 }
 
 .task-genre-input-container input {
-  width: 71vh !important;
+  width: 35vh !important;
+  background-color: white !important;
+}
+
+.task-genre-input-container input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset;
 }
 
 .date-picker {
@@ -171,13 +244,13 @@
   border-bottom: 1px solid #000000;
   transition: border-color 0.3s;
   padding: 0 !important;
-  background-color: #d9d9d9;
+  background-color: white !important;
   font-size: 2vh;
   font-family: "Roboto", sans-serif;
   text-align: center;
   top: 0;
-  width: 71vh !important;
-  height: 6.5vh;
+  width: 35vh !important;
+  height: 5vh;
   margin-bottom: 1vh;
 }
 
@@ -196,7 +269,7 @@
 
 .minus {
   cursor: pointer;
-  font-size: 5vh !important;
+  font-size: 4vh !important;
 }
 
 .minus:hover {
@@ -205,17 +278,22 @@
 
 .non-task-genre {
   width: 100%;
-  height: 17vh;
+  height: 24.5vh;
   font-size: 3vh;
-  color: #7a7a7a;
+  color: #9b9b9b;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
+.textarea-container {
+  width: 100%;
+  margin-left: 1vh;
+}
+
 .popup-inner textarea {
   resize: none;
-  height: 10vh;
+  height: 24.5vh;
   padding-left: 1vh;
   width: 100%;
   border: none;
@@ -237,6 +315,12 @@
 
 .attached-file-area.drag-over {
   border-color: #4a90e2;
+}
+
+.none-attached-file-area-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .none-attached-file-area p {
@@ -282,9 +366,15 @@
   margin: 0;
 }
 
+.clip-container {
+  margin: 1vh auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .clip {
   font-size: 5vh !important;
-  margin: 1vh auto;
 }
 
 .attached-file-icon {

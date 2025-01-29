@@ -3,7 +3,7 @@
 }
 
 .non-tasks {
-  width: 75vh;
+  width: 42vw;
   height: 25vh;
   font-size: 5vh;
   color: #cccfd0;
@@ -63,7 +63,7 @@
 }
 
 .not-yet-completed-tasks-area table {
-  width: 75vh;
+  width: 42vw;
   border-collapse: collapse;
   background-color: #ffffff;
   box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.8);
@@ -92,48 +92,74 @@
 }
 
 .not-yet-completed-tasks-area th.col-task-name {
-  width: 34.5vh;
-  padding: 0.5 1.5vh 0.5vh;
+  width: 19vw;
+  padding: 0 1.5vh;
   box-sizing: border-box;
 }
 
 .not-yet-completed-tasks-area td.col-task-name {
-  width: 34vh;
+  width: 19vw;
   display: flex;
   justify-content: flex-start;
   align-items: center;
   text-align: start;
-  padding: 0.5vh 0.5vh 0.5vh 0;
+  padding: 0.5vh 0;
   box-sizing: border-box;
   word-wrap: break-word;
   height: 100%;
 }
 
-.not-yet-completed-tasks-area th.col-project-name,
-.not-yet-completed-tasks-area td.col-project-name {
-  width: 18vh;
-  padding: 0.5vh;
-  box-sizing: border-box;
-}
-
 .not-yet-completed-tasks-area th.col-status,
 .not-yet-completed-tasks-area td.col-status {
-  width: 10vh;
+  width: 5vw;
   padding: 0;
 }
 
 .not-yet-completed-tasks-area th.col-deadline,
 .not-yet-completed-tasks-area td.col-deadline {
-  width: 16vh;
-  padding: 0.5vh;
+  width: 9vw;
+  padding: 0 0.5vh;
   box-sizing: border-box;
+}
+
+.deadline-date-container,
+.assigned-person-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-icon {
+  width: 2.5vh;
+  height: 2.5vh;
+  background-image: url("/img/calendar.png");
+  background-size: cover;
+}
+
+.alarm-icon {
+  width: 2.5vh;
+  height: 2.5vh;
+  background-image: url("/img/alarm.png");
+  background-size: cover;
+}
+
+.near-deadline {
+  background-color: #ffe5e5;
+  color: #d32f2f;
 }
 
 .not-yet-completed-tasks-area th.col-assigned-person,
 .not-yet-completed-tasks-area td.col-assigned-person {
-  width: 15vh;
-  padding: 0.5vh;
+  width: 9vw;
+  padding: 0 0.5vh;
   box-sizing: border-box;
+}
+
+.person-icon {
+  width: 2.5vh;
+  height: 2.5vh;
+  background-image: url("/img/person.png");
+  background-size: cover;
 }
 
 @keyframes blink {
@@ -156,7 +182,6 @@
 
 .details-open {
   display: table-row;
-  background-color: #efefef;
   animation: open 0.3s ease-in-out forwards;
   transform-origin: top;
 }
@@ -193,15 +218,32 @@
   width: 4vh;
 }
 
+.arrow {
+  float: left;
+  font-size: 5vh !important;
+  cursor: pointer;
+  margin: 0;
+}
+
+.arrow:hover {
+  color: #357ae8;
+}
+
 .task-name {
   max-width: 27vh;
   box-sizing: border-box;
   word-wrap: break-word;
+  margin: 0;
+  font-weight: 600;
+}
+
+.background-image2 {
+  opacity: 0.3;
+  filter: blur(3px);
+  z-index: -1;
 }
 
 .scrollable-content {
-  max-height: 30vh;
-  overflow-y: auto;
   width: 100%;
 }
 
@@ -254,6 +296,27 @@
   box-sizing: border-box;
   word-wrap: break-word;
   text-align: center !important;
+}
+
+.project-name-container,
+.small-project-name-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 1vh;
+}
+
+.project-element,
+.small-project-element {
+  width: 10vh;
+  font-size: 1.5vh !important;
+}
+
+.white-text-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .white-text {
@@ -327,6 +390,7 @@
 
 .result-area {
   font-size: 1.5vh;
+  width: 100%;
 }
 
 .user-result-area {
@@ -362,6 +426,18 @@
   border-radius: 0.5vh;
   padding: 0.5vh;
   margin: 0.5vh;
+}
+
+.result-task-name {
+  max-width: 5vw;
+  margin: 0 auto;
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .sum-result-area-container {
@@ -407,7 +483,7 @@
   font-size: 1.5vh;
   font-family: "Roboto", sans-serif;
   text-align: center;
-  width: 28.5vh;
+  width: 16vw !important;
   top: 0;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
 }

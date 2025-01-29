@@ -4,15 +4,14 @@ import styles from "./task.module.css";
 import { useEffect, useMemo, useState } from "react";
 import Header from "@/app/component/header/header";
 import React from "react";
-import { fetchProjectsData } from "../lib/fetchProjectsData";
 import { usePageUpdateContext } from "../provider/pageUpdateProvider";
-import { getUserId } from "../lib/getUserId";
+import { getUserId } from "../lib/api/getUserId";
 import { useFormContext } from "../provider/formProvider";
 import { useRouter } from "next/navigation";
 import { useNotificationContext } from "../provider/notificationProvider";
 import NotificationBanner from "../component/notificationBanner/notificationBanner";
-import { fetchTasksData } from "../lib/fetchTasksData";
-import { getStatus } from "../lib/getStatus";
+import { fetchTasksData } from "../lib/api/fetchTasksData";
+import { getStatus } from "../lib/api/getStatus";
 import Loading from "../component/loading/loading";
 import MyTasksArea from "./myTasksArea/myTasksArea";
 import ProjectsArea from "./projectsArea/projectsArea";
@@ -22,12 +21,50 @@ import { GetSession } from "../hooks/getSession";
 import { useSessionTimeout } from "../hooks/sessionTimeout";
 import NotYetCompletedTasksArea from "./tasksNotYetCompletedArea/notYetCompletedTasksArea";
 import { postMailNotifications } from "../lib/postMailNotifications";
-import { getProjectTaskGenre } from "../lib/getProjectTaskGenre";
-import { fetchAttachedFiles } from "../lib/fetchAttachedFiles";
+import { getSmallProjectTaskGenre } from "../lib/api/getSmallProjectTaskGenre";
+import { fetchAttachedFiles } from "../lib/api/fetchAttachedFiles";
+import { getProjectData } from "../lib/api/getProjectData";
+import { fetchSmallProjectData } from "../lib/api/fetchSmallProjectData";
 
 interface StatusProps {
   id: number;
   status: string;
+}
+
+interface SmallProjectMembersProps {
+  smallProjectId: number;
+  membersDataArray: {
+    id: number;
+    name: string;
+  }[];
+}
+
+interface SmallProjectStatusProps {
+  smallProjectId: number;
+  projectId: number;
+  notStarted: number;
+  processing: number;
+  completed: number;
+}
+
+interface SmallProjectTaskGenreProps {
+  smallProjectId: number;
+  taskGenreDataArray: {
+    taskGenreId: number;
+    taskGenreName: string;
+    numberOfPersons: number;
+    startDate: string;
+    deadlineDate: string;
+    numberOfDays: number;
+  }[];
+}
+
+interface AttachedFileProps {
+  id: number;
+  fileDataArray: {
+    file: File;
+    url: string;
+  }[];
 }
 
 const Task: React.FC = () => {
@@ -35,22 +72,23 @@ const Task: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [statuses, setStatuses] = useState<StatusProps[]>([]);
 
-  const [projects, setProjects] = useState<any[]>([]);
-  const [projectMembers, setProjectMembers] = useState<string[][]>([]);
-  const [projectTaskGenre, setProjectTaskGenre] = useState<any[]>([]);
-  const [projectStatus, setProjectStatus] = useState<any[]>([]);
-  const [attachedFileList, setAttachedFileList] = useState<File[][]>([[]]);
-  const [downloadUrlList, setDownloadUrlList] = useState<(string | null)[][]>([
-    [],
-  ]);
+  const [projectDataArray, setProjectDataArray] = useState<any[]>([]);
+  const [smallProjectDataArray, setSmallProjectDataArray] = useState<any[]>([]);
+
+  const [smallProjectMemberDataArray, setSmallProjectMemberDataArray] =
+    useState<SmallProjectMembersProps[]>([]);
+  const [smallProjectStatusDataArray, setSmallProjectStatusDataArray] =
+    useState<SmallProjectStatusProps[]>([]);
+
+  const [smallProjectTaskGenreArray, setSmallProjectTaskGenreArray] = useState<
+    SmallProjectTaskGenreProps[]
+  >([]);
+  const [attachedFileDataArray, setAttachedFileDataArray] = useState<
+    AttachedFileProps[]
+  >([]);
 
   const [myTasks, setMyTasks] = useState<any[]>([]);
-  const [myTaskArrows, setMyTaskArrows] = useState<boolean[]>([]);
-
   const [notYetCompletedTasks, setNotYetCompletedTasks] = useState<any[]>([]);
-  const [notYetCompletedTasksArrows, setNotYetCompletedTasksArrows] = useState<
-    boolean[]
-  >([]);
 
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { notificationValue } = useNotificationContext();
@@ -84,54 +122,57 @@ const Task: React.FC = () => {
 
         const userId = await getUserId(session!.user.id);
         if (!userId) {
-          throw new Error("User Id is null.");
+          throw new Error("User Id couldn't get.");
         } else {
           setUserId(userId);
         }
 
-        const projectData = await fetchProjectsData();
-        if (
-          !projectData.projectMembersData ||
-          !projectData.projectStatusData ||
-          !projectData.projectsData
-        ) {
-          throw new Error("Fetch ProjectsData is null.");
+        const projectData = await getProjectData();
+        if (!projectData) {
+          throw new Error("Fetch Project Data couldn't get.");
         }
 
-        const projectMembersList = projectData.projectMembersData.map(
-          (projectMember) => projectMember.map((member) => member.name)
-        );
+        const smallProjectData = await fetchSmallProjectData();
+        if (
+          !smallProjectData.smallProjectData ||
+          !smallProjectData.smallProjectMembersData ||
+          !smallProjectData.smallProjectStatusData
+        ) {
+          throw new Error("Fetch ProjectsData couldn't get.");
+        }
 
-        if (projectData.projectsData.length > 0) {
-          setProjectMembers(projectMembersList);
-          setProjectStatus(projectData.projectStatusData);
-          setProjects(projectData.projectsData);
-
-          const projectIdList = projectData.projectsData.map(
-            (project) => project.id
+        if (projectData.length > 0) {
+          setProjectDataArray(projectData);
+          setSmallProjectDataArray(smallProjectData.smallProjectData);
+          setSmallProjectMemberDataArray(
+            smallProjectData.smallProjectMembersData
           );
-          setProjectTaskGenre(await getProjectTaskGenre(projectIdList));
+          setSmallProjectStatusDataArray(
+            smallProjectData.smallProjectStatusData
+          );
 
-          const attachedFiles = await fetchAttachedFiles(0, projectIdList);
-          setAttachedFileList(attachedFiles);
+          const smallProjectIdList = smallProjectData.smallProjectData.map(
+            (smallProject) => smallProject.id
+          );
+          setSmallProjectTaskGenreArray(
+            await getSmallProjectTaskGenre(smallProjectIdList)
+          );
 
-          if (attachedFiles.length > 0) {
-            const urlList = attachedFiles.map((subList) =>
-              subList.map((file) => {
-                try {
-                  return URL.createObjectURL(file);
-                } catch (error) {
-                  console.error("Failed to create object URL ", error);
-                  return null;
-                }
-              })
-            );
-            setDownloadUrlList(urlList);
+          const attachedFileData = await fetchAttachedFiles(
+            0,
+            smallProjectIdList
+          );
+          if (
+            attachedFileData.some(
+              (attachedFiles) => attachedFiles.fileDataArray.length > 0
+            )
+          ) {
+            setAttachedFileDataArray(attachedFileData);
           }
 
           const tasksData = await fetchTasksData();
           if (!tasksData) {
-            throw new Error("Fetch TasksData is null.");
+            throw new Error("Fetch TasksData couldn't get.");
           } else {
             const myTasksData = tasksData.filter(
               (taskData) => taskData.assigned_user_id === userId
@@ -156,6 +197,7 @@ const Task: React.FC = () => {
                         null,
                         myTask.id,
                         null,
+                        null,
                         4,
                         []
                       );
@@ -164,6 +206,7 @@ const Task: React.FC = () => {
                         null,
                         myTask.id,
                         null,
+                        null,
                         5,
                         []
                       );
@@ -171,6 +214,7 @@ const Task: React.FC = () => {
                       return postMailNotifications(
                         null,
                         myTask.id,
+                        null,
                         null,
                         6,
                         []
@@ -185,13 +229,13 @@ const Task: React.FC = () => {
               postDeadlineNotifications();
 
               setMyTasks(myTasksData);
-              setMyTaskArrows(new Array(myTasksData.length).fill(false));
+            } else {
+              setMyTasks([]);
             }
 
             const notYetCompletedTasksData = tasksData.filter(
               (taskData) => taskData.task_status.status !== "Completed"
             );
-
             if (notYetCompletedTasksData.length > 0) {
               const sortedNotYetCompletedTasks = notYetCompletedTasksData.sort(
                 (a, b) =>
@@ -199,18 +243,25 @@ const Task: React.FC = () => {
                   new Date(b.deadline_date).getTime()
               );
               setNotYetCompletedTasks(sortedNotYetCompletedTasks);
-              setNotYetCompletedTasksArrows(
-                new Array(sortedNotYetCompletedTasks.length).fill(false)
-              );
+            } else {
+              setNotYetCompletedTasks([]);
             }
           }
 
           const statusData = await getStatus();
           if (!statuses || statuses.length < 0) {
-            throw new Error("Fetch StatusData is null.");
-          } else {
-            setStatuses(statusData);
+            throw new Error("Fetch StatusData couldn't get.");
           }
+          setStatuses(statusData);
+        } else {
+          setProjectDataArray([]);
+          setSmallProjectDataArray([]);
+          setSmallProjectMemberDataArray([]);
+          setSmallProjectStatusDataArray([]);
+          setSmallProjectTaskGenreArray([]);
+          setAttachedFileDataArray([]);
+          setMyTasks([]);
+          setNotYetCompletedTasks([]);
         }
 
         setPageUpdated(false);
@@ -241,30 +292,26 @@ const Task: React.FC = () => {
       ) : (
         <div className={styles[`task-container`]}>
           <BackgroundImage1 />
-          <Header userId={userId} />
+          <Header projectId={null} projectName={null} userId={userId} />
           <div className={styles.task}>
             <ProjectsArea
-              projects={projects}
-              projectMembers={projectMembers}
-              projectStatus={projectStatus}
-              projectTaskGenre={projectTaskGenre}
-              attachedFileList={attachedFileList}
-              downloadUrlList={downloadUrlList}
+              projectDataArray={projectDataArray}
+              smallProjectDataArray={smallProjectDataArray}
+              smallProjectMemberDataArray={smallProjectMemberDataArray}
+              smallProjectStatusDataArray={smallProjectStatusDataArray}
+              smallProjectTaskGenreArray={smallProjectTaskGenreArray}
+              attachedFileDataArray={attachedFileDataArray}
               userId={userId}
             />
 
             <div className={styles[`under-area`]}>
               <MyTasksArea
                 myTasks={myTasks}
-                myTaskArrows={myTaskArrows}
-                setMyTaskArrows={setMyTaskArrows}
                 userId={userId}
                 statuses={statuses}
               />
               <NotYetCompletedTasksArea
                 notYetCompletedTasks={notYetCompletedTasks}
-                notYetCompletedTasksArrows={notYetCompletedTasksArrows}
-                setNotYetCompletedTasksArrows={setNotYetCompletedTasksArrows}
                 userId={userId}
                 statuses={statuses}
               />

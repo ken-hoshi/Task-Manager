@@ -9,19 +9,39 @@ import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import EditButton from "@/app/component/editButton/editButton";
 import DeleteButton from "@/app/component/deleteButton/deleteButton";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
+import { useRouter } from "next/navigation";
 
 interface StatusProps {
   id: number;
   status: string;
 }
 
+interface TasksDividedBySmallProjectIdProps {
+  smallProjectId: number;
+  taskDataArray: any[];
+}
+
+interface AttachedFileProps {
+  id: number;
+  fileDataArray: {
+    file: File;
+    url: string;
+  }[];
+}
+
+interface TaskAttachedFileProps {
+  smallProjectId: number;
+  fileDataList: AttachedFileProps[];
+}
+
 interface TaskBoardProps {
   userId: number;
-  tasks: any[];
-  statuses: StatusProps[];
-  attachedFileList: File[][];
-  downloadUrlList: (string | null)[][];
-  isChecked: boolean;
+  smallProjectIdList: number[];
+  displaySmallProjectId: number | null;
+  taskData: TasksDividedBySmallProjectIdProps[];
+  statusData: StatusProps[];
+  taskAttachedFileData: TaskAttachedFileProps[];
+  filterMyTasks: boolean;
 }
 
 const ItemTypes = {
@@ -31,16 +51,14 @@ const ItemTypes = {
 const TaskItem = ({
   userId,
   task,
-  attachedFiles,
-  downloadUrls,
-  index,
+  taskId,
+  attachedFileData,
   moveTask,
 }: {
   userId: number;
   task: any;
-  index: number;
-  attachedFiles: File[];
-  downloadUrls: (string | null)[];
+  taskId: number;
+  attachedFileData: AttachedFileProps[];
   moveTask: (id: string, status: string) => void;
 }) => {
   const { setNotificationValue } = useNotificationContext();
@@ -57,6 +75,10 @@ const TaskItem = ({
   const toggleArrow = () => {
     setIsOpen(!isOpen);
   };
+
+  const attachedFileMatchedTaskId = attachedFileData.find(
+    (attachedFile) => attachedFile.id === taskId
+  );
 
   return (
     <div
@@ -109,14 +131,15 @@ const TaskItem = ({
             Attached File
           </div>
           <div className={styles[`attached-file-flex-area`]}>
-            {attachedFiles && attachedFiles.length > 0 ? (
-              attachedFiles.map((file: any, index: number) => (
+            {attachedFileMatchedTaskId &&
+            attachedFileMatchedTaskId.fileDataArray.length > 0 ? (
+              attachedFileMatchedTaskId.fileDataArray.map((file, index) => (
                 <div
                   className={styles["display-attachedFile-container"]}
                   key={index}
                 >
                   <div className={styles["file-info"]}>
-                    <a href={downloadUrls[index] || "#"} download={file.name}>
+                    <a href={file.url || "#"} download={file.file.name}>
                       <span
                         className={classNames(
                           "material-symbols-outlined",
@@ -127,7 +150,7 @@ const TaskItem = ({
                       </span>
                     </a>
                   </div>
-                  <p>{file.name}</p>
+                  <p>{file.file.name}</p>
                 </div>
               ))
             ) : (
@@ -144,11 +167,13 @@ const TaskList = ({
   userId,
   status,
   taskData,
+  attachedFileData,
   moveTask,
 }: {
   userId: number;
   status: StatusProps;
-  taskData: any;
+  taskData: any[];
+  attachedFileData: AttachedFileProps[];
   moveTask: (id: string, status: string) => void;
 }) => {
   const [isHovered, setIsHovered] = useState([false, false, false]);
@@ -205,15 +230,13 @@ const TaskList = ({
       >
         {taskData &&
           Object.keys(taskData).length > 0 &&
-          taskData.tasksByStatus.length > 0 &&
-          taskData.tasksByStatus.map((task: any, index: number) => (
+          taskData.map((task: any, index: number) => (
             <TaskItem
-              userId={userId}
               key={task.id}
+              userId={userId}
               task={task}
-              attachedFiles={taskData.attachedFilesByStatus[index]}
-              downloadUrls={taskData.downloadUrlsByStatus[index]}
-              index={index}
+              taskId={task.id}
+              attachedFileData={attachedFileData}
               moveTask={moveTask}
             />
           ))}
@@ -224,47 +247,58 @@ const TaskList = ({
 
 const TaskBoard: React.FC<TaskBoardProps> = ({
   userId,
-  tasks,
-  statuses,
-  attachedFileList,
-  downloadUrlList,
-  isChecked,
+  smallProjectIdList,
+  displaySmallProjectId,
+  taskData,
+  statusData,
+  taskAttachedFileData,
+  filterMyTasks,
 }) => {
-  const [taskData, setTaskData] = useState<any[]>();
-  const [attachedFileData, setAttachedFileData] = useState<any[]>();
-  const [downloadUrlData, setDownloadUrlData] = useState<any[]>();
+  const [useDisplaySmallProjectId, setUseDisplaySmallProjectId] = useState(0);
+  const [smallProjectTask, setSmallProjectTask] = useState<any[]>([]);
+  const [taskAttachedFileListData, setTaskAttachedFileListData] = useState<
+    AttachedFileProps[]
+  >([]);
 
   const { setNotificationValue } = useNotificationContext();
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
+  const router = useRouter();
 
   useEffect(() => {
-    if (tasks.length > 0) {
-      if (isChecked) {
-        const filteredTaskData = tasks.reduce(
-          (result, task, index) => {
-            if (task.assigned_user_id == userId) {
-              result.tasks.push(task);
-              result.attachedFiles.push(attachedFileList[index]);
-              result.downloadUrls.push(downloadUrlList[index]);
-            }
-            return result;
-          },
-          {
-            tasks: [],
-            attachedFiles: [],
-            downloadUrls: [],
-          }
-        );
-        setTaskData(filteredTaskData.tasks);
-        setAttachedFileData(filteredTaskData.attachedFiles);
-        setDownloadUrlData(filteredTaskData.downloadUrls);
-      } else {
-        setTaskData(tasks);
-        setAttachedFileData(attachedFileList);
-        setDownloadUrlData(downloadUrlList);
-      }
+    const changedDisplaySmallProjectId =
+      displaySmallProjectId &&
+      smallProjectIdList.includes(displaySmallProjectId)
+        ? displaySmallProjectId!
+        : smallProjectIdList[0];
+
+    setUseDisplaySmallProjectId(changedDisplaySmallProjectId);
+
+    const smallProjectTask = taskData.find(
+      (task) => task.smallProjectId === changedDisplaySmallProjectId
+    );
+
+    const taskAttachedFileListData = taskAttachedFileData.find(
+      (taskAttachedFile) =>
+        taskAttachedFile.smallProjectId === changedDisplaySmallProjectId
+    );
+
+    if (!smallProjectTask || !taskAttachedFileListData) {
+      console.error("Data associated with displaySmallProjectId not found.");
+      setNotificationValue({
+        message: "Couldn't get Project Data.",
+        color: 1,
+      });
+      router.push("/task");
     }
-  }, [pageUpdated, isChecked]);
+
+    if (smallProjectTask!.taskDataArray.length > 0) {
+      setSmallProjectTask(smallProjectTask!.taskDataArray);
+      setTaskAttachedFileListData(taskAttachedFileListData!.fileDataList);
+    } else {
+      setSmallProjectTask([]);
+      setTaskAttachedFileListData([]);
+    }
+  }, [filterMyTasks, pageUpdated, displaySmallProjectId]);
 
   const moveTask = async (id: string, status: string) => {
     try {
@@ -280,7 +314,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
       }
 
       if (!statusId) {
-        throw new Error("Status Id is null");
+        throw new Error("Status Id couldn't get.");
       }
 
       const { error: updateStatusError } = await clientSupabase
@@ -293,20 +327,28 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
       }
       setPageUpdated(true);
 
-      setTaskData(
+      setSmallProjectTask(
         taskData?.map((task) =>
-          task.id.toString() === id
+          task.smallProjectId === useDisplaySmallProjectId
             ? {
                 ...task,
-                status_id: statusId.id,
-                task_status: { status: status },
+                taskDataArray: task.taskDataArray.map((taskData) =>
+                  taskData.id.toString() === id
+                    ? {
+                        ...task,
+                        status_id: statusId.id,
+                        task_status: { status: status },
+                      }
+                    : task
+                ),
               }
-            : task
+            : taskData
         )
       );
       const postEmailNotificationsError = await postMailNotifications(
         userId,
         Number(id),
+        null,
         null,
         1,
         []
@@ -328,38 +370,19 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
     }
   };
 
-  const getTaskDataByStatus = (
-    statusId: number,
-    tasks: any[],
-    attachedFileList: File[][],
-    downloadUrlList: (string | null)[][]
-  ) => {
+  const getTaskDataByStatus = (statusId: number, tasks: any[]) => {
     if (tasks && tasks.length > 0) {
-      const filteredTaskDataByStatus = tasks?.reduce(
-        (result, task, index) => {
-          if (task.status_id === statusId) {
-            result.tasksByStatus.push(task);
-            result.attachedFilesByStatus.push(attachedFileList[index]);
-            result.downloadUrlsByStatus.push(downloadUrlList[index]);
-          }
-          return result;
-        },
-        {
-          tasksByStatus: [],
-          attachedFilesByStatus: [],
-          downloadUrlsByStatus: [],
-        }
-      );
-      return filteredTaskDataByStatus;
+      const tasksByStatus = tasks.filter((task) => task.status_id === statusId);
+      return tasksByStatus;
     } else {
-      return {};
+      return [];
     }
   };
 
   return (
     <DndProvider backend={HTML5Backend}>
       <div className={styles.board}>
-        {statuses.map((status) => (
+        {statusData.map((status) => (
           <div key={status.id}>
             <div className={styles[`status-icon-container`]}>
               <div
@@ -379,12 +402,8 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
             <TaskList
               userId={userId}
               status={status}
-              taskData={getTaskDataByStatus(
-                status.id,
-                taskData!,
-                attachedFileData!,
-                downloadUrlData!
-              )}
+              taskData={getTaskDataByStatus(status.id, smallProjectTask!)}
+              attachedFileData={taskAttachedFileListData}
               moveTask={moveTask}
             />
           </div>
