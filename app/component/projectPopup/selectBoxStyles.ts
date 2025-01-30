@@ -55,7 +55,7 @@ export const selectBoxStyles = {
     border: "1px solid black",
     borderRadius: "0",
     maxHeight: "40vh",
-    overflowY: "auto",
+    overflowY: "visible", 
   }),
   menuList: (baseStyles: any) => ({
     ...baseStyles,
