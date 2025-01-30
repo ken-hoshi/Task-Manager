@@ -57,6 +57,12 @@ export const selectBoxStyles = {
     maxHeight: "40vh",
     overflowY: "auto",
   }),
+  menuList: (baseStyles: any) => ({
+    ...baseStyles,
+    padding: 0,
+    maxHeight: "40vh",
+    overflowY: "auto",
+  }),
   option: (baseStyles: any, state: { isSelected: any; isFocused: any }) => ({
     ...baseStyles,
     backgroundColor: state.isSelected
