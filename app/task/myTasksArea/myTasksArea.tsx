@@ -96,7 +96,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
     if (myTasks.length > 0) {
       const taskData = onFilter
         ? myTasks.filter(
-            (task) => task.status_id !== 3 || !task.small_projects.isFinished
+            (task) => task.status_id !== 3 && !task.small_projects.isFinished
           )
         : myTasks.filter((task) => !task.small_projects.isFinished);
 
@@ -185,7 +185,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
   const handleFilter = () => {
     if (!onFilter) {
       const notCompletedMyTasks = myTasks.filter(
-        (tasks) => tasks.status_id !== 3
+        (task) => task.status_id !== 3 && !task.small_projects.isFinished
       );
 
       const myTaskStatuses = notCompletedMyTasks.map((myTask) => {
@@ -199,9 +199,9 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
       setMyTaskList(notCompletedMyTasks);
       getTaskGenreDataArray(notCompletedMyTasks);
       fetchAttachedFilesData(notCompletedMyTasks);
-      setTaskArrowJudgeData((prevTaskArrowJudgeData) =>
-        prevTaskArrowJudgeData.map((taskArrowJudgeData) => ({
-          taskId: taskArrowJudgeData.taskId,
+      setTaskArrowJudgeData(
+        notCompletedMyTasks.map((task) => ({
+          taskId: task.id,
           arrowJudge: false,
         }))
       );
@@ -350,7 +350,6 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
                 ? (taskGenreData.numberOfDays ?? 0) *
                   (taskGenreData.numberOfPersons ?? 0)
                 : 0;
-
               const taskArrowJudge = taskArrowJudgeData.find(
                 (taskArrowJudge) => taskArrowJudge.taskId === myTask.id
               )!.arrowJudge;
