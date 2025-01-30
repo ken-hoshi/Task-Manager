@@ -123,14 +123,17 @@ const Header: React.FC<HeaderProps> = ({ projectId, projectName, userId }) => {
 
   return (
     <>
-      <div className={projectName ? styles[`none-back-header`] : styles.header}>
+      <div className={styles.header}>
         {projectName && (
-          <span
-            className={classNames("material-symbols-outlined", styles.back)}
-            onClick={handleBack}
-          >
-            arrow_back
-          </span>
+          <div className={styles[`back-button-container`]}>
+            {" "}
+            <span
+              className={classNames("material-symbols-outlined", styles.back)}
+              onClick={handleBack}
+            >
+              arrow_back
+            </span>
+          </div>
         )}
 
         {projectName && (
