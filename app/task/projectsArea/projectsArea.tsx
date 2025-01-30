@@ -143,7 +143,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
       setAttachedFileData(attachedFileDataArray);
 
       if (projectArrowJudgeData.some((project) => project.arrowJudge)) {
-        const detailsOpenProjectIdList = projectDataArray
+        const detailsOpenProjectIdList = projectArrowJudgeData
           .filter((projectArrowJudge) => projectArrowJudge.arrowJudge)
           .map((projectArrowJudge) => projectArrowJudge.projectId);
 
