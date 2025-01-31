@@ -60,13 +60,23 @@ const AiChatArea: React.FC<AiChatAreaProps> = ({ setIsOpen }) => {
     return (
       <div ref={isUserMessage ? userMessageRef : null}>
         {isUserMessage ? (
-          <div>{message.content}</div>
+          <div>
+            {message.content.split("\n").map((line, index) => (
+              <React.Fragment key={index}>
+                {line}
+                <br />
+              </React.Fragment>
+            ))}
+          </div>
         ) : (
-          <ReactMarkdown>{message.content}</ReactMarkdown>
+          <ReactMarkdown >
+            {message.content}
+          </ReactMarkdown>
         )}
       </div>
     );
   };
+
 
   return (
     <div className={styles[`chat-area`]}>

@@ -351,7 +351,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
           PROJECTS
         </div>
         <div className={styles[`background-area`]}>
-          <p>Finished Project</p>
+          <p>Finished Projects</p>
           <div
             className={classNames(styles.toggle, {
               [styles.checked]: filterFinishedProjects,

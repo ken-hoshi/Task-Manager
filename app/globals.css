@@ -1,6 +1,13 @@
+html,
+body {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
   margin: 0;
-  font-family: "Roboto", sans-serif;
+  font-family: "Segoe UI", "Roboto", sans-serif;
   font-size: 2vh;
   background-color: #d0e0e3;
 }
