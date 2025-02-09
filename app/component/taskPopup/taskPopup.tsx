@@ -207,7 +207,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           console.error("Error Fetch Task Details ", error);
           onClose();
           setNotificationValue({
-            message: "Couldn't get the Task data.",
+            message: "Couldn't get the Task Data.",
             color: 1,
           });
         }
@@ -322,7 +322,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           console.error("Error Fetch Task Details ", error);
           onClose();
           setNotificationValue({
-            message: "Couldn't get the Task data.",
+            message: "Couldn't get the Task Data.",
             color: 1,
           });
         }
@@ -368,7 +368,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         console.error("Error Fetch Task Details ", error);
         onClose();
         setNotificationValue({
-          message: "Couldn't get the Task data.",
+          message: "Couldn't get the Task Data.",
           color: 1,
         });
       }
@@ -404,7 +404,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         const { data: taskGenreData, error: selectTaskGenreError } =
           await clientSupabase
             .from("task_genre")
-            .select("id,task_genre_name, start_date, deadline_date")
+            .select("id, task_genre_name, start_date, deadline_date")
             .eq("small_project_id", selectedSmallProject!.value);
 
         if (selectTaskGenreError) {
@@ -422,7 +422,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         console.error("Error Fetch Task Details ", error);
         onClose();
         setNotificationValue({
-          message: "Couldn't get the Task data.",
+          message: "Couldn't get the Task Data.",
           color: 1,
         });
       }
@@ -665,6 +665,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           taskId,
           null,
           null,
+          null,
           1,
           []
         );
@@ -728,6 +729,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           taskId,
           null,
           null,
+          null,
           0,
           []
         );
@@ -748,9 +750,9 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         onClose();
       }
     } catch (error) {
-      console.error(taskId ? "Error edit task " : "Error add task ", error);
+      console.error(taskId ? "Error Update Task " : "Error Add Task ", error);
       setNotificationValue({
-        message: taskId ? "Task was not edited." : "Task was not added.",
+        message: taskId ? "Couldn't update task." : "Couldn't add task.",
         color: 1,
       });
       setPostLoading(false);

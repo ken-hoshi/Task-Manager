@@ -350,6 +350,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         Number(id),
         null,
         null,
+        null,
         1,
         []
       );
@@ -360,9 +361,9 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         );
       }
     } catch (error) {
-      console.error("Error Update status ", error);
+      console.error("Error Update Status ", error);
       setNotificationValue({
-        message: "Couldn't change the Status data.",
+        message: "Couldn't update Status.",
         color: 1,
       });
       setPageUpdated(true);

@@ -3,6 +3,7 @@ import { getSmallProjectMember } from "./getSmallProjectMember";
 import { getSmallProjectStatus } from "./getSmallProjectStatus";
 import { getSmallProjectTaskGenre } from "./getSmallProjectTaskGenre";
 import { clientSupabase } from "../supabase/client";
+import { getSmallProjectWikiData } from "./getSmallProjectWikiData";
 
 export const fetchProjectDetailsData = async (projectId: number) => {
   try {
@@ -41,20 +42,25 @@ export const fetchProjectDetailsData = async (projectId: number) => {
       throw new Error("Small Project Id couldn't get.");
     }
 
-    const smallProjectIdList: number[] = smallProjectPromiseResult.data.map(
-      (smallProject) => smallProject.id
-    );
+    const smallProjectIdList: number[] = smallProjectPromiseResult.data
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
+      .map((smallProject) => smallProject.id);
 
     const [
       smallProjectMembersData,
       smallProjectStatusData,
       smallProjectTaskGenreData,
       smallProjectAttachedFileData,
+      smallProjectWikiData
     ] = await Promise.all([
       getSmallProjectMember(smallProjectIdList),
       getSmallProjectStatus(smallProjectIdList),
       getSmallProjectTaskGenre(smallProjectIdList),
       fetchAttachedFiles(0, smallProjectIdList),
+      getSmallProjectWikiData(smallProjectIdList)
     ]);
 
     const { data: tasksData, error: selectTasksDataError } =
@@ -103,6 +109,7 @@ export const fetchProjectDetailsData = async (projectId: number) => {
       tasksDividedBySmallProjectId,
       smallProjectAttachedFileData,
       taskAttachedFileData,
+      smallProjectWikiData
     };
   } catch (error) {
     console.error("Error Fetch Project Details Data ", error);

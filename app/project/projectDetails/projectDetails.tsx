@@ -220,7 +220,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
       if (updateSmallProjectError) {
         console.error("Error Update Small Projects", updateSmallProjectError);
         setNotificationValue({
-          message: "Couldn't update the Small Project data.",
+          message: "Couldn't update the Small Project Data.",
           color: 1,
         });
       }

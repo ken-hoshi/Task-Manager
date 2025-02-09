@@ -1,0 +1,533 @@
+.wiki-page-area {
+  margin: 0 auto;
+  background-color: #25bafa;
+  border-radius: 0 0 1vh 1vh;
+  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.8);
+  width: 70vw;
+  height: 80vh;
+  border: none;
+  position: relative;
+}
+
+.container-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.left-area {
+  flex: 1;
+  height: 100%;
+}
+
+.page-list-area-container {
+  height: 50%;
+}
+
+.page-list-area {
+  margin-top: 5vh;
+}
+
+.page-list-title {
+  text-align: center;
+  color: white;
+}
+
+.list-container {
+  background-color: #d9d9d9;
+  width: 80%;
+  height: 35vh;
+  margin: 0 auto;
+  border-radius: 1vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.list-area {
+  background-color: white;
+  width: 80%;
+  height: 80%;
+  overflow-x: auto;
+}
+
+.list {
+  text-align: flex-start;
+  padding: 1vh;
+  cursor: pointer;
+}
+
+.list:hover {
+  background-color: #d0eeff;
+}
+
+.markdown-explain-title {
+  text-align: center;
+  color: white;
+}
+
+.markdown-explain-container {
+  background-color: #d9d9d9;
+  width: 80%;
+  height: 28vh;
+  margin: 0 auto;
+  border-radius: 1vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.markdown-explain {
+  background-color: white;
+  height: 75%;
+  width: 11vw;
+  padding: 1vh 0.8vh 1vh 1vh;
+  overflow-y: auto;
+}
+
+.markdown-explain::-webkit-scrollbar {
+  width: 0.8vh !important;
+}
+
+.markdown-explain::-webkit-scrollbar-thumb {
+  background-color: #b4b4b4;
+  border-radius: 1vh;
+}
+
+.markdown-explain::-webkit-scrollbar-thumb:hover {
+  background-color: #8d8d8d;
+}
+
+.explain-title {
+  margin: 1vh auto;
+  font-weight: 600;
+}
+
+.markdown-explain pre {
+  background-color: #272822;
+  color: #eee;
+  padding: 1vh;
+  margin: 0;
+  border-radius: 0.5vh;
+  overflow-x: auto;
+  font-family: "Fira Code", monospace;
+  box-shadow: inset 0px 0px 5px rgba(0, 0, 0, 0.2);
+}
+
+.markdown-explain code {
+  background-color: #f1f3f4;
+  color: #d93025;
+  border-radius: 0.8vh;
+  font-family: "Fira Code", monospace;
+}
+
+.markdown-explain pre code {
+  color: #ffffff !important;
+  background-color: #272822;
+}
+
+.markdown-explain pre::-webkit-scrollbar {
+  height: 0;
+}
+.markdown-explain pre::-webkit-scrollbar:horizontal {
+  height: 1vh !important;
+}
+
+.markdown-explain pre::-webkit-scrollbar-thumb:horizontal {
+  background-color: #b4b4b4;
+  border-radius: 1vh;
+}
+
+.markdown-explain ul,
+.markdown-explain ol {
+  padding-left: 2vw;
+}
+
+.markdown-explain blockquote {
+  background: #f1f3f4;
+  border-left: 4px solid #1a73e8;
+  padding: 1vh;
+  margin: 1.5vh 0;
+  font-style: italic;
+  color: #5f6368;
+}
+
+.markdown-explain table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5vh 0;
+  font-size: 1.5vh;
+}
+
+.markdown-explain th,
+.markdown-explain td {
+  border: 1px solid #000000;
+  text-align: left;
+  padding: 0.5vh;
+}
+
+.markdown-explain th {
+  background-color: #0080ff;
+  color: white;
+  font-weight: bold;
+}
+
+.markdown-explain ul {
+  padding-left: 0.5vw;
+}
+
+.check-list-container {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.markdown-explain input[type="checkbox"] {
+  appearance: none;
+  width: 2vh;
+  height: 2vh;
+  border: solid 0.1vh #000000;
+  border-radius: 0.6vh;
+  background-color: white;
+  position: relative;
+  margin: 0 0.5vh;
+}
+
+.markdown-explain input[type="checkbox"]:checked {
+  background-color: #007bff;
+  border-color: #0056b3;
+}
+
+.markdown-explain input[type="checkbox"]:checked::after {
+  content: "✔";
+  color: white;
+  font-size: 1.5vh;
+  font-weight: bold;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.right-area {
+  flex: 3;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  height: 100%;
+}
+
+.wiki-area {
+  width: 50vw;
+  height: 85%;
+}
+
+.button-area {
+  width: 100%;
+}
+
+.button-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 4vh;
+}
+
+.edit-button,
+.add-button,
+.delete-button {
+  font-size: 4vh !important;
+  color: white;
+  cursor: pointer;
+}
+
+.edit-button:hover,
+.add-button:hover,
+.delete-button:hover {
+  color: #969696;
+}
+
+.wiki-content-area {
+  background-color: #d9d9d9;
+  border-radius: 1vh;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wiki-container {
+  width: 95%;
+}
+
+.title-area {
+  padding: 2vh;
+  font-size: 3vh;
+  text-align: center;
+  background-color: white;
+}
+
+.content-area {
+  height: 50vh;
+  margin-top: 2vh;
+  background-color: white;
+  overflow-wrap: break-word;
+  position: relative;
+}
+
+.markdown-container {
+  height: 46vh;
+  position: absolute;
+  z-index: 1001;
+  overflow-y: auto;
+  padding: 1.5vh;
+  width: 98%;
+  font-family: "Roboto", sans-serif;
+}
+
+.background-image2 {
+  opacity: 0.5;
+  filter: blur(3px);
+  z-index: 1000;
+  position: fixed;
+}
+
+.content-area p{
+  margin: 1vh 0;
+}
+
+.content-area h1 {
+  font-size: 3vh;
+  font-weight: bold;
+  padding-bottom: 5px;
+  margin-bottom: 1rem;
+}
+
+.content-area h2 {
+  font-size: 2.5vh;
+  font-weight: bold;
+  margin-top: 1.5rem;
+  margin-bottom: 0.8rem;
+}
+
+.content-area h3 {
+  font-size: 2vh;
+  font-weight: bold;
+  margin-top: 1.2rem;
+  margin-bottom: 0.6rem;
+}
+
+.content-area ul,
+.content-area ol {
+  padding-left: 1.5rem;
+}
+
+.content-area li {
+  margin-bottom: 0.5vh;
+  position: relative;
+}
+
+.content-area blockquote {
+  background: #f1f3f4;
+  border-left: 4px solid #1a73e8;
+  padding: 0.5vh;
+  margin: 0.5vh 0;
+  font-style: italic;
+  color: #5f6368;
+}
+
+.content-area a {
+  color: #1a73e8;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.content-area a:hover {
+  text-decoration: underline;
+}
+
+.content-area pre {
+  background-color: #272822;
+  max-width: 100%;
+  color: #eee;
+  border-radius: 1vh;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow-x: auto;
+  font-family: "Fira Code", monospace;
+  box-shadow: inset 0px 0px 5px rgba(0, 0, 0, 0.2);
+}
+
+.content-area code {
+  background-color: #f1f3f4;
+  color: #d93025;
+  display: block;
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  padding: 1vh;
+  border-radius: 1vh;
+  font-family: "Fira Code", monospace;
+  font-size: 2vh;
+}
+
+.content-area pre code {
+  color: #ffffff !important;
+  background-color: #272822;
+  display: block;
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  padding: 1vh;
+}
+
+.content-area table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.content-area th,
+.content-area td {
+  border: 1px solid #000000;
+  padding: 0.5vh;
+  text-align: left;
+}
+
+.content-area th {
+  background-color: #0080ff;
+  color: white;
+  font-weight: bold;
+}
+
+.content-area input[type="checkbox"] {
+  appearance: none;
+  width: 3.5vh;
+  height: 3.5vh;
+  border-radius: 0.8vh;
+  background-color: white;
+  position: absolute;
+  left: -3%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+}
+
+.content-area input[type="checkbox"]:checked {
+  background-color: #007bff;
+  border-color: #0056b3;
+}
+
+.content-area input[type="checkbox"]:checked::after {
+  content: "✔";
+  color: white;
+  font-size: 2vh;
+  font-weight: bold;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.wiki-content-area form {
+  width: 95%;
+}
+
+.title-form {
+  background-color: white;
+  padding: 2vh;
+}
+
+.title-form-input {
+  font-size: 3vh;
+  width: 98%;
+  border-radius: 0.5vh;
+}
+
+.content-form {
+  position: absolute;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.content-form-input {
+  font-size: 2vh;
+  resize: none;
+  height: 44vh;
+  width: 44vw;
+  padding: 1vh;
+  font-family: "Roboto", sans-serif;
+  border-radius: 0.5vh;
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.post-button-area {
+  position: absolute;
+  left: 87%;
+  top: 102%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1vh;
+  z-index: 1001;
+}
+
+.post-button-area button {
+  border: none;
+  border-radius: 1vh;
+  cursor: pointer;
+  width: 4.5vw;
+  height: 4vh;
+  font-size: 2vh;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.post-button-area .cancel {
+  background-color: #f44336;
+  color: white;
+}
+
+.post-button-area .add {
+  background-color: #007bff;
+  color: white;
+}
+
+.post-button-area button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.post-button-area button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.button-spinner {
+  border: 0.5vh solid #f3f3f3;
+  border-top: 0.5vh solid #94bfce;
+  border-radius: 50%;
+  width: 1.5vh;
+  height: 1.5vh;
+  animation: buttonSpin 1s linear infinite;
+  margin: auto;
+}
+
+@keyframes buttonSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

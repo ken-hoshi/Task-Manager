@@ -2,13 +2,11 @@ import React from "react";
 import styles from "./deleteConfirmModal.module.css";
 
 interface DeleteConfirmModalProps {
-  isOpen: boolean;
   onConfirm: () => void;
   closeModal: () => void;
 }
 
 const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
-  isOpen,
   onConfirm,
   closeModal,
 }) => {

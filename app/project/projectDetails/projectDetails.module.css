@@ -116,7 +116,7 @@ td.col-status-situation {
 
 .value {
   border: 1px solid black;
-  border-radius: 1.2vh;
+  border-radius: 1vh;
   width: 3.5vh;
   height: 3.5vh;
   display: flex;

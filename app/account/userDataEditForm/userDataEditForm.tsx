@@ -127,7 +127,7 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
     } catch (error) {
       console.error("Error Update User Data ", error);
       setNotificationValue({
-        message: "Couldn't update User data.",
+        message: "Couldn't update User Data.",
         color: 1,
       });
     }

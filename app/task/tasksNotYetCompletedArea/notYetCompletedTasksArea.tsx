@@ -170,6 +170,7 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
         taskId,
         null,
         null,
+        null,
         1,
         []
       );
@@ -182,7 +183,7 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
     } catch (error) {
       console.error("Error Update Status ", error);
       setNotificationValue({
-        message: "Couldn't change the Status data.",
+        message: "Couldn't update Status.",
         color: 1,
       });
     }
@@ -251,7 +252,7 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
     } catch (error) {
       console.error("Error Add Task Result ", error);
       setNotificationValue({
-        message: "Task Result was not added.",
+        message: "Couldn't add Task Result Data.",
         color: 1,
       });
       setPostLoading(false);

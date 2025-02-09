@@ -132,6 +132,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
           taskId,
           null,
           null,
+          null,
           2,
           []
         );
@@ -161,7 +162,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
       });
     } catch (error) {
       console.error(
-        projectId ? "Error delete project " : "Error delete task ",
+        projectId ? "Error Delete project " : "Error Delete task ",
         error
       );
       setNotificationValue({
@@ -194,7 +195,6 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
       </span>
       {isModalOpen && (
         <DeleteConfirmModal
-          isOpen={isModalOpen}
           onConfirm={handleDelete}
           closeModal={closeModal}
         />

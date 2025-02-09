@@ -1,16 +1,17 @@
 import { clientSupabase } from "./supabase/client";
 
 export async function postMailNotifications(
-  otherId: number | null,
+  notSendUserId: number | null,
   taskId: number | null,
   projectName: string | null,
   smallProjectName: string | null,
+  wikiName: string | null,
   type: number,
   userIdList: number[]
 ) {
   try {
     if (
-      !otherId &&
+      !notSendUserId &&
       taskId &&
       !projectName &&
       !smallProjectName &&
@@ -67,7 +68,11 @@ export async function postMailNotifications(
           .eq("id", taskId)
           .single(),
 
-        clientSupabase.from("users").select("name").eq("id", otherId).single(),
+        clientSupabase
+          .from("users")
+          .select("name")
+          .eq("id", notSendUserId)
+          .single(),
       ]);
       const { data: taskData, error: taskDataSelectError } = taskResult;
       const { data: userName, error: userNameSelectError } = userResult;
@@ -80,7 +85,7 @@ export async function postMailNotifications(
         throw userNameSelectError;
       }
 
-      if (otherId !== taskData.assigned_user_id) {
+      if (notSendUserId !== taskData.assigned_user_id) {
         const text =
           userName.name +
           "さんがタスク「" +
@@ -100,35 +105,70 @@ export async function postMailNotifications(
           throw insertMailNotificationsError;
         }
       }
-    } else if (projectName && smallProjectName && !taskId) {
-      const text = {
-        0:
-          "プロジェクト「" +
-          projectName +
-          "」「" +
-          smallProjectName +
-          "」のメンバーに追加されました。",
-      }[type];
+    } else if (
+      projectName &&
+      smallProjectName &&
+      !wikiName &&
+      !taskId &&
+      userIdList.length > 0
+    ) {
+      const text =
+        "プロジェクト「" +
+        projectName +
+        "」「" +
+        smallProjectName +
+        "」のメンバーに追加されました。";
 
-      if (type === 0 && userIdList && userIdList.length > 0) {
-        await Promise.all(
-          userIdList
-            .filter((id) => id !== otherId)
-            .map(async (filteredId) => {
-              const { error: insertMailNotificationsError } =
-                await clientSupabase.from("mail_notifications").insert({
-                  user_id: filteredId,
-                  text: text,
-                });
+      await Promise.all(
+        userIdList
+          .filter((id) => id !== notSendUserId)
+          .map(async (filteredId) => {
+            const { error: insertMailNotificationsError } = await clientSupabase
+              .from("mail_notifications")
+              .insert({
+                user_id: filteredId,
+                text: text,
+              });
 
-              if (insertMailNotificationsError) {
-                throw insertMailNotificationsError;
-              }
-            })
-        );
-      }
+            if (insertMailNotificationsError) {
+              throw insertMailNotificationsError;
+            }
+          })
+      );
+    } else if (
+      notSendUserId &&
+      !taskId &&
+      projectName &&
+      smallProjectName &&
+      userIdList.length > 0
+    ) {
+      const text =
+        "プロジェクト「" +
+        projectName +
+        "」「" +
+        smallProjectName +
+        "」にWiki 「" +
+        wikiName +
+        "」が追加されました。";
+
+      await Promise.all(
+        userIdList
+          .filter((id) => id !== notSendUserId)
+          .map(async (filteredId) => {
+            const { error: insertMailNotificationsError } = await clientSupabase
+              .from("mail_notifications")
+              .insert({
+                user_id: filteredId,
+                text: text,
+              });
+
+            if (insertMailNotificationsError) {
+              throw insertMailNotificationsError;
+            }
+          })
+      );
     } else {
-      throw new Error("Task ID or Project ID couldn't get.");
+      throw new Error("Couldn't setup arguments.");
     }
     return;
   } catch (error) {

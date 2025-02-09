@@ -98,7 +98,7 @@ const Comment: React.FC<CommentProps> = ({
     } catch (error) {
       console.error("Error Delete Comment ", error);
       setNotificationValue({
-        message: "Comment was not deleted.",
+        message: "Couldn't delete Comment.",
         color: 1,
       });
     }
@@ -117,9 +117,9 @@ const Comment: React.FC<CommentProps> = ({
         throw commentUpdateError;
       }
     } catch (error) {
-      console.error("Error Edit Comment ", error);
+      console.error("Error Update Comment ", error);
       setNotificationValue({
-        message: "Comment was not edited.",
+        message: "Couldn't update Comment.",
         color: 1,
       });
     }
@@ -148,6 +148,7 @@ const Comment: React.FC<CommentProps> = ({
         taskId,
         null,
         null,
+        null,
         3,
         []
       );
@@ -160,7 +161,7 @@ const Comment: React.FC<CommentProps> = ({
     } catch (error) {
       console.error("Error Insert Comment ", error);
       setNotificationValue({
-        message: "Comment was not added.",
+        message: "Couldn't add Comment.",
         color: 1,
       });
     }

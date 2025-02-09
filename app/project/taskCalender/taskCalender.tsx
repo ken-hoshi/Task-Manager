@@ -399,6 +399,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
             taskId,
             null,
             null,
+            null,
             1,
             []
           );
@@ -453,7 +454,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
       }
 
       setNotificationValue({
-        message: "Task was not updated.",
+        message: "Couldn't update Task Data.",
         color: 1,
       });
     }

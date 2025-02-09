@@ -270,12 +270,6 @@ const TaskList: React.FC<TaskListProps> = ({
       setTaskGenreListData([]);
       setTaskAttachedFileListData([]);
     }
-    // setTaskNameClickCount(0);
-    // setStatusClickCount(0);
-    // setStartDateClickCount(0);
-    // setDeadlineDateClickCount(0);
-    // setAssignedUserClickCount(0);
-    // setNumberOfDaysClickCount(0);
   }, [filterMyTasks, pageUpdated, displaySmallProjectId]);
 
   const getStatusOptions = (selectedStatusId: number): Option[] => {
@@ -303,6 +297,7 @@ const TaskList: React.FC<TaskListProps> = ({
         taskId,
         null,
         null,
+        null,
         1,
         []
       );
@@ -315,7 +310,7 @@ const TaskList: React.FC<TaskListProps> = ({
     } catch (error) {
       console.error("Error Update Status ", error);
       setNotificationValue({
-        message: "Couldn't change the Status data.",
+        message: "Couldn't update Status.",
         color: 1,
       });
     }
@@ -600,9 +595,9 @@ const TaskList: React.FC<TaskListProps> = ({
       setPostLoading(false);
       setPageUpdated(true);
     } catch (error) {
-      console.error("Error Add Task Result ", error);
+      console.error("Error Add Task Result Data", error);
       setNotificationValue({
-        message: "Task Result was not added.",
+        message: "Couldn't add Task Result Data.",
         color: 1,
       });
       setPostLoading(false);

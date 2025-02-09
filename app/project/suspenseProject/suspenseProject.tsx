@@ -20,6 +20,7 @@ import { useSessionTimeout } from "@/app/hooks/sessionTimeout";
 import { fetchProjectDetailsData } from "@/app/lib/api/fetchProjectDetailsData";
 import { getTaskGenreData } from "@/app/lib/api/getTaskGenreData";
 import { getSmallProjectIdList } from "@/app/lib/api/getSmallProjectIdList";
+import Wiki from "../wiki/wiki";
 
 interface StatusProps {
   id: number;
@@ -88,10 +89,21 @@ interface TaskAttachedFileProps {
   }[];
 }
 
+interface WikiProps {
+  smallProjectId: number;
+  wikiDataArray: {
+    id: number;
+    title: string;
+    content: string;
+    small_project_id: number;
+  }[];
+}
+
 enum Switch {
   list,
   board,
   calender,
+  wiki,
 }
 
 const SuspenseProject: React.FC = () => {
@@ -103,6 +115,7 @@ const SuspenseProject: React.FC = () => {
     list: true,
     board: false,
     calender: false,
+    wiki: false,
   });
 
   const [projectData, setProjectData] = useState<any>({});
@@ -124,10 +137,10 @@ const SuspenseProject: React.FC = () => {
   const [taskGenreData, setTaskGenreData] = useState<TaskGenreProps[]>([]);
   const [smallProjectAttachedFileData, setSmallProjectAttachedFileData] =
     useState<SmallProjectAttachedFileProps[]>([]);
-
   const [taskAttachedFileData, setTaskAttachedFileData] = useState<
     TaskAttachedFileProps[]
   >([]);
+  const [wikiData, setWikiData] = useState<WikiProps[]>([]);
 
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { notificationValue, setNotificationValue } = useNotificationContext();
@@ -177,6 +190,7 @@ const SuspenseProject: React.FC = () => {
           tasksDividedBySmallProjectId,
           smallProjectAttachedFileData,
           taskAttachedFileData,
+          smallProjectWikiData,
         } = await fetchProjectDetailsData(projectId);
 
         if (
@@ -188,9 +202,10 @@ const SuspenseProject: React.FC = () => {
           !smallProjectTaskGenreData ||
           !tasksDividedBySmallProjectId ||
           !smallProjectAttachedFileData ||
-          !taskAttachedFileData
+          !taskAttachedFileData ||
+          !smallProjectWikiData
         ) {
-          throw new Error("Project Data couldn't get.");
+          throw new Error("Couldn't get Project Data.");
         }
         setProjectData(projectData);
         setSmallProjectData(smallProjectData);
@@ -199,6 +214,7 @@ const SuspenseProject: React.FC = () => {
         setSmallProjectStatusData(smallProjectStatusData);
         setSmallProjectTaskGenreData(smallProjectTaskGenreData);
         setSmallProjectAttachedFileData(smallProjectAttachedFileData);
+        setWikiData(smallProjectWikiData);
 
         if (filterMyTasks) {
           const filteredTask = tasksDividedBySmallProjectId.map((taskData) => ({
@@ -255,6 +271,7 @@ const SuspenseProject: React.FC = () => {
           list: true,
           board: false,
           calender: false,
+          wiki: false,
         });
         break;
       case Switch.board:
@@ -262,6 +279,7 @@ const SuspenseProject: React.FC = () => {
           list: false,
           board: true,
           calender: false,
+          wiki: false,
         });
         break;
       case Switch.calender:
@@ -269,6 +287,15 @@ const SuspenseProject: React.FC = () => {
           list: false,
           board: false,
           calender: true,
+          wiki: false,
+        });
+        break;
+      case Switch.wiki:
+        setTabJudgeList({
+          list: false,
+          board: false,
+          calender: false,
+          wiki: true,
         });
         break;
       default:
@@ -276,6 +303,7 @@ const SuspenseProject: React.FC = () => {
           list: true,
           board: false,
           calender: false,
+          wiki: false,
         });
         break;
     }
@@ -343,6 +371,15 @@ const SuspenseProject: React.FC = () => {
                     >
                       Calender
                     </button>
+                    <button
+                      className={classNames(
+                        styles[`tab-button`],
+                        tabJudgeList.wiki && styles.active
+                      )}
+                      onClick={() => handleTabSwitch(Switch.wiki)}
+                    >
+                      Wiki
+                    </button>
                   </div>
                   <div className={styles[`filter-switch-area`]}>
                     <div className={styles[`background-area`]}>
@@ -400,6 +437,14 @@ const SuspenseProject: React.FC = () => {
                       taskData={taskData}
                       smallProjectTaskGenreData={smallProjectTaskGenreData}
                       filterMyTasks={filterMyTasks}
+                    />
+                  )}
+                  {tabJudgeList.wiki && (
+                    <Wiki
+                      userId={params.userId}
+                      smallProjectIdList={smallProjectIds}
+                      displaySmallProjectId={displaySmallProjectId}
+                      wikiDataList={wikiData}
                     />
                   )}
                 </div>

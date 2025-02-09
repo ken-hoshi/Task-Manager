@@ -215,7 +215,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           console.error("Error Fetch Project Details ", error);
           onClose();
           setNotificationValue({
-            message: "Couldn't get the Project data.",
+            message: "Couldn't get the Project Data.",
             color: 1,
           });
         }
@@ -1208,6 +1208,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
               null,
               projectName,
               smallProjectData.smallProjectName,
+              null,
               0,
               smallProjectData.selectedUsers.map((user) => user.value)
             );
