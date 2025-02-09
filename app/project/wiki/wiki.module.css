@@ -62,6 +62,11 @@
   background-color: #d0eeff;
 }
 
+.display-list {
+  background-color: #f1f1f1;
+  font-weight: 600;
+}
+
 .markdown-explain-title {
   text-align: center;
   color: white;
@@ -295,7 +300,7 @@
   position: fixed;
 }
 
-.content-area p{
+.content-area p {
   margin: 1vh 0;
 }
 

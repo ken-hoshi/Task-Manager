@@ -5,7 +5,7 @@
   box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.8);
   width: 70vw;
   height: 80vh;
-  border: 1px solid #878788;
+  border: none;
   position: relative;
 }
 

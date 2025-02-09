@@ -261,7 +261,11 @@ const Wiki: React.FC<WikiProps> = ({
                     {wikiData.length > 0 &&
                       wikiData.map((wiki, index) => (
                         <div
-                          className={styles.list}
+                          className={classNames(
+                            styles.list,
+                            index === displayWikiNumber &&
+                              styles[`display-list`]
+                          )}
                           key={index}
                           onClick={() => setDisplayWikiNumber(index)}
                         >
