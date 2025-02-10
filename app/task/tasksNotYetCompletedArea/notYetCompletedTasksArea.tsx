@@ -650,20 +650,28 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
                                                   </div>
                                                   {userId ===
                                                     assignedUserTaskResult.userId && (
-                                                    <span
-                                                      className={classNames(
-                                                        "material-symbols-outlined",
-                                                        styles[`cancel-icon`]
-                                                      )}
-                                                      onClick={(e) =>
-                                                        handleResetResult(
-                                                          e,
-                                                          assignedUserTaskResult.taskId
-                                                        )
+                                                    <div
+                                                      className={
+                                                        styles[
+                                                          "cancel-icon-container"
+                                                        ]
                                                       }
                                                     >
-                                                      cancel
-                                                    </span>
+                                                      <span
+                                                        className={classNames(
+                                                          "material-symbols-outlined",
+                                                          styles[`cancel-icon`]
+                                                        )}
+                                                        onClick={(e) =>
+                                                          handleResetResult(
+                                                            e,
+                                                            assignedUserTaskResult.taskId
+                                                          )
+                                                        }
+                                                      >
+                                                        cancel
+                                                      </span>
+                                                    </div>
                                                   )}
                                                 </div>
                                               )

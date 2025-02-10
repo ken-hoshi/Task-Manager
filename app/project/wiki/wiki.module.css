@@ -14,15 +14,16 @@
   justify-content: center;
   align-items: center;
   height: 100%;
+  width: 100%;
 }
 
 .left-area {
-  flex: 1;
+  flex: 1.2;
   height: 100%;
 }
 
 .page-list-area-container {
-  height: 50%;
+  height: 47.5%;
 }
 
 .page-list-area {
@@ -36,8 +37,8 @@
 
 .list-container {
   background-color: #d9d9d9;
-  width: 80%;
-  height: 35vh;
+  width: 90%;
+  height: 30vh;
   margin: 0 auto;
   border-radius: 1vh;
   display: flex;
@@ -47,7 +48,7 @@
 
 .list-area {
   background-color: white;
-  width: 80%;
+  width: 85%;
   height: 80%;
   overflow-x: auto;
 }
@@ -87,8 +88,8 @@
 
 .markdown-explain-container {
   background-color: #d9d9d9;
-  width: 80%;
-  height: 28vh;
+  width: 90%;
+  height: 30vh;
   margin: 0 auto;
   border-radius: 1vh;
   display: flex;
@@ -99,7 +100,7 @@
 .markdown-explain {
   background-color: white;
   height: 75%;
-  width: 11vw;
+  width: 80%;
   padding: 1vh 0.8vh 1vh 1vh;
   overflow-y: auto;
 }
@@ -127,6 +128,7 @@
   color: #eee;
   padding: 1vh;
   line-height: 1.5;
+  max-width: 15vw;
   margin: 0;
   border-radius: 0.5vh;
   overflow-x: auto;
@@ -238,14 +240,13 @@
 .right-area {
   flex: 3;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
-  width: 100%;
   height: 100%;
 }
 
 .wiki-area {
-  width: 50vw;
+  width: 98%;
   height: 85%;
 }
 
@@ -306,7 +307,6 @@
 .markdown-container {
   height: 46vh;
   position: absolute;
-  z-index: 1001;
   overflow-y: auto;
   padding: 1.5vh;
   width: 98%;
@@ -329,8 +329,6 @@
 .background-image2 {
   opacity: 0.5;
   filter: blur(3px);
-  z-index: 1000;
-  position: fixed;
 }
 
 .content-area p {

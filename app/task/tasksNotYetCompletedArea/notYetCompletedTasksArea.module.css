@@ -238,6 +238,7 @@
 }
 
 .background-image2 {
+  max-height: 85vh;
   opacity: 0.3;
   filter: blur(3px);
   z-index: -1;
@@ -449,9 +450,16 @@
   width: 85%;
 }
 
+.cancel-icon-container{
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .cancel-icon {
-  color: red;
-  font-size: 3vh !important;
+  color: rgb(255, 53, 53);
+  font-size: 2.5vh !important;
   cursor: pointer;
 }
 

@@ -1289,22 +1289,30 @@ const TaskList: React.FC<TaskListProps> = ({
                                                           </div>
                                                           {userId ===
                                                             assignedUserTaskResult.userId && (
-                                                            <span
-                                                              className={classNames(
-                                                                "material-symbols-outlined",
+                                                            <div
+                                                              className={
                                                                 styles[
-                                                                  `cancel-icon`
+                                                                  "cancel-icon-container"
                                                                 ]
-                                                              )}
-                                                              onClick={(e) =>
-                                                                handleResetResult(
-                                                                  e,
-                                                                  assignedUserTaskResult.taskId
-                                                                )
                                                               }
                                                             >
-                                                              cancel
-                                                            </span>
+                                                              <span
+                                                                className={classNames(
+                                                                  "material-symbols-outlined",
+                                                                  styles[
+                                                                    `cancel-icon`
+                                                                  ]
+                                                                )}
+                                                                onClick={(e) =>
+                                                                  handleResetResult(
+                                                                    e,
+                                                                    assignedUserTaskResult.taskId
+                                                                  )
+                                                                }
+                                                              >
+                                                                cancel
+                                                              </span>
+                                                            </div>
                                                           )}
                                                         </div>
                                                       )

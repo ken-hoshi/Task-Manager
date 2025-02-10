@@ -25,6 +25,7 @@ const h1: React.CSSProperties = {
   fontSize: "8vh",
   textAlign: "center",
   marginBottom: 0,
+  color:"red",
 };
 
 const p: React.CSSProperties = {
