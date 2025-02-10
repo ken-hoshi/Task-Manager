@@ -562,10 +562,40 @@ const TaskList: React.FC<TaskListProps> = ({
     );
   };
 
+  const handleResetResult = async (
+    e: { preventDefault: () => void },
+    taskId: number
+  ) => {
+    e.preventDefault();
+
+    try {
+      const { error: taskResultUpdateError } = await clientSupabase
+        .from("tasks")
+        .update({
+          result_start_date: null,
+          result_deadline_date: null,
+          number_of_result_days: null,
+        })
+        .eq("id", taskId);
+
+      if (taskResultUpdateError) {
+        throw taskResultUpdateError;
+      }
+
+      setPageUpdated(true);
+    } catch (error) {
+      console.error("Error Update Task Result Data", error);
+      setNotificationValue({
+        message: "Couldn't update Task Result Data.",
+        color: 1,
+      });
+      setPageUpdated(true);
+    }
+  };
+
   const handleSubmit = async (
     e: { preventDefault: () => void },
-    taskId: number,
-    taskGenreId: number
+    taskId: number
   ) => {
     e.preventDefault();
 
@@ -1210,43 +1240,72 @@ const TaskList: React.FC<TaskListProps> = ({
                                                     {taskGenreMatchedTaskId.taskGenre.assignedUserTaskResultData.map(
                                                       (
                                                         assignedUserTaskResult: {
+                                                          userId: number;
                                                           userName: string;
+                                                          taskId: number;
                                                           taskName: string;
                                                           numberOfResultDays: number;
                                                         },
                                                         index: number
                                                       ) => (
                                                         <div
-                                                          key={index}
                                                           className={
                                                             styles[
-                                                              "assigned-user-list"
+                                                              "assigned-user-list-container"
                                                             ]
                                                           }
+                                                          key={index}
                                                         >
-                                                          <div>
-                                                            {
-                                                              assignedUserTaskResult.userName
-                                                            }
-                                                          </div>
                                                           <div
                                                             className={
                                                               styles[
-                                                                "result-area-task-name"
+                                                                "assigned-user-list"
                                                               ]
                                                             }
                                                           >
-                                                            {
-                                                              assignedUserTaskResult.taskName
-                                                            }
+                                                            <div>
+                                                              {
+                                                                assignedUserTaskResult.userName
+                                                              }
+                                                            </div>
+                                                            <div
+                                                              className={
+                                                                styles[
+                                                                  "result-area-task-name"
+                                                                ]
+                                                              }
+                                                            >
+                                                              {
+                                                                assignedUserTaskResult.taskName
+                                                              }
+                                                            </div>
+                                                            <div>
+                                                              {(assignedUserTaskResult.numberOfResultDays
+                                                                ? assignedUserTaskResult.numberOfResultDays
+                                                                : 0
+                                                              ).toFixed(1)}
+                                                              {" days"}
+                                                            </div>
                                                           </div>
-                                                          <div>
-                                                            {(assignedUserTaskResult.numberOfResultDays
-                                                              ? assignedUserTaskResult.numberOfResultDays
-                                                              : 0
-                                                            ).toFixed(1)}
-                                                            {" days"}
-                                                          </div>
+                                                          {userId ===
+                                                            assignedUserTaskResult.userId && (
+                                                            <span
+                                                              className={classNames(
+                                                                "material-symbols-outlined",
+                                                                styles[
+                                                                  `cancel-icon`
+                                                                ]
+                                                              )}
+                                                              onClick={(e) =>
+                                                                handleResetResult(
+                                                                  e,
+                                                                  assignedUserTaskResult.taskId
+                                                                )
+                                                              }
+                                                            >
+                                                              cancel
+                                                            </span>
+                                                          )}
                                                         </div>
                                                       )
                                                     )}
@@ -1333,11 +1392,7 @@ const TaskList: React.FC<TaskListProps> = ({
                                               task.assigned_user_id && (
                                               <form
                                                 onSubmit={(e) =>
-                                                  handleSubmit(
-                                                    e,
-                                                    task.id,
-                                                    task.task_genre_id
-                                                  )
+                                                  handleSubmit(e, task.id)
                                                 }
                                                 className={
                                                   styles[`task-result-form`]

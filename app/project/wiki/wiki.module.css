@@ -105,7 +105,7 @@
 }
 
 .markdown-explain::-webkit-scrollbar {
-  width: 0.8vh !important;
+  width: 1vh !important;
 }
 
 .markdown-explain::-webkit-scrollbar-thumb {

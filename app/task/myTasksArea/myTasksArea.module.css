@@ -365,7 +365,7 @@
   margin: 0 auto;
   padding: 1.5vh 0;
   border-bottom: 1.5px dotted black;
-  width: 80%;
+  width: 90%;
 }
 
 .flex-area {
@@ -430,13 +430,17 @@
 .task-genre-area {
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .task-genre-block {
   background-color: #ffffff;
   border-radius: 1vh;
   width: 25vh;
+  height: 20vh;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+  margin: 0.8vh;
+  padding: 0.5vh;
 }
 
 .task-genre-name {
@@ -445,6 +449,7 @@
   color: #000000;
   word-break: break-word;
   white-space: pre-wrap;
+  padding: 0.3vh;
 }
 
 .task-genre-table-container {
@@ -455,8 +460,13 @@
 
 .task-genre-area table {
   border-collapse: collapse;
-  margin: 1vh;
+  margin: 0;
   box-shadow: none;
+  width: 100% !important;
+}
+
+.task-genre-area tbody {
+  width: 100% !important;
 }
 
 .task-genre-area td {
@@ -520,6 +530,13 @@
   background-color: #f0f0f0;
 }
 
+.assigned-user-list-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
 .assigned-user-list {
   display: flex;
   justify-content: space-between;
@@ -529,7 +546,18 @@
   box-shadow: 2px 1px 1px rgba(0, 0, 0, 0.5);
   border-radius: 0.5vh;
   padding: 0.5vh;
-  margin: 0.5vh;
+  margin: 0.5vh 0.5vh 0.5vh 0;
+  width: 85%;
+}
+
+.cancel-icon {
+  color: red;
+  font-size: 2.5vh !important;
+  cursor: pointer;
+}
+
+.cancel-icon:hover {
+  color: #f1746b;
 }
 
 .result-task-name {
@@ -576,6 +604,7 @@
 .task-result-form {
   margin-top: 2vh;
   font-size: 1.5vh;
+  width: 100%;
 }
 
 .date-picker {
@@ -587,7 +616,7 @@
   font-size: 1.5vh;
   font-family: "Roboto", sans-serif;
   text-align: center;
-  width: 16vw !important;
+  width: 17.8vw !important;
   top: 0;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
 }

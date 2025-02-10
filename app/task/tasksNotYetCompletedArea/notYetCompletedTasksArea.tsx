@@ -218,6 +218,37 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
     );
   };
 
+  const handleResetResult = async (
+    e: { preventDefault: () => void },
+    taskId: number
+  ) => {
+    e.preventDefault();
+
+    try {
+      const { error: taskResultUpdateError } = await clientSupabase
+        .from("tasks")
+        .update({
+          result_start_date: null,
+          result_deadline_date: null,
+          number_of_result_days: null,
+        })
+        .eq("id", taskId);
+
+      if (taskResultUpdateError) {
+        throw taskResultUpdateError;
+      }
+
+      setPageUpdated(true);
+    } catch (error) {
+      console.error("Error Update Task Result Data", error);
+      setNotificationValue({
+        message: "Couldn't update Task Result Data.",
+        color: 1,
+      });
+      setPageUpdated(true);
+    }
+  };
+
   const handleSubmit = async (
     e: { preventDefault: () => void },
     taskId: number
@@ -570,39 +601,70 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
                                             {taskGenreData.assignedUserTaskResultData.map(
                                               (
                                                 assignedUserTaskResult: {
+                                                  userId: number;
                                                   userName: string;
+                                                  taskId: number;
                                                   taskName: string;
                                                   numberOfResultDays: number;
                                                 },
-                                                i: number
+                                                index: number
                                               ) => (
                                                 <div
-                                                  key={i}
                                                   className={
-                                                    styles["assigned-user-list"]
+                                                    styles[
+                                                      "assigned-user-list-container"
+                                                    ]
                                                   }
+                                                  key={index}
                                                 >
-                                                  <div>
-                                                    {
-                                                      assignedUserTaskResult.userName
-                                                    }
-                                                  </div>
                                                   <div
                                                     className={
-                                                      styles["result-task-name"]
+                                                      styles[
+                                                        "assigned-user-list"
+                                                      ]
                                                     }
                                                   >
-                                                    {
-                                                      assignedUserTaskResult.taskName
-                                                    }
+                                                    <div>
+                                                      {
+                                                        assignedUserTaskResult.userName
+                                                      }
+                                                    </div>
+                                                    <div
+                                                      className={
+                                                        styles[
+                                                          "result-task-name"
+                                                        ]
+                                                      }
+                                                    >
+                                                      {
+                                                        assignedUserTaskResult.taskName
+                                                      }
+                                                    </div>
+                                                    <div>
+                                                      {(assignedUserTaskResult.numberOfResultDays
+                                                        ? assignedUserTaskResult.numberOfResultDays
+                                                        : 0
+                                                      ).toFixed(1)}
+                                                      {" days"}
+                                                    </div>
                                                   </div>
-                                                  <div>
-                                                    {(assignedUserTaskResult.numberOfResultDays
-                                                      ? assignedUserTaskResult.numberOfResultDays
-                                                      : 0
-                                                    ).toFixed(1)}
-                                                    {" days"}
-                                                  </div>
+                                                  {userId ===
+                                                    assignedUserTaskResult.userId && (
+                                                    <span
+                                                      className={classNames(
+                                                        "material-symbols-outlined",
+                                                        styles[`cancel-icon`]
+                                                      )}
+                                                      onClick={(e) =>
+                                                        handleResetResult(
+                                                          e,
+                                                          assignedUserTaskResult.taskId
+                                                        )
+                                                      }
+                                                    >
+                                                      cancel
+                                                    </span>
+                                                  )}
                                                 </div>
                                               )
                                             )}

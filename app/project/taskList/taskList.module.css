@@ -346,6 +346,12 @@ th.col-assigned-person {
   flex: 1;
 }
 
+.task-genre-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .task-genre-block {
   background-color: #ffffff;
   border-radius: 1vh;
@@ -353,6 +359,7 @@ th.col-assigned-person {
   height: 25vh;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
   margin: 1vh;
+  padding: 0.5vh;
 }
 
 .task-genre-name {
@@ -361,6 +368,7 @@ th.col-assigned-person {
   color: #000000;
   word-break: break-word;
   white-space: pre-wrap;
+  padding: 0.5vh;
 }
 
 .task-genre-table-container {
@@ -369,20 +377,15 @@ th.col-assigned-person {
   align-items: center;
 }
 
-.task-genre-area {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .task-genre-area table {
   border-collapse: collapse;
-  margin: 0.5vh;
+  margin: 0;
   box-shadow: none;
+  width: 100% !important
 }
 
 .task-genre-area tbody {
-  width: 30vh;
+  width: 100% !important
 }
 
 .task-genre-area td {
@@ -450,7 +453,7 @@ th.col-assigned-person {
 }
 
 .result-area-task-name {
-  max-width: 10vw;
+  max-width: 9vw;
   margin: 0 auto;
   word-break: break-all;
   display: -webkit-box;
@@ -459,6 +462,13 @@ th.col-assigned-person {
   text-overflow: ellipsis;
   -webkit-line-clamp: 2;
   line-clamp: 2;
+}
+
+.assigned-user-list-container {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .assigned-user-list {
@@ -471,6 +481,17 @@ th.col-assigned-person {
   border-radius: 0.5vh;
   padding: 0.5vh;
   margin: 0.5vh;
+  width: 85%;
+}
+
+.cancel-icon {
+  color: red;
+  font-size: 4vh !important;
+  cursor: pointer;
+}
+
+.cancel-icon:hover {
+  color: #f1746b;
 }
 
 .sum-result-area-container {
