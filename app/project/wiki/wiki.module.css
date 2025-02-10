@@ -135,9 +135,10 @@
 }
 
 .markdown-explain code {
-  background-color: #f1f3f4;
+  background-color: #e2e2e2;
   color: #d93025;
-  border-radius: 0.8vh;
+  padding: 0.3vh;
+  border-radius: 0.5vh;
   font-family: "Fira Code", monospace;
 }
 
@@ -353,8 +354,8 @@
 }
 
 .content-area em {
-  font-style: italic !important;
-  font-family: "Segoe UI", "Arial", "Helvetica", "sans-serif";
+  display: inline-block;
+  transform: skewX(-10deg);
 }
 
 .content-area ul,
