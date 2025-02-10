@@ -355,11 +355,10 @@ th.col-assigned-person {
 .task-genre-block {
   background-color: #ffffff;
   border-radius: 1vh;
-  width: 32vh;
-  height: 25vh;
+  width: 30vh;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
   margin: 1vh;
-  padding: 0.5vh;
+  padding: 0.5vh 1vh 1vh 1vh;
 }
 
 .task-genre-name {
@@ -381,11 +380,11 @@ th.col-assigned-person {
   border-collapse: collapse;
   margin: 0;
   box-shadow: none;
-  width: 100% !important
+  width: 100% !important;
 }
 
 .task-genre-area tbody {
-  width: 100% !important
+  width: 100% !important;
 }
 
 .task-genre-area td {

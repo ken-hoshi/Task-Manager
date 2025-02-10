@@ -336,11 +336,10 @@
 .task-genre-block {
   background-color: #ffffff;
   border-radius: 1vh;
-  width: 25vh;
-  height: 20vh;
+  width: 23vh;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
   margin: 0.8vh;
-  padding: 0.5vh;
+  padding: 0.5vh 1vh 1vh 1vh;
 }
 
 .task-genre-name {
@@ -452,7 +451,7 @@
 
 .cancel-icon {
   color: red;
-  font-size: 2.5vh !important;
+  font-size: 3vh !important;
   cursor: pointer;
 }
 

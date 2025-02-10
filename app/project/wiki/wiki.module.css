@@ -180,6 +180,11 @@
   font-size: 1.5vh;
 }
 
+.markdown-explain em {
+  display: inline-block;
+  transform: skewX(-10deg);
+}
+
 .markdown-explain th,
 .markdown-explain td {
   border: 1px solid #000000;
