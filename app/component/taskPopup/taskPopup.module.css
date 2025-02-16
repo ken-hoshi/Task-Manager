@@ -1,5 +1,5 @@
 .popup {
-  position: fixed;
+  position: fixed !important;
   top: 0;
   left: 0;
   width: 100%;
@@ -8,7 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 2000 !important;
 }
 
 .popup-inner {
@@ -20,6 +20,7 @@
   position: relative;
   animation: slideIn 0.3s ease-out;
   cursor: default;
+  z-index: 2001 !important;
 }
 
 @keyframes slideIn {

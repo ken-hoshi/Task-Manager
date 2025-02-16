@@ -112,9 +112,9 @@ const SuspenseProject: React.FC = () => {
   const [statusData, setStatusData] = useState<StatusProps[]>([]);
   const [params, setParams] = useState<Params>({ projectId: 0, userId: 0 });
   const [tabJudgeList, setTabJudgeList] = useState({
-    list: true,
+    calender: true,
+    list: false,
     board: false,
-    calender: false,
     wiki: false,
   });
 
@@ -347,6 +347,15 @@ const SuspenseProject: React.FC = () => {
                     <button
                       className={classNames(
                         styles[`tab-button`],
+                        tabJudgeList.calender && styles.active
+                      )}
+                      onClick={() => handleTabSwitch(Switch.calender)}
+                    >
+                      Calender
+                    </button>
+                    <button
+                      className={classNames(
+                        styles[`tab-button`],
                         tabJudgeList.list && styles.active
                       )}
                       onClick={() => handleTabSwitch(Switch.list)}
@@ -361,15 +370,6 @@ const SuspenseProject: React.FC = () => {
                       onClick={() => handleTabSwitch(Switch.board)}
                     >
                       Board
-                    </button>
-                    <button
-                      className={classNames(
-                        styles[`tab-button`],
-                        tabJudgeList.calender && styles.active
-                      )}
-                      onClick={() => handleTabSwitch(Switch.calender)}
-                    >
-                      Calender
                     </button>
                     <button
                       className={classNames(
@@ -432,11 +432,13 @@ const SuspenseProject: React.FC = () => {
                   {tabJudgeList.calender && (
                     <TaskCalender
                       userId={params.userId}
+                      projectId={params.projectId}
                       smallProjectIdList={smallProjectIds}
                       displaySmallProjectId={displaySmallProjectId}
                       taskData={taskData}
                       smallProjectTaskGenreData={smallProjectTaskGenreData}
                       filterMyTasks={filterMyTasks}
+                      statusData={statusData}
                     />
                   )}
                   {tabJudgeList.wiki && (

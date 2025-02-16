@@ -188,8 +188,9 @@ const Task: React.FC = () => {
               };
 
               const postDeadlineNotifications = async () => {
-                const notificationPromises = myTasksData.map(
-                  async (myTask: any) => {
+                const notificationPromises = myTasksData
+                  .filter((myTask) => myTask.status_id !== 3)
+                  .map(async (myTask: any) => {
                     const taskDeadline = new Date(myTask.deadline_date);
 
                     if (checkDateMatch(taskDeadline, dayAfterTomorrow)) {
@@ -225,8 +226,7 @@ const Task: React.FC = () => {
                     } else {
                       return;
                     }
-                  }
-                );
+                  });
                 await Promise.all(notificationPromises);
               };
               postDeadlineNotifications();

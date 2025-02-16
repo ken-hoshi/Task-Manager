@@ -91,9 +91,9 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
   };
 
   useEffect(() => {
-    setStatusList(statuses);
-
     if (myTasks.length > 0) {
+      setStatusList(statuses);
+
       const taskData = onFilter
         ? myTasks.filter(
             (task) => task.status_id !== 3 && !task.small_projects.isFinished
@@ -147,7 +147,6 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
 
   const handleStatusChange = async (
     taskId: number,
-    index: number,
     selectedStatusOptions: SingleValue<Option>
   ) => {
     try {
@@ -425,7 +424,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
                           }),
                         }}
                         onChange={(selectedOption) =>
-                          handleStatusChange(myTask.id, index, selectedOption)
+                          handleStatusChange(myTask.id, selectedOption)
                         }
                         isSearchable={false}
                       />

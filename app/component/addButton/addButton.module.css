@@ -1,9 +1,9 @@
 .add {
-    float: right;
-    font-size: 3vh !important;
-    cursor: pointer;
-  }
+  float: right;
+  font-size: 3vh !important;
+  cursor: pointer;
+}
 
-  .add:hover {
-    color: dimgrey;
-  }
+.add:hover {
+  color: dimgrey;
+}

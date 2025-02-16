@@ -16,7 +16,7 @@ import { getSmallProjectData } from "@/app/lib/api/getSmallProjectData";
 import { getSmallProjectMember } from "@/app/lib/api/getSmallProjectMember";
 
 interface TaskPopupProps {
-  onClose: () => void;
+  onClose: (taskGenreId?: number )=> void;
   userId: number;
   taskId: number | null;
   taskGenreId: number | null;
@@ -956,7 +956,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
               <p className={styles.attention}>Maximum file size is 3MB</p>
 
               <div className={styles[`button-area`]}>
-                <button className={styles.cancel} onClick={onClose}>
+                <button className={styles.cancel} onClick={()=>onClose()}>
                   Cancel
                 </button>
                 <button className={styles.add} type="submit">
