@@ -534,6 +534,23 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
     );
   };
 
+  const toggleEditButton = (id: number, target: Target) => {
+    if (onEditResultTaskId || onEditTaskId || onEditTaskGenreId) {
+      return;
+    }
+    switch (target) {
+      case Target.task:
+        setOnEditTaskId(id);
+        break;
+      case Target.taskResult:
+        setOnEditResultTaskId(id);
+        break;
+      case Target.taskGenre:
+        setOnEditTaskGenreId(id);
+        break;
+    }
+  };
+
   const getCellClassName = (date: Date, target: Target) => {
     let startDate, endDate;
     const highlightClass = styles[`edit-highlight`];
@@ -735,7 +752,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                               styles.edit
                             )}
                             onClick={() =>
-                              setOnEditTaskGenreId(taskGenre.taskGenreId)
+                              toggleEditButton(taskGenre.taskGenreId, 2)
                             }
                           >
                             edit
@@ -910,7 +927,9 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                                         "material-symbols-outlined",
                                         styles.edit
                                       )}
-                                      onClick={() => setOnEditTaskId(task.id)}
+                                      onClick={() =>
+                                        toggleEditButton(task.id, 0)
+                                      }
                                     >
                                       edit
                                     </span>
@@ -1036,7 +1055,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                                         styles.edit
                                       )}
                                       onClick={() =>
-                                        setOnEditResultTaskId(task.id)
+                                        toggleEditButton(task.id, 1)
                                       }
                                     >
                                       edit
@@ -1233,7 +1252,9 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                                           "material-symbols-outlined",
                                           styles.edit
                                         )}
-                                        onClick={() => setOnEditTaskId(task.id)}
+                                        onClick={() =>
+                                          toggleEditButton(task.id, 0)
+                                        }
                                       >
                                         edit
                                       </span>
@@ -1360,7 +1381,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                                           styles.edit
                                         )}
                                         onClick={() =>
-                                          setOnEditResultTaskId(task.id)
+                                          toggleEditButton(task.id, 1)
                                         }
                                       >
                                         edit
