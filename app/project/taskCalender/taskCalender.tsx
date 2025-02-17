@@ -706,7 +706,12 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                 {smallProjectTaskGenre?.map((taskGenre, index) => (
                   <React.Fragment key={index}>
                     <tr>
-                      <td className={styles[`task-genre-name`]}>
+                      <td
+                        className={classNames(
+                          styles[`task-name`],
+                          styles[`task-genre-color`]
+                        )}
+                      >
                         <div className={styles[`task-genre-name-area`]}>
                           <p>{taskGenre.taskGenreName}</p>
                           <div className={styles[`button-area`]}>
@@ -727,24 +732,48 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                           </div>
                         </div>
                       </td>
-                      <td className={styles[`task-start-date`]}>
+                      <td
+                        className={classNames(
+                          styles[`task-start-date`],
+                          styles[`task-genre-color`]
+                        )}
+                      >
                         <div className={styles[`date-container`]}>
-                          <span className={styles[`calendar-icon`]}></span>
+                          <span
+                            className={styles[`calendar-white-icon`]}
+                          ></span>
                           {formatDate(taskGenre.startDate)}
                         </div>
                       </td>
-                      <td className={styles[`task-deadline-date`]}>
+                      <td
+                        className={classNames(
+                          styles[`task-deadline-date`],
+                          styles[`task-genre-color`]
+                        )}
+                      >
                         <div className={styles[`date-container`]}>
-                          <span className={styles[`calendar-icon`]}></span>
+                          <span
+                            className={styles[`calendar-white-icon`]}
+                          ></span>
                           {formatDate(taskGenre.deadlineDate)}
                         </div>
                       </td>
-                      <td className={styles[`task-person-days`]}>
+                      <td
+                        className={classNames(
+                          styles[`task-person-days`],
+                          styles[`task-genre-color`]
+                        )}
+                      >
                         {(taskGenre.numberOfPersons ?? 0).toFixed(1) +
                           " / " +
                           (taskGenre.numberOfDays ?? 0).toFixed(1)}
                       </td>
-                      <td className={styles[`task-period-edit`]}>
+                      <td
+                        className={classNames(
+                          styles[`task-period-edit`],
+                          styles[`task-genre-color`]
+                        )}
+                      >
                         {taskGenre.taskGenreId !== onEditTaskGenreId && (
                           <span
                             className={classNames(
@@ -882,7 +911,14 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                                   </div>
                                 </div>
                               </td>
-                              <td className={styles[`task-start-date`]}>
+                              <td
+                                className={classNames(
+                                  styles[`task-start-date`],
+                                  index % 2 === 0
+                                    ? styles[`odd-color`]
+                                    : styles[`even-color`]
+                                )}
+                              >
                                 <div className={styles[`date-container`]}>
                                   <span
                                     className={styles[`calendar-icon`]}
@@ -897,7 +933,9 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                                     task.status_id
                                   )
                                     ? styles["near-deadline"]
-                                    : ""
+                                    : index % 2 === 0
+                                    ? styles[`odd-color`]
+                                    : styles[`even-color`]
                                 }`}
                               >
                                 <div className={styles[`date-container`]}>
@@ -914,12 +952,26 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                                   {formatDate(task.deadline_date)}
                                 </div>
                               </td>
-                              <td className={styles[`task-person-days`]}>
+                              <td
+                                className={classNames(
+                                  styles[`task-person-days`],
+                                  index % 2 === 0
+                                    ? styles[`odd-color`]
+                                    : styles[`even-color`]
+                                )}
+                              >
                                 {(1.0).toFixed(1) +
                                   " / " +
                                   task.number_of_days.toFixed(1)}
                               </td>
-                              <td className={styles[`task-period-edit`]}>
+                              <td
+                                className={classNames(
+                                  styles[`task-period-edit`],
+                                  index % 2 === 0
+                                    ? styles[`odd-color`]
+                                    : styles[`even-color`]
+                                )}
+                              >
                                 {task.id !== onEditTaskId && (
                                   <div className={styles[`button-area`]}>
                                     <span
@@ -1019,7 +1071,14 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                                   <p>{task.users.name}</p>
                                 </div>
                               </td>
-                              <td className={styles[`task-start-date`]}>
+                              <td
+                                className={classNames(
+                                  styles[`task-start-date`],
+                                  index % 2 === 0
+                                    ? styles[`odd-color`]
+                                    : styles[`even-color`]
+                                )}
+                              >
                                 {task.result_start_date && (
                                   <div className={styles[`date-container`]}>
                                     <span
@@ -1029,7 +1088,14 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                                   </div>
                                 )}
                               </td>
-                              <td className={styles[`task-deadline-date`]}>
+                              <td
+                                className={classNames(
+                                  styles[`task-deadline-date`],
+                                  index % 2 === 0
+                                    ? styles[`odd-color`]
+                                    : styles[`even-color`]
+                                )}
+                              >
                                 {task.result_deadline_date && (
                                   <div className={styles[`date-container`]}>
                                     <span
@@ -1040,13 +1106,27 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                                 )}
                               </td>
 
-                              <td className={styles[`task-person-days`]}>
+                              <td
+                                className={classNames(
+                                  styles[`task-person-days`],
+                                  index % 2 === 0
+                                    ? styles[`odd-color`]
+                                    : styles[`even-color`]
+                                )}
+                              >
                                 {task.number_of_result_days &&
                                   (1.0).toFixed(1) +
                                     " / " +
                                     task.number_of_result_days.toFixed(1)}
                               </td>
-                              <td className={styles[`task-period-edit`]}>
+                              <td
+                                className={classNames(
+                                  styles[`task-period-edit`],
+                                  index % 2 === 0
+                                    ? styles[`odd-color`]
+                                    : styles[`even-color`]
+                                )}
+                              >
                                 <div className={styles[`button-area`]}>
                                   {task.id !== onEditResultTaskId && (
                                     <span
