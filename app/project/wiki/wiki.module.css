@@ -308,8 +308,8 @@
   height: 46vh;
   position: absolute;
   overflow-y: auto;
-  padding: 1.5vh;
-  width: 98%;
+  padding: 1.3vh;
+  width: 97%;
   font-family: "Roboto", sans-serif;
 }
 
@@ -430,9 +430,23 @@
 }
 
 .content-area table {
-  width: 100%;
+  width: max-content;
   border-collapse: collapse;
   margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.markdown-container::-webkit-scrollbar:horizontal {
+  height: 1vh !important;
+}
+
+.markdown-container::-webkit-scrollbar-thumb:horizontal {
+  background-color: #b4b4b4;
+  border-radius: 1vh;
+}
+
+.markdown-container::-webkit-scrollbar-thumb:horizontal:hover {
+  background-color: #8d8d8d;
 }
 
 .content-area th,

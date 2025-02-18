@@ -118,7 +118,7 @@
 }
 
 .calender-table {
-  width: 100vw;
+  width: 90vw;
   border-collapse: collapse;
   font-family: Arial, sans-serif;
   background-color: white;
@@ -139,11 +139,11 @@
 .calender-table th {
   background-color: #dbdbdb;
   padding: 0;
-  width: 3vw;
+  width: 2.5vw;
 }
 
 .calender-table td {
-  width: 3vw;
+  width: 2.5vw;
   padding: 0;
 }
 
@@ -175,7 +175,7 @@ th.sticky-col {
 
 th.task-name,
 td.task-name {
-  width: 32vw !important;
+  width: 28vw !important;
   position: sticky;
   z-index: 1;
   left: 0;
@@ -207,7 +207,7 @@ td.task-person-days {
 
 th.task-period-edit,
 td.task-period-edit {
-  width: 6vw !important;
+  width: 3vw !important;
 }
 
 .date-container {

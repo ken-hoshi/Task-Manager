@@ -538,6 +538,17 @@ const Wiki: React.FC<WikiProps> = ({
                         <ReactMarkdown
                           rehypePlugins={[rehypeRaw]}
                           remarkPlugins={[remarkGfm]}
+                          components={{
+                            a: ({ node, ...props }) => (
+                              <a
+                                {...props}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {props.children}
+                              </a>
+                            ),
+                          }}
                         >
                           {wikiData.length > 0
                             ? wikiData[displayWikiNumber].content
