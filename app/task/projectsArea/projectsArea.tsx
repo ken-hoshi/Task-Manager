@@ -300,9 +300,16 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
 
   const handleTransitionProjectDetails = (
     projectId: number,
+    smallProjectId: number | null,
     userId: number
   ) => {
-    router.push(`/project?id=${projectId}&userId=${userId}`);
+    if (smallProjectId) {
+      router.push(
+        `/project?id=${projectId}&smallProjectId=${smallProjectId}&userId=${userId}`
+      );
+    } else {
+      router.push(`/project?id=${projectId}&userId=${userId}`);
+    }
   };
 
   const handleFinishedSmallProject = (
@@ -435,7 +442,11 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                         <p
                           className={styles[`project-name`]}
                           onClick={() =>
-                            handleTransitionProjectDetails(project.id, userId)
+                            handleTransitionProjectDetails(
+                              project.id,
+                              null,
+                              userId
+                            )
                           }
                         >
                           {project.project_name}
@@ -445,7 +456,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                     <td
                       className={styles[`col-status-situation`]}
                       onClick={() =>
-                        handleTransitionProjectDetails(project.id, userId)
+                        handleTransitionProjectDetails(project.id, null, userId)
                       }
                     >
                       <div className={styles[`status-situation-part`]}>
@@ -756,7 +767,16 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                                         : "arrow_right"}
                                     </span>
                                   </div>
-                                  <p className={styles[`small-project-name`]}>
+                                  <p
+                                    className={styles[`small-project-name`]}
+                                    onClick={() =>
+                                      handleTransitionProjectDetails(
+                                        project.id,
+                                        smallProject.id,
+                                        userId
+                                      )
+                                    }
+                                  >
                                     {smallProject.small_project_name}
                                   </p>
                                 </div>

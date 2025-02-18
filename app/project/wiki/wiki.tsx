@@ -307,11 +307,13 @@ const Wiki: React.FC<WikiProps> = ({
                       ~~取り消し線~~
                     </code>
                   </pre>
+                  <br />
                   <strong>太字</strong>
                   <br />
                   <em>斜体</em>
                   <br />
                   <del>取り消し線</del>
+                  <br />
                   <hr />
                   <p className={styles[`explain-title`]}>3.リスト</p>
                   <pre>
@@ -388,6 +390,7 @@ const Wiki: React.FC<WikiProps> = ({
                   <pre>
                     <code>console.log("Hello, Markdown!")</code>
                   </pre>
+                  <br />
                   <hr />
                   <p className={styles[`explain-title`]}>6.テーブル</p>
                   <pre>
@@ -428,6 +431,7 @@ const Wiki: React.FC<WikiProps> = ({
                       </tr>
                     </tbody>
                   </table>
+                  <br />
                   <hr />
                   <p className={styles[`explain-title`]}>7.チェックリスト</p>
                   <pre>
@@ -459,6 +463,7 @@ const Wiki: React.FC<WikiProps> = ({
                       ---
                     </code>
                   </pre>
+                  <br />
                   <hr />
                   <hr />
                   <hr />
@@ -473,6 +478,43 @@ const Wiki: React.FC<WikiProps> = ({
                     </code>
                   </pre>
                   <p style={{ color: "red" }}>これは赤色のテキストです。</p>
+                  <hr />
+                  <p className={styles[`explain-title`]}>10.改行</p>
+                  <pre>
+                    <code>
+                      br1個&lt;br&gt;
+                      <br />
+                      br2個&lt;br&gt;&lt;br&gt;
+                      <br />
+                      br3個&lt;br&gt;&lt;br&gt;&lt;br&gt;
+                      <br />
+                      br4個&lt;br&gt;&lt;br&gt;&lt;br&gt;&lt;br&gt;
+                    </code>
+                  </pre>
+                  <br />
+                  <div>br1個</div>
+                  <div>br2個</div>
+                  <br />
+                  <div>br3個</div>
+                  <br />
+                  <br />
+                  <div>br4個</div>
+                  <br />
+                  <hr />
+                  <p className={styles[`explain-title`]}>11.半角スペース</p>
+                  <pre>
+                    <code>
+                      <div>&amp;nbsp; 半角スペース</div>
+                      <div>&amp;nbsp; &amp;nbsp; 半角スペース</div>
+                      <div>&amp;nbsp; &amp;nbsp; &amp;nbsp; 半角スペース</div>
+                    </code>
+                  </pre>
+                  <br />
+                  &nbsp; 半角スペース
+                  <br />
+                  &nbsp; &nbsp; 半角スペース
+                  <br />
+                  &nbsp; &nbsp; &nbsp; 半角スペース
                 </div>
               </div>
             </div>

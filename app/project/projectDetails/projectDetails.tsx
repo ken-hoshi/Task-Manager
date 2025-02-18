@@ -450,7 +450,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                                       </tbody>
                                     </table>
                                   </div>
-                                </div>
+                                 </div>
                               )
                             )}
                           </div>

@@ -372,6 +372,7 @@
   box-sizing: border-box;
   word-wrap: break-word;
   margin: 0;
+  cursor: pointer;
 }
 
 .finished-button-area {

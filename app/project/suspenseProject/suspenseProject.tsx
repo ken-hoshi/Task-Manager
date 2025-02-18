@@ -29,6 +29,7 @@ interface StatusProps {
 
 interface Params {
   projectId: number;
+  smallProjectId?: number;
   userId: number;
 }
 
@@ -110,7 +111,11 @@ const SuspenseProject: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [filterMyTasks, setFilterMyTasks] = useState(false);
   const [statusData, setStatusData] = useState<StatusProps[]>([]);
-  const [params, setParams] = useState<Params>({ projectId: 0, userId: 0 });
+  const [params, setParams] = useState<Params>({
+    projectId: 0,
+    smallProjectId: undefined,
+    userId: 0,
+  });
   const [tabJudgeList, setTabJudgeList] = useState({
     calender: true,
     list: false,
@@ -151,6 +156,7 @@ const SuspenseProject: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramsProjectId = searchParams.get("id");
+  const paramsSmallProjectId = searchParams.get("smallProjectId");
   const paramsUserId = searchParams.get("userId");
 
   const getTaskGenre = async (
@@ -174,9 +180,26 @@ const SuspenseProject: React.FC = () => {
   };
 
   useEffect(() => {
+    if (paramsSmallProjectId) {
+      setDisplaySmallProjectId(Number(paramsSmallProjectId));
+      setParams({
+        projectId: Number(paramsProjectId),
+        smallProjectId: Number(paramsSmallProjectId),
+        userId: Number(paramsUserId),
+      });
+    }
+  }, []);
+
+  useEffect(() => {
     const projectId = Number(paramsProjectId);
     const userId = Number(paramsUserId);
-    setParams({ projectId: projectId, userId: userId });
+    if (!paramsSmallProjectId) {
+      setParams({
+        projectId: projectId,
+        smallProjectId: undefined,
+        userId: userId,
+      });
+    }
 
     const fetchProjectDetails = async () => {
       try {
@@ -216,6 +239,14 @@ const SuspenseProject: React.FC = () => {
         setSmallProjectAttachedFileData(smallProjectAttachedFileData);
         setWikiData(smallProjectWikiData);
 
+        if (
+          (!paramsSmallProjectId && !displaySmallProjectId) ||
+          (displaySmallProjectId &&
+            !smallProjectIdList.includes(displaySmallProjectId))
+        ) {
+          setDisplaySmallProjectId(smallProjectIdList[0]);
+        }
+
         if (filterMyTasks) {
           const filteredTask = tasksDividedBySmallProjectId.map((taskData) => ({
             ...taskData,
@@ -235,13 +266,6 @@ const SuspenseProject: React.FC = () => {
           throw new Error("Fetch StatusData couldn't get.");
         }
         setStatusData(statusData);
-
-        if (
-          !displaySmallProjectId ||
-          !smallProjectIdList.includes(displaySmallProjectId)
-        ) {
-          setDisplaySmallProjectId(smallProjectIdList[0]);
-        }
 
         setPageUpdated(false);
         setLoading(false);

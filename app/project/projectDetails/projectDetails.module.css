@@ -222,17 +222,19 @@ td.col-status-situation {
 .task-genre-block {
   background-color: #ffffff;
   border-radius: 1vh;
-  width: 23vh;
+  width: 100%;
   height: 20vh;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
   margin: 1vh;
+  padding: 0.5vh;
 }
 
 .task-genre-name {
   font-size: 1.5vh;
   font-weight: bold;
   color: #000000;
-  margin: 0.5vh;
+  padding: 0.5vh;
+  text-align: center;
   word-break: break-word;
   white-space: pre-wrap;
 }
@@ -244,8 +246,9 @@ td.col-status-situation {
 }
 
 .task-genre-area table {
+  width: 100% !important;
+  margin: 0 !important;
   border-collapse: collapse;
-  margin: 0.3vh;
   box-shadow: none;
 }
 
@@ -346,7 +349,7 @@ td.col-status-situation {
   line-clamp: 2;
 }
 
-.col-finished-button{
+.col-finished-button {
   display: flex;
   justify-content: center;
 }
