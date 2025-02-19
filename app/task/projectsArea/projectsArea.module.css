@@ -359,12 +359,16 @@
   margin: 0;
 }
 
+.col-tr-small-project:hover {
+  background-color: #f2f2f2;
+}
+
 .small-project-name-container {
   display: flex;
   justify-content: flex-start;
   align-items: center;
   text-align: start;
-  margin-left: 1vw;
+  margin-left: 1.5vw;
   padding: 0.5vh 0;
 }
 

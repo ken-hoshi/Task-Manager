@@ -58,6 +58,16 @@ const Wiki: React.FC<WikiProps> = ({
   const { setNotificationValue } = useNotificationContext();
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === "Enter" &&
+        (e.target as HTMLElement).tagName !== "TEXTAREA"
+      ) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    };
+
     const changedDisplaySmallProjectId =
       displaySmallProjectId &&
       smallProjectIdList.includes(displaySmallProjectId)
@@ -83,6 +93,11 @@ const Wiki: React.FC<WikiProps> = ({
         setUpdateFlg(!updateFlg);
       }
     }
+
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+    };
   }, [pageUpdated, displaySmallProjectId]);
 
   const onClose = () => {

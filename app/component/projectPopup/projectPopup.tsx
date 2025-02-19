@@ -93,6 +93,16 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
   const { addItem } = useFlashDisplayContext();
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === "Enter" &&
+        (e.target as HTMLElement).tagName !== "TEXTAREA"
+      ) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    };
+
     if (projectId) {
       const fetchUpdateProjectData = async () => {
         try {
@@ -235,6 +245,11 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
       fetchUsers();
       setGetLoading(false);
     }
+
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+    };
   }, []);
 
   const handleUserChange = (selectedOptions: MultiValue<UserOption>) => {

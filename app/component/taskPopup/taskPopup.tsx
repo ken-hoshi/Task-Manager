@@ -16,7 +16,7 @@ import { getSmallProjectData } from "@/app/lib/api/getSmallProjectData";
 import { getSmallProjectMember } from "@/app/lib/api/getSmallProjectMember";
 
 interface TaskPopupProps {
-  onClose: (taskGenreId?: number )=> void;
+  onClose: (taskGenreId?: number) => void;
   userId: number;
   taskId: number | null;
   taskGenreId: number | null;
@@ -95,6 +95,16 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   const { addItem } = useFlashDisplayContext();
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === "Enter" &&
+        (e.target as HTMLElement).tagName !== "TEXTAREA"
+      ) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    };
+
     if (taskId) {
       const fetchUpdateTaskData = async () => {
         try {
@@ -329,6 +339,11 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
       };
       fetchData();
     }
+
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+    };
   }, []);
 
   useEffect(() => {
@@ -956,7 +971,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
               <p className={styles.attention}>Maximum file size is 3MB</p>
 
               <div className={styles[`button-area`]}>
-                <button className={styles.cancel} onClick={()=>onClose()}>
+                <button className={styles.cancel} onClick={() => onClose()}>
                   Cancel
                 </button>
                 <button className={styles.add} type="submit">

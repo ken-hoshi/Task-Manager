@@ -737,11 +737,12 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                         return (
                           <React.Fragment key={smallProject.id}>
                             <tr
-                              className={
+                              className={classNames(
                                 projectArrowJudge
                                   ? styles[`details-open`]
-                                  : styles[`details-hidden`]
-                              }
+                                  : styles[`details-hidden`],
+                                styles[`col-tr-small-project`]
+                              )}
                             >
                               <td className={styles[`col-small-project-name`]}>
                                 <div
@@ -809,6 +810,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                                   </span>
                                 </div>
                               </td>
+                              <td></td>
                             </tr>
 
                             <tr
