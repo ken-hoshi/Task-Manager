@@ -96,7 +96,11 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
         e.key === "Enter" &&
-        (e.target as HTMLElement).tagName !== "TEXTAREA"
+        (e.target as HTMLElement).tagName !== "TEXTAREA" &&
+        !(
+          (e.target as HTMLElement).tagName === "INPUT" &&
+          (e.target as HTMLInputElement).classList.contains("tab-input")
+        )
       ) {
         e.stopPropagation();
         e.preventDefault();
@@ -467,7 +471,9 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
     setEditingIndex(null);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleEnterKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    console.log(editingIndex);
+
     if (e.key === "Enter") {
       handleNameSave();
     }
@@ -1321,8 +1327,8 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                           value={newSmallProjectName}
                           onChange={handleNameChange}
                           onBlur={handleBlur}
-                          onKeyDown={handleKeyDown}
-                          className={styles[`tab-input`]}
+                          onKeyDown={handleEnterKeyDown}
+                          className={`${styles[`tab-input`]} tab-input`}
                           autoFocus
                         />
                       ) : (
