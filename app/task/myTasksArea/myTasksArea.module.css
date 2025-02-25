@@ -127,21 +127,32 @@
   justify-content: center;
 }
 
-.calendar-icon {
+.calendar-icon,
+.alarm-icon,
+.alarm-yellow-icon {
   width: 2.5vh;
   height: 2.5vh;
-  background-image: url("/img/calendar.png");
   background-size: cover;
+}
+
+.calendar-icon {
+  background-image: url("/img/calendar.png");
 }
 
 .alarm-icon {
-  width: 2.5vh;
-  height: 2.5vh;
   background-image: url("/img/alarm.png");
-  background-size: cover;
+}
+
+.alarm-yellow-icon {
+  background-image: url("/img/alarm-yellow.png");
 }
 
 .near-deadline {
+  background-color: #ffffac;
+  color: #fc7e10;
+}
+
+.pass-deadline {
   background-color: #ffe5e5;
   color: #d32f2f;
 }
@@ -550,7 +561,7 @@
   width: 85%;
 }
 
-.cancel-icon-container{
+.cancel-icon-container {
   height: 100%;
   display: flex;
   align-items: center;

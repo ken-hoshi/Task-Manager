@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import NotificationBanner from "@/app/component/notificationBanner/notificationBanner";
 import { useFormContext } from "@/app/provider/formProvider";
+import { clientSupabase } from "@/app/lib/supabase/client";
 
 const SuspenseComplete: React.FC = () => {
   const { setBackForm } = useFormContext();
@@ -23,14 +24,33 @@ const SuspenseComplete: React.FC = () => {
 
   useEffect(() => {
     if (!paramsName || !paramsEmail) {
-      console.error("Error Register: Params Name or Params Email couldn't get.");
+      console.error(
+        "Error Register: Params Name or Params Email couldn't get."
+      );
       setNotificationValue({
         message: "Couldn't get Registered Data.",
         color: 1,
       });
       router.push("/register");
+      return;
     }
     setLoading(false);
+
+    const {
+      data: { subscription },
+    } = clientSupabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") {
+        router.push(
+          `/complete?name=${encodeURIComponent(
+            paramsName
+          )}&email=${encodeURIComponent(paramsEmail)}`
+        );
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleNavigateTopPage = async () => {

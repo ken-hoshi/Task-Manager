@@ -368,6 +368,11 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
         <tbody>
           {myTaskList.length > 0 ? (
             myTaskList?.map((myTask, index) => {
+              const deadlineStatus = isDeadlineNear(
+                myTask.deadline_date,
+                myTask.status_id
+              );
+
               const attachedFileMatchedTaskId = attachedFileList.find(
                 (attachedFile) => attachedFile.id === myTask.id
               );
@@ -430,22 +435,18 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
                       />
                     </td>
                     <td
-                      className={`${styles[`col-deadline`]} ${
-                        isDeadlineNear(myTask.deadline_date, myTask.status_id)
-                          ? styles["near-deadline"]
-                          : ""
-                      }`}
+                      className={classNames(styles[`col-deadline`], {
+                        [styles[`near-deadline`]]: deadlineStatus === 1,
+                        [styles[`pass-deadline`]]: deadlineStatus === 2,
+                      })}
                     >
                       <div className={styles[`deadline-date-container`]}>
                         <span
-                          className={
-                            isDeadlineNear(
-                              myTask.deadline_date,
-                              myTask.status_id
-                            )
-                              ? styles[`alarm-icon`]
-                              : styles[`calendar-icon`]
-                          }
+                          className={classNames({
+                            [styles[`calendar-icon`]]: deadlineStatus === 0,
+                            [styles[`alarm-yellow-icon`]]: deadlineStatus === 1,
+                            [styles[`alarm-icon`]]: deadlineStatus === 2,
+                          })}
                         ></span>
                         {formatDate(myTask.deadline_date)}
                       </div>

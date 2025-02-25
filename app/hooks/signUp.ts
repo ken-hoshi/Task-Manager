@@ -10,7 +10,9 @@ export const signUp = () => {
         email: email,
         password: password,
         options: {
-          emailRedirectTo: `https://task-manager-eta-eosin.vercel.app/complete?name=${encodeURIComponent(
+          emailRedirectTo: `${
+            window.location.origin
+          }/authentication?name=${encodeURIComponent(
             name
           )}&email=${encodeURIComponent(email)}`,
           data: {

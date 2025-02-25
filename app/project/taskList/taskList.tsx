@@ -970,6 +970,11 @@ const TaskList: React.FC<TaskListProps> = ({
                           (taskArrowJudge) => taskArrowJudge.taskId === task.id
                         )?.arrowJudge;
 
+                        const deadlineStatus = isDeadlineNear(
+                          task.deadline_date,
+                          task.status_id
+                        );
+
                         return (
                           <React.Fragment key={task.id}>
                             <tr
@@ -1031,27 +1036,28 @@ const TaskList: React.FC<TaskListProps> = ({
                                 </div>
                               </td>
                               <td
-                                className={`${styles[`col-deadline-date`]} ${
-                                  isDeadlineNear(
-                                    task.deadline_date,
-                                    task.status_id
-                                  )
-                                    ? styles["near-deadline"]
-                                    : ""
-                                }`}
+                                className={classNames(
+                                  styles[`col-deadline-date`],
+                                  {
+                                    [styles[`near-deadline`]]:
+                                      deadlineStatus === 1,
+                                    [styles[`pass-deadline`]]:
+                                      deadlineStatus === 2,
+                                  }
+                                )}
                               >
                                 <div
                                   className={styles[`deadline-date-container`]}
                                 >
                                   <span
-                                    className={
-                                      isDeadlineNear(
-                                        task.deadline_date,
-                                        task.status_id
-                                      )
-                                        ? styles[`alarm-icon`]
-                                        : styles[`calendar-icon`]
-                                    }
+                                    className={classNames({
+                                      [styles[`calendar-icon`]]:
+                                        deadlineStatus === 0,
+                                      [styles[`alarm-yellow-icon`]]:
+                                        deadlineStatus === 1,
+                                      [styles[`alarm-icon`]]:
+                                        deadlineStatus === 2,
+                                    })}
                                   ></span>
                                   <span>{formatDate(task.deadline_date)}</span>
                                 </div>
@@ -1408,7 +1414,9 @@ const TaskList: React.FC<TaskListProps> = ({
                                               >
                                                 <div
                                                   className={
-                                                    styles["form-container"]
+                                                    styles[
+                                                      "top-input-container"
+                                                    ]
                                                   }
                                                 >
                                                   <div>
@@ -1482,6 +1490,14 @@ const TaskList: React.FC<TaskListProps> = ({
                                                       Days
                                                     </p>
                                                   </div>
+                                                </div>
+                                                <div
+                                                  className={
+                                                    styles[
+                                                      `under-input-container`
+                                                    ]
+                                                  }
+                                                >
                                                   <div
                                                     className={
                                                       styles[`button-container`]

@@ -145,21 +145,32 @@
   justify-content: center;
 }
 
-.calendar-icon {
+.calendar-icon,
+.alarm-icon,
+.alarm-yellow-icon {
   width: 2.5vh;
   height: 2.5vh;
-  background-image: url("/img/calendar.png");
   background-size: cover;
+}
+
+.calendar-icon {
+  background-image: url("/img/calendar.png");
 }
 
 .alarm-icon {
-  width: 2.5vh;
-  height: 2.5vh;
   background-image: url("/img/alarm.png");
-  background-size: cover;
+}
+
+.alarm-yellow-icon {
+  background-image: url("/img/alarm-yellow.png");
 }
 
 .near-deadline {
+  background-color: #ffffac;
+  color: #fc7e10;
+}
+
+.pass-deadline {
   background-color: #ffe5e5;
   color: #d32f2f;
 }
@@ -533,10 +544,11 @@ th.col-assigned-person {
   margin-top: 2vh;
 }
 
-.form-container {
+.top-input-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 0.5vh;
 }
 
 .instruction {
@@ -551,10 +563,10 @@ th.col-assigned-person {
   transition: border-color 0.3s;
   padding: 1vh !important;
   background-color: #d9d9d9;
-  font-size: 1.8vh;
+  font-size: 2vh;
   font-family: "Roboto", sans-serif;
   text-align: center;
-  width: 16vw;
+  width: 18.5vw;
   top: 0;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
 }
@@ -570,13 +582,19 @@ th.col-assigned-person {
   -webkit-box-shadow: 0 0 0px 1000px #d9d9d9 inset;
 }
 
+.under-input-container {
+  display: flex;
+  justify-content:center;
+  align-items: center;
+}
+
 .number-of-result-days-form {
   border: none;
   border-bottom: 1px solid #000000;
   transition: border-color 0.3s;
   padding-left: 1vh;
-  height: 5.2vh;
-  width: 2.5vw;
+  height: 4.8vh;
+  width: 5.5vw;
   background-color: #d9d9d9;
   font-size: 2vh;
   font-family: "Roboto", sans-serif;

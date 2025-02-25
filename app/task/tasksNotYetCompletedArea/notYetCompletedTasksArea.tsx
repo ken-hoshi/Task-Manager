@@ -331,6 +331,11 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
         <tbody>
           {notYetCompletedTaskList.length > 0 ? (
             notYetCompletedTaskList.map((notYetCompletedTask, index) => {
+              const deadlineStatus = isDeadlineNear(
+                notYetCompletedTask.deadline_date,
+                notYetCompletedTask.status_id
+              );
+
               const attachedFileMatchedTaskId = attachedFileList.find(
                 (attachedFile) => attachedFile.id === notYetCompletedTask.id
               );
@@ -395,25 +400,18 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
                       />
                     </td>
                     <td
-                      className={`${styles[`col-deadline`]} ${
-                        isDeadlineNear(
-                          notYetCompletedTask.deadline_date,
-                          notYetCompletedTask.status_id
-                        )
-                          ? styles["near-deadline"]
-                          : ""
-                      }`}
+                      className={classNames(styles[`col-deadline`], {
+                        [styles[`near-deadline`]]: deadlineStatus === 1,
+                        [styles[`pass-deadline`]]: deadlineStatus === 2,
+                      })}
                     >
                       <div className={styles[`deadline-date-container`]}>
                         <span
-                          className={
-                            isDeadlineNear(
-                              notYetCompletedTask.deadline_date,
-                              notYetCompletedTask.status_id
-                            )
-                              ? styles[`alarm-icon`]
-                              : styles[`calendar-icon`]
-                          }
+                          className={classNames({
+                            [styles[`calendar-icon`]]: deadlineStatus === 0,
+                            [styles[`alarm-yellow-icon`]]: deadlineStatus === 1,
+                            [styles[`alarm-icon`]]: deadlineStatus === 2,
+                          })}
                         ></span>
                         {formatDate(notYetCompletedTask.deadline_date)}
                       </div>

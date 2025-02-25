@@ -863,6 +863,10 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                         (task) => task.task_genre_id === taskGenre.taskGenreId
                       )
                       .map((task, index) => {
+                        const deadlineStatus = isDeadlineNear(
+                          task.deadline_date,
+                          task.status_id
+                        );
                         const findSelectedStatus = selectedStatuses.find(
                           (status) => status.taskId === task.id
                         );
@@ -927,27 +931,30 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                                 </div>
                               </td>
                               <td
-                                className={`${styles[`task-deadline-date`]} ${
-                                  isDeadlineNear(
-                                    task.deadline_date,
-                                    task.status_id
-                                  )
-                                    ? styles["near-deadline"]
-                                    : index % 2 === 0
-                                    ? styles[`odd-color`]
-                                    : styles[`even-color`]
-                                }`}
+                                className={classNames(
+                                  styles[`task-deadline-date`],
+                                  {
+                                    [styles[`odd-color`]]:
+                                      index % 2 === 0 && deadlineStatus === 0,
+                                    [styles[`even-color`]]:
+                                      index % 2 !== 0 && deadlineStatus === 0,
+                                    [styles[`near-deadline`]]:
+                                      deadlineStatus === 1,
+                                    [styles[`pass-deadline`]]:
+                                      deadlineStatus === 2,
+                                  }
+                                )}
                               >
                                 <div className={styles[`date-container`]}>
                                   <span
-                                    className={
-                                      isDeadlineNear(
-                                        task.deadline_date,
-                                        task.status_id
-                                      )
-                                        ? styles[`alarm-icon`]
-                                        : styles[`calendar-icon`]
-                                    }
+                                    className={classNames({
+                                      [styles[`calendar-icon`]]:
+                                        deadlineStatus === 0,
+                                      [styles[`alarm-yellow-icon`]]:
+                                        deadlineStatus === 1,
+                                      [styles[`alarm-icon`]]:
+                                        deadlineStatus === 2,
+                                    })}
                                   ></span>
                                   {formatDate(task.deadline_date)}
                                 </div>
