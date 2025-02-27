@@ -19,7 +19,6 @@ import RobotButton from "@/app/component/robotButton/robotButton";
 import { useSessionTimeout } from "@/app/hooks/sessionTimeout";
 import { fetchProjectDetailsData } from "@/app/lib/api/fetchProjectDetailsData";
 import { getTaskGenreData } from "@/app/lib/api/getTaskGenreData";
-import { getSmallProjectIdList } from "@/app/lib/api/getSmallProjectIdList";
 import Wiki from "../wiki/wiki";
 
 interface StatusProps {
@@ -152,7 +151,7 @@ const SuspenseProject: React.FC = () => {
   const [displaySmallProjectId, setDisplaySmallProjectId] = useState<
     number | null
   >(null);
-
+  const { isInitialized } = useSessionTimeout();
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramsProjectId = searchParams.get("id");
@@ -200,6 +199,7 @@ const SuspenseProject: React.FC = () => {
         userId: userId,
       });
     }
+    if (!isInitialized) return;
 
     const fetchProjectDetails = async () => {
       try {
@@ -279,9 +279,7 @@ const SuspenseProject: React.FC = () => {
       }
     };
     fetchProjectDetails();
-  }, [pageUpdated, displaySmallProjectId]);
-
-  useSessionTimeout();
+  }, [pageUpdated, displaySmallProjectId, isInitialized]);
 
   const handleToggleFilterTask = () => {
     setFilterMyTasks(!filterMyTasks);

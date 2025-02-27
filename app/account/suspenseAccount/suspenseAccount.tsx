@@ -20,7 +20,7 @@ const SuspenseAccount: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramsUserId = searchParams.get("userId");
-
+  const { isInitialized } = useSessionTimeout();
   const { notificationValue, setNotificationValue } = useNotificationContext();
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
 
@@ -47,6 +47,7 @@ const SuspenseAccount: React.FC = () => {
     const userId = Number(paramsUserId);
     setUserId(userId);
 
+    if (!isInitialized) return;
     const getUserData = async () => {
       try {
         const { data: userData, error: userDataSelectError } =
@@ -86,9 +87,7 @@ const SuspenseAccount: React.FC = () => {
     };
     getUserData();
     setPageUpdated(false);
-  }, [pageUpdated]);
-
-  useSessionTimeout();
+  }, [pageUpdated, isInitialized]);
 
   const handleBackTop = () => {
     router.back();
