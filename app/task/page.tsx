@@ -94,7 +94,7 @@ const Task: React.FC = () => {
   const { notificationValue } = useNotificationContext();
   const { setBackForm } = useFormContext();
   const { useGetSession } = GetSession();
-
+  const { isInitialized } = useSessionTimeout();
   const router = useRouter();
 
   const today = new Date();
@@ -112,6 +112,8 @@ const Task: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!isInitialized) return;
+
       try {
         const session = await useGetSession();
         if (!session || !session.user.id) {
@@ -277,9 +279,7 @@ const Task: React.FC = () => {
       }
     };
     fetchData();
-  }, [pageUpdated]);
-
-  useSessionTimeout();
+  }, [pageUpdated, isInitialized]);
 
   return (
     <>
