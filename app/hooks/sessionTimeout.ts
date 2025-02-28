@@ -17,7 +17,10 @@ export const useSessionTimeout = () => {
       if (!isActive) return;
       try {
         const session = await useGetSession();
-        if (!session?.user?.id) return;
+        if (!session?.user?.id) {
+          setIsInitialized(false);
+          return;
+        }
 
         const lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY);
         if (
@@ -25,6 +28,8 @@ export const useSessionTimeout = () => {
           Date.now() - parseInt(lastActivity) > SESSION_TIMEOUT
         ) {
           await useLogout();
+          localStorage.removeItem(LAST_ACTIVITY_KEY);
+          setIsInitialized(false);
           return;
         }
       } catch (error) {
@@ -55,6 +60,7 @@ export const useSessionTimeout = () => {
         startInactivityTimer();
       } catch (error) {
         console.error("User activity error:", error);
+        setIsInitialized(false);
       }
     };
 
@@ -64,17 +70,19 @@ export const useSessionTimeout = () => {
         await checkSessionTimeout();
         const session = await useGetSession();
         if (!session?.user?.id) {
-          await useLogout();
           setIsInitialized(false);
+          localStorage.removeItem(LAST_ACTIVITY_KEY);
           return;
         }
 
+        await checkSessionTimeout();
         localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
         startInactivityTimer();
         setIsInitialized(true);
       } catch (error) {
         console.error("Session initialization error:", error);
         setIsInitialized(false);
+        localStorage.removeItem(LAST_ACTIVITY_KEY);
         await useLogout();
       }
     };
