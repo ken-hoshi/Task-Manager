@@ -110,16 +110,25 @@ const Task: React.FC = () => {
     return memoDayAfterTomorrow;
   }, [today]);
 
+  const handleSessionError = (message?: string) => {
+    setBackForm(true);
+    if (message) alert(message);
+    router.push("/");
+  };
+
   useEffect(() => {
     const fetchData = async () => {
-      if (!isInitialized) return;
+      if (isInitialized === null) {
+        return;
+      }
+      if (!isInitialized) {
+        handleSessionError("データの取得に失敗しました。");
+      }
 
       try {
         const session = await useGetSession();
-        if (!session || !session.user.id) {
-          setBackForm(true);
-          alert("データの取得に失敗しました。");
-          router.push("/");
+        if (!session?.user.id) {
+          handleSessionError("データの取得に失敗しました。");
         }
 
         const userId = await getUserId(session!.user.id);
@@ -273,9 +282,7 @@ const Task: React.FC = () => {
         setLoading(false);
       } catch (error) {
         console.error("Error Fetch Data ", error);
-        setBackForm(true);
-        alert("データの取得に失敗しました。");
-        router.push("/");
+        handleSessionError("データの取得に失敗しました。");
       }
     };
     fetchData();

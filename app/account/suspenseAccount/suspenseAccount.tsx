@@ -44,10 +44,16 @@ const SuspenseAccount: React.FC = () => {
   });
 
   useEffect(() => {
+    if (isInitialized === null) {
+      return;
+    }
+    if (!isInitialized) {
+      router.push("/");
+    }
+
     const userId = Number(paramsUserId);
     setUserId(userId);
 
-    if (!isInitialized) return;
     const getUserData = async () => {
       try {
         const { data: userData, error: userDataSelectError } =

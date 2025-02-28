@@ -190,6 +190,13 @@ const SuspenseProject: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (isInitialized === null) {
+      return;
+    }
+    if (!isInitialized) {
+      router.push("/");
+    }
+
     const projectId = Number(paramsProjectId);
     const userId = Number(paramsUserId);
     if (!paramsSmallProjectId) {
@@ -199,7 +206,6 @@ const SuspenseProject: React.FC = () => {
         userId: userId,
       });
     }
-    if (!isInitialized) return;
 
     const fetchProjectDetails = async () => {
       try {
@@ -275,6 +281,7 @@ const SuspenseProject: React.FC = () => {
           message: "Couldn't get Project Data.",
           color: 1,
         });
+        setLoading(false);
         router.push("/task");
       }
     };

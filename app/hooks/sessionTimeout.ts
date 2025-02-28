@@ -3,11 +3,11 @@ import { Logout } from "./logout";
 import { GetSession } from "./getSession";
 
 export const useSessionTimeout = () => {
-  const SESSION_TIMEOUT = 1 * 60 * 60 * 1000;
+  const SESSION_TIMEOUT = 1 * 60 * 1000;
   const { useLogout } = Logout();
   const { useGetSession } = GetSession();
   const LAST_ACTIVITY_KEY = "lastActivityTime";
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isInitialized, setIsInitialized] = useState<boolean | null>(null);  
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -62,19 +62,25 @@ export const useSessionTimeout = () => {
       if (!isActive) return;
       try {
         const session = await useGetSession();
-        if (!session?.user?.id) return;
+        if (!session?.user?.id) {
+          await useLogout();
+          setIsInitialized(false);
+          return;
+        }
 
-        updateLastActivity();
+        localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
         startInactivityTimer();
         setIsInitialized(true);
       } catch (error) {
         console.error("Session initialization error:", error);
+        setIsInitialized(false);
+        await useLogout();
       }
     };
+    initializeSession();
 
     const initTimeout = setTimeout(async () => {
       if (isActive) {
-        await initializeSession();
         await checkSessionTimeout();
       }
     }, 1000);
