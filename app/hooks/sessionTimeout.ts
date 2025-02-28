@@ -20,12 +20,12 @@ export const useSessionTimeout = () => {
         if (!session?.user?.id) return;
 
         const lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY);
-        if (lastActivity) {
-          const timeSinceLastActivity = Date.now() - parseInt(lastActivity);
-          if (timeSinceLastActivity > SESSION_TIMEOUT) {
-            await useLogout();
-            return;
-          }
+        if (
+          !lastActivity ||
+          Date.now() - parseInt(lastActivity) > SESSION_TIMEOUT
+        ) {
+          await useLogout();
+          return;
         }
       } catch (error) {
         console.error("Session check error:", error);
@@ -61,6 +61,7 @@ export const useSessionTimeout = () => {
     const initializeSession = async () => {
       if (!isActive) return;
       try {
+        await checkSessionTimeout();
         const session = await useGetSession();
         if (!session?.user?.id) {
           await useLogout();
@@ -85,6 +86,13 @@ export const useSessionTimeout = () => {
       }
     }, 1000);
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        checkSessionTimeout();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("mousemove", handleUserActivity);
     window.addEventListener("keydown", handleUserActivity);
 
@@ -94,6 +102,7 @@ export const useSessionTimeout = () => {
       clearTimeout(initTimeout);
       window.removeEventListener("mousemove", handleUserActivity);
       window.removeEventListener("keydown", handleUserActivity);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
