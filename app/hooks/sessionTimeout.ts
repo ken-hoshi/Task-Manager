@@ -3,11 +3,11 @@ import { Logout } from "./logout";
 import { GetSession } from "./getSession";
 
 export const useSessionTimeout = () => {
-  const SESSION_TIMEOUT = 1 * 60 * 1000;
+  const SESSION_TIMEOUT = 1 * 60 * 60 * 1000;
   const { useLogout } = Logout();
   const { useGetSession } = GetSession();
   const LAST_ACTIVITY_KEY = "lastActivityTime";
-  const [isInitialized, setIsInitialized] = useState<boolean | null>(null);  
+  const [isInitialized, setIsInitialized] = useState<boolean | null>(null);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
