@@ -1,20 +1,18 @@
 import { clientSupabase } from "../lib/supabase/client";
 
-export const GetSession = () => {
-  const useGetSession = async () => {
-    try {
-      const { data: sessionData, error: getSessionDataError } =
-        await clientSupabase.auth.getSession();
+export const getSession = async () => {
+  try {
+    const { data: sessionData, error: sessionError } =
+      await clientSupabase.auth.getSession();
+    if (sessionError) throw sessionError;
 
-      if (getSessionDataError) {
-        throw getSessionDataError;
-      }
-      return sessionData.session;
-    } catch (error) {
-      console.error("Error Get Session ", error);
-      return null;
-    }
-  };
+    const { data: userData, error: userError } =
+      await clientSupabase.auth.getUser();
+    if (userError) throw userError;
 
-  return { useGetSession };
+    return sessionData.session || userData.user ? sessionData.session : null;
+  } catch (error) {
+    console.error("Error Get Session ", error);
+    return null;
+  }
 };

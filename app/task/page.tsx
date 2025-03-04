@@ -17,7 +17,6 @@ import MyTasksArea from "./myTasksArea/myTasksArea";
 import ProjectsArea from "./projectsArea/projectsArea";
 import BackgroundImage1 from "../component/backgroundImage1/backgroundImage1";
 import RobotButton from "../component/robotButton/robotButton";
-import { GetSession } from "../hooks/getSession";
 import { useSessionTimeout } from "../hooks/sessionTimeout";
 import NotYetCompletedTasksArea from "./tasksNotYetCompletedArea/notYetCompletedTasksArea";
 import { postMailNotifications } from "../lib/postMailNotifications";
@@ -25,6 +24,7 @@ import { getSmallProjectTaskGenre } from "../lib/api/getSmallProjectTaskGenre";
 import { fetchAttachedFiles } from "../lib/api/fetchAttachedFiles";
 import { getProjectData } from "../lib/api/getProjectData";
 import { fetchSmallProjectData } from "../lib/api/fetchSmallProjectData";
+import { getSession } from "../hooks/getSession";
 
 interface StatusProps {
   id: number;
@@ -93,7 +93,6 @@ const Task: React.FC = () => {
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { notificationValue } = useNotificationContext();
   const { setBackForm } = useFormContext();
-  const { useGetSession } = GetSession();
   const { isInitialized } = useSessionTimeout();
   const router = useRouter();
 
@@ -126,7 +125,7 @@ const Task: React.FC = () => {
       }
 
       try {
-        const session = await useGetSession();
+        const session = await getSession();
         if (!session?.user.id) {
           handleSessionError("データの取得に失敗しました。");
         }

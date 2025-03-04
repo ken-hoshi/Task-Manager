@@ -1,29 +1,40 @@
 import { useEffect, useState } from "react";
 import { Logout } from "./logout";
-import { GetSession } from "./getSession";
+import { getSession } from "./getSession";
 
 export const useSessionTimeout = () => {
   const SESSION_TIMEOUT = 1 * 60 * 60 * 1000;
   const { useLogout } = Logout();
-  const { useGetSession } = GetSession();
   const LAST_ACTIVITY_KEY = "lastActivityTime";
   const [isInitialized, setIsInitialized] = useState<boolean | null>(null);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    let isActive = true;
 
     const checkSessionTimeout = async () => {
-      if (!isActive) return;
       try {
-        const session = await useGetSession();
-        if (!session?.user?.id) return;
+        const session = await getSession();
 
-        const lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY);
-        if (!lastActivity || Date.now() - parseInt(lastActivity) > SESSION_TIMEOUT) {
-          await useLogout();
+        if (!session?.user?.id) {
           localStorage.removeItem(LAST_ACTIVITY_KEY);
           return;
+        }
+
+        const lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY);
+        const lastActivityTime = lastActivity
+          ? parseInt(lastActivity, 10)
+          : null;
+
+        if (!lastActivityTime) {
+          localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+          return;
+        }
+
+        const elapsedTime = Date.now() - lastActivityTime;
+
+        if (elapsedTime > SESSION_TIMEOUT) {
+          localStorage.removeItem(LAST_ACTIVITY_KEY);
+          await useLogout();
         }
       } catch (error) {
         console.error("Session check error:", error);
@@ -37,25 +48,24 @@ export const useSessionTimeout = () => {
     const startInactivityTimer = () => {
       clearTimeout(timer);
       timer = setTimeout(async () => {
-        if (isActive) {
-          await useLogout();
-        }
+        localStorage.removeItem(LAST_ACTIVITY_KEY);
+        await useLogout();
       }, SESSION_TIMEOUT);
     };
 
     const handleUserActivity = () => {
-      if (!isActive || !isInitialized) return;
+      if (!isInitialized) return;
       updateLastActivity();
       startInactivityTimer();
     };
 
     const initializeSession = async () => {
-      if (!isActive) return;
       try {
-        const session = await useGetSession();
+        await checkSessionTimeout();
+
+        const session = await getSession();
         if (!session?.user?.id) {
           await useLogout();
-          return;
         }
 
         localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
@@ -68,15 +78,9 @@ export const useSessionTimeout = () => {
     };
     initializeSession();
 
-    const initTimeout = setTimeout(async () => {
-      if (isActive) {
-        await checkSessionTimeout();
-      }
-    }, 1000);
-
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible") {
-        checkSessionTimeout();
+        await checkSessionTimeout();
       }
     };
 
@@ -85,9 +89,7 @@ export const useSessionTimeout = () => {
     window.addEventListener("keydown", handleUserActivity);
 
     return () => {
-      isActive = false;
       clearTimeout(timer);
-      clearTimeout(initTimeout);
       window.removeEventListener("mousemove", handleUserActivity);
       window.removeEventListener("keydown", handleUserActivity);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
