@@ -35,67 +35,19 @@ const SuspenseAuthentication: React.FC = () => {
       return;
     }
     setLoading(false);
-    const {
-      data: { subscription },
-    } = clientSupabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+
+    const { data: authListener } = clientSupabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth event:", event, "Session:", session);
         if (session?.user?.user_metadata?.email_verified) {
-          router.push(
-            `/complete?name=${encodeURIComponent(
-              paramsName
-            )}&email=${encodeURIComponent(paramsEmail)}`
-          );
-        }
-      }
-    });
-
-    const pollEmailVerification = async () => {
-      const interval = setInterval(async () => {
-        const { data: { session } } = await clientSupabase.auth.getSession();
-        console.log("Session:", session);
-
-        // セッションが null の場合は `getUser()` で取得
-        if (!session) {
-          const { data: userData, error } = await clientSupabase.auth.getUser();
-          if (error) {
-            console.error("Error fetching user:", error);
-            return;
-          }
-          console.log("User data:", userData);
-
-          if (userData?.user?.user_metadata?.email_verified) {
-            clearInterval(interval); // タイマー停止
-            router.push(
-              `/complete?name=${encodeURIComponent(paramsName)}&email=${encodeURIComponent(paramsEmail)}`
-            );
-          }
-        } else if (session?.user?.user_metadata?.email_verified) {
-          clearInterval(interval); // タイマー停止
           router.push(
             `/complete?name=${encodeURIComponent(paramsName)}&email=${encodeURIComponent(paramsEmail)}`
           );
         }
-      }, 3000); // 3秒ごとにチェック
-    };
-    pollEmailVerification();
-
-
-    // const checkCurrentSession = async () => {
-    //   const {
-    //     data: { session },
-    //   } = await clientSupabase.auth.getSession();
-    //   if (session?.user?.user_metadata?.email_verified) {
-    //     router.push(
-    //       `/complete?name=${encodeURIComponent(
-    //         paramsName
-    //       )}&email=${encodeURIComponent(paramsEmail)}`
-    //     );
-    //   }
-    // };
-    // checkCurrentSession();
+      }
+    );
 
     return () => {
-      subscription.unsubscribe();
     };
   }, [paramsName, paramsEmail, router, setNotificationValue]);
 
