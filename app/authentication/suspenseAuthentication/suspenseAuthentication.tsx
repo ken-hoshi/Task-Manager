@@ -51,22 +51,34 @@ const SuspenseAuthentication: React.FC = () => {
 
     const pollEmailVerification = async () => {
       const interval = setInterval(async () => {
-        const {
-          data: { session },
-        } = await clientSupabase.auth.getSession();
-console.log(session)
-        if (session?.user?.user_metadata?.email_verified) {
+        const { data: { session } } = await clientSupabase.auth.getSession();
+        console.log("Session:", session);
 
+        // セッションが null の場合は `getUser()` で取得
+        if (!session) {
+          const { data: userData, error } = await clientSupabase.auth.getUser();
+          if (error) {
+            console.error("Error fetching user:", error);
+            return;
+          }
+          console.log("User data:", userData);
+
+          if (userData?.user?.user_metadata?.email_verified) {
+            clearInterval(interval); // タイマー停止
+            router.push(
+              `/complete?name=${encodeURIComponent(paramsName)}&email=${encodeURIComponent(paramsEmail)}`
+            );
+          }
+        } else if (session?.user?.user_metadata?.email_verified) {
           clearInterval(interval); // タイマー停止
           router.push(
-            `/complete?name=${encodeURIComponent(
-              paramsName
-            )}&email=${encodeURIComponent(paramsEmail)}`
+            `/complete?name=${encodeURIComponent(paramsName)}&email=${encodeURIComponent(paramsEmail)}`
           );
         }
       }, 3000); // 3秒ごとにチェック
     };
-    pollEmailVerification(); // 追加
+    pollEmailVerification();
+
 
     // const checkCurrentSession = async () => {
     //   const {
