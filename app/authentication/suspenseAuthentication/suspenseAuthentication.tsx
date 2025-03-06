@@ -49,19 +49,37 @@ const SuspenseAuthentication: React.FC = () => {
       }
     });
 
-    const checkCurrentSession = async () => {
-      const {
-        data: { session },
-      } = await clientSupabase.auth.getSession();
-      if (session?.user?.user_metadata?.email_verified) {
-        router.push(
-          `/complete?name=${encodeURIComponent(
-            paramsName
-          )}&email=${encodeURIComponent(paramsEmail)}`
-        );
-      }
+    const pollEmailVerification = async () => {
+      const interval = setInterval(async () => {
+        const {
+          data: { session },
+        } = await clientSupabase.auth.getSession();
+
+        if (session?.user?.user_metadata?.email_verified) {
+          clearInterval(interval); // タイマー停止
+          router.push(
+            `/complete?name=${encodeURIComponent(
+              paramsName
+            )}&email=${encodeURIComponent(paramsEmail)}`
+          );
+        }
+      }, 3000); // 3秒ごとにチェック
     };
-    checkCurrentSession();
+    pollEmailVerification(); // 追加
+
+    // const checkCurrentSession = async () => {
+    //   const {
+    //     data: { session },
+    //   } = await clientSupabase.auth.getSession();
+    //   if (session?.user?.user_metadata?.email_verified) {
+    //     router.push(
+    //       `/complete?name=${encodeURIComponent(
+    //         paramsName
+    //       )}&email=${encodeURIComponent(paramsEmail)}`
+    //     );
+    //   }
+    // };
+    // checkCurrentSession();
 
     return () => {
       subscription.unsubscribe();
