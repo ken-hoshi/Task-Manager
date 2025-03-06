@@ -12,7 +12,7 @@ export const signUp = () => {
         options: {
           emailRedirectTo: `${
             window.location.origin
-          }/authentication?name=${encodeURIComponent(
+          }/complete?name=${encodeURIComponent(
             name
           )}&email=${encodeURIComponent(email)}`,
           data: {

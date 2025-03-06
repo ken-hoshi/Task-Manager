@@ -36,19 +36,19 @@ const SuspenseAuthentication: React.FC = () => {
     }
     setLoading(false);
 
-    const { data: authListener } = clientSupabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth event:", event, "Session:", session);
-        if (session?.user?.user_metadata?.email_verified) {
-          router.push(
-            `/complete?name=${encodeURIComponent(paramsName)}&email=${encodeURIComponent(paramsEmail)}`
-          );
-        }
-      }
-    );
+    const interval = setInterval(async () => {
+      const { data: { session } } = await clientSupabase.auth.getSession();
+      console.log("Checking session:", session); // デバッグ用
 
-    return () => {
-    };
+      if (session?.user?.user_metadata?.email_verified) {
+        clearInterval(interval); // チェックを停止
+        router.push(
+          `/complete?name=${encodeURIComponent(paramsName)}&email=${encodeURIComponent(paramsEmail)}`
+        );
+      }
+    }, 5000); // 5秒ごとに確認
+
+    return () => clearInterval(interval);
   }, [paramsName, paramsEmail, router, setNotificationValue]);
 
   const handleNavigateTopPage = async () => {
