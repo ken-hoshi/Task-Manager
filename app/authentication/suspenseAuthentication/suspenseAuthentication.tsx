@@ -54,8 +54,9 @@ const SuspenseAuthentication: React.FC = () => {
         const {
           data: { session },
         } = await clientSupabase.auth.getSession();
-
+console.log(session)
         if (session?.user?.user_metadata?.email_verified) {
+
           clearInterval(interval); // タイマー停止
           router.push(
             `/complete?name=${encodeURIComponent(
