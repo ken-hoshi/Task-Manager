@@ -35,22 +35,6 @@ const SuspenseComplete: React.FC = () => {
       return;
     }
     setLoading(false);
-
-    const {
-      data: { subscription },
-    } = clientSupabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN") {
-        router.push(
-          `/complete?name=${encodeURIComponent(
-            paramsName
-          )}&email=${encodeURIComponent(paramsEmail)}`
-        );
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
   const handleNavigateTopPage = async () => {
