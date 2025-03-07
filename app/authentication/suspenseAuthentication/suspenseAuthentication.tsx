@@ -43,6 +43,7 @@ const SuspenseAuthentication: React.FC = () => {
   };
 
   const handleManualCheck = async () => {
+    await clientSupabase.auth.refreshSession(); // セッション更新
     const { data: { session } } = await clientSupabase.auth.getSession();
     console.log("Manual session check:", session);
 
