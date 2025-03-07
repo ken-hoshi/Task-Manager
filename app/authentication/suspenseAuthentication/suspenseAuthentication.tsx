@@ -35,20 +35,6 @@ const SuspenseAuthentication: React.FC = () => {
       return;
     }
     setLoading(false);
-
-    const interval = setInterval(async () => {
-      const { data: { session } } = await clientSupabase.auth.getSession();
-      console.log("Checking session:", session); // デバッグ用
-
-      if (session?.user?.user_metadata?.email_verified) {
-        clearInterval(interval); // チェックを停止
-        router.push(
-          `/complete?name=${encodeURIComponent(paramsName)}&email=${encodeURIComponent(paramsEmail)}`
-        );
-      }
-    }, 5000); // 5秒ごとに確認
-
-    return () => clearInterval(interval);
   }, [paramsName, paramsEmail, router, setNotificationValue]);
 
   const handleNavigateTopPage = async () => {
@@ -56,12 +42,23 @@ const SuspenseAuthentication: React.FC = () => {
     router.push("/");
   };
 
+  const handleManualCheck = async () => {
+    const { data: { session } } = await clientSupabase.auth.getSession();
+    console.log("Manual session check:", session);
+
+    if (session?.user?.user_metadata?.email_verified) {
+      router.push(
+        `/complete?name=${encodeURIComponent(paramsName!)}&email=${encodeURIComponent(paramsEmail!)}`
+      );
+    }
+  };
   return (
     <>
       {loading ? (
         <Loading />
       ) : (
         <>
+        <button onClick={handleManualCheck}>ログイン状態を確認</button>
           {notificationValue.message && (
             <NotificationBanner
               message={notificationValue.message}
