@@ -2,6 +2,7 @@
   float: right;
   font-size: 3vh !important;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .add:hover {

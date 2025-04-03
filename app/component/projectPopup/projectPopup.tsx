@@ -11,6 +11,7 @@ import classNames from "classnames";
 import DatePicker from "react-datepicker";
 import { fetchAttachedFiles } from "@/app/lib/api/fetchAttachedFiles";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
+import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 
 interface ProjectPopupProps {
   onClose: () => void;
@@ -91,6 +92,8 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
   const { setPageUpdated } = usePageUpdateContext();
   const { setNotificationValue } = useNotificationContext();
   const { addItem } = useFlashDisplayContext();
+    const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -226,7 +229,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
 
           setGetLoading(false);
         } catch (error) {
-          console.error("Error Fetch Project Details ", error);
+          console.error("Fetch Project Details", error);
           onClose();
           setNotificationValue({
             message: "Couldn't get the Project Data.",
@@ -472,8 +475,6 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
   };
 
   const handleEnterKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    console.log(editingIndex);
-
     if (e.key === "Enter") {
       handleNameSave();
     }
@@ -698,7 +699,10 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
             ({ beforeChangeTaskGenreDataArray, taskGenreDataArray }) =>
               beforeChangeTaskGenreDataArray
                 .filter(
-                  (TaskGenreData) => !taskGenreDataArray.includes(TaskGenreData)
+                  (beforeTaskGenreDataArray) =>
+                    !taskGenreDataArray
+                      .map((taskGenreData) => taskGenreData.id)
+                      .includes(beforeTaskGenreDataArray.id)
                 )
                 .map((taskGenreData) => taskGenreData.id)
           );
@@ -747,7 +751,12 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
               taskGenreDataArray
                 .filter(
                   (TaskGenreData) =>
-                    !beforeChangeTaskGenreDataArray.includes(TaskGenreData)
+                    !beforeChangeTaskGenreDataArray
+                      .map(
+                        (beforeChangeTaskGenreData) =>
+                          beforeChangeTaskGenreData.id
+                      )
+                      .includes(TaskGenreData.id)
                 )
                 .map((taskGenreData) => ({
                   ...taskGenreData,
@@ -1225,6 +1234,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         Promise.all(
           smallProjectArray.map(async (smallProjectData) => {
             const postEmailNotificationsError = await postMailNotifications(
+              displayWorkspaceId,
               userId,
               null,
               projectName,
@@ -1235,7 +1245,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
             );
             if (postEmailNotificationsError) {
               console.error(
-                "Error post mail notifications ",
+                "Post Mail Notifications",
                 postEmailNotificationsError
               );
             }
@@ -1252,10 +1262,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         onClose();
       }
     } catch (error) {
-      console.error(
-        projectId ? "Error edit project " : "Error add project ",
-        error
-      );
+      console.error(projectId ? "Edit Project" : "Add Project", error);
       setNotificationValue({
         message: projectId
           ? "Project was not edited."

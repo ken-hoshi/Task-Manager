@@ -10,6 +10,7 @@ import { clientSupabase } from "@/app/lib/supabase/client";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import DeleteConfirmModal from "@/app/component/deleteConfirmModal/deleteConfirmModal";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
+import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 
 interface WikiDataProps {
   id: number;
@@ -53,7 +54,7 @@ const Wiki: React.FC<WikiProps> = ({
   const [displayWikiNumber, setDisplayWikiNumber] = useState(0);
   const [updateFlg, setUpdateFlg] = useState(false);
   const [postLoading, setPostLoading] = useState(false);
-
+  const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { setNotificationValue } = useNotificationContext();
 
@@ -160,7 +161,7 @@ const Wiki: React.FC<WikiProps> = ({
         color: 0,
       });
     } catch (error) {
-      console.error("Error Delete Wiki Data: ", error);
+      console.error("Delete Wiki Data", error);
       setNotificationValue({ message: "Couldn't delete Wiki Page.", color: 1 });
     }
     setPageUpdated(true);
@@ -202,6 +203,7 @@ const Wiki: React.FC<WikiProps> = ({
 
         if (smallProjectData) {
           const postEmailNotificationsError = await postMailNotifications(
+            displayWorkspaceId,
             userId,
             null,
             (Array.isArray(smallProjectData.projects)

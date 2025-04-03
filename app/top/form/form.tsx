@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import styles from "./form.module.css";
 import classNames from "classnames";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { login } from "../../hooks/login";
 
 interface FormProps {
@@ -75,7 +75,7 @@ const Form: React.FC<FormProps> = ({ className }) => {
               value={formData.email}
               onChange={handleChange}
               onFocus={handleFocus}
-              autoComplete="current-password"
+              autoComplete="on"
               required
             />
             <p className={styles.instruction}>Enter your Email Address</p>
@@ -87,7 +87,7 @@ const Form: React.FC<FormProps> = ({ className }) => {
               value={formData.password}
               onChange={handleChange}
               onFocus={handleFocus}
-              autoComplete="current-password"
+              autoComplete="off"
               required
             />
             <p className={styles.instruction}>Enter Password</p>

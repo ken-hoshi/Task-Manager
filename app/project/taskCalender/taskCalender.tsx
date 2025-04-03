@@ -12,6 +12,7 @@ import { isDeadlineNear } from "@/app/lib/isDeadlineNear";
 import { selectBoxStyles } from "./selectBoxStyles";
 import Select, { SingleValue } from "react-select";
 import TaskPopup from "@/app/component/taskPopup/taskPopup";
+import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 
 interface TasksPeriodList {
   id: number;
@@ -80,6 +81,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
   filterMyTasks,
   statusData,
 }) => {
+  const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
   const [useDisplaySmallProjectId, setUseDisplaySmallProjectId] = useState(0);
   const [smallProjectTask, setSmallProjectTask] = useState<any[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -383,7 +385,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
         throw error;
       }
     } catch (error) {
-      console.error("Error Update Status ", error);
+      console.error("Update Status", error);
       setNotificationValue({
         message: "Couldn't update Status.",
         color: 1,
@@ -463,6 +465,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
 
         if (target == Target.task || target == Target.taskResult) {
           const postEmailNotificationsError = await postMailNotifications(
+            displayWorkspaceId,
             userId,
             taskId,
             null,
@@ -503,7 +506,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
         color: 0,
       });
     } catch (error) {
-      console.error("Error Update Task ", error);
+      console.error("Update Task", error);
 
       setPageUpdated(true);
       setClickCount(0);
@@ -607,6 +610,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
       {taskGenreIdUseTaskPopup && (
         <TaskPopup
           onClose={toggleTaskPopup}
+          workspaceId={displayWorkspaceId!}
           userId={userId}
           projectId={projectId}
           smallProjectId={displaySmallProjectId}
@@ -1234,7 +1238,12 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                     .length > 0 && (
                     <>
                       <tr>
-                        <td className={styles[`task-genre-name`]}>
+                        <td
+                          className={classNames(
+                            styles[`task-name`],
+                            styles[`task-genre-color`]
+                          )}
+                        >
                           <div className={styles[`task-genre-name-area`]}>
                             <p>No Task Genre</p>
                           </div>

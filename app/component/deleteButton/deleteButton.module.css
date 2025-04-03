@@ -1,9 +1,26 @@
+.delete-button-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .delete {
   cursor: pointer;
   float: right;
-  font-size: 3vh !important;
+  font-size: 2vh !important;
+  width: 2.5vh;
+  height: 2.5vh;
+  transition: all 0.3s ease-in-out;
+  background: #f0f0f0;
+  border-radius: 50%;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .delete:hover {
-  color: #357ae8;
+  background: #2d7df6;
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(45, 125, 246, 0.3);
 }

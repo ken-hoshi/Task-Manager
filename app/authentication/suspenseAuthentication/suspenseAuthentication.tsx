@@ -1,107 +1,61 @@
 "use client";
 
 import BackgroundImage2 from "@/app/component/backgroundImage2/backgroundImage2";
-import Loading from "@/app/component/loading/loading";
 import styles from "./suspenseAuthentication.module.css";
 import classNames from "classnames";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
-import NotificationBanner from "@/app/component/notificationBanner/notificationBanner";
-import { useFormContext } from "@/app/provider/formProvider";
-import { clientSupabase } from "@/app/lib/supabase/client";
 
 const SuspenseAuthentication: React.FC = () => {
   const { setNotificationValue } = useNotificationContext();
-  const { notificationValue } = useNotificationContext();
-  const { setBackForm } = useFormContext();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const paramsName = searchParams.get("name");
-  const paramsEmail = searchParams.get("email");
 
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!paramsName || !paramsEmail) {
-      console.error(
-        "Error Register: Params Name or Params Email couldn't get."
-      );
-      setNotificationValue({
-        message: "Couldn't get Registered Data.",
-        color: 1,
-      });
-      router.push("/register");
-      return;
-    }
-    setLoading(false);
-  }, [paramsName, paramsEmail, router, setNotificationValue]);
-
-  const handleNavigateTopPage = async () => {
-    setBackForm(true);
-    router.push("/");
-  };
-
-  const handleManualCheck = async () => {
-    await clientSupabase.auth.refreshSession(); // セッション更新
-    const { data: { session } } = await clientSupabase.auth.getSession();
-    console.log("Manual session check:", session);
-
-    if (session?.user?.user_metadata?.email_verified) {
-      router.push(
-        `/complete?name=${encodeURIComponent(paramsName!)}&email=${encodeURIComponent(paramsEmail!)}`
-      );
-    }
-  };
   return (
     <>
-      {loading ? (
-        <Loading />
-      ) : (
-        <>
-        <button onClick={handleManualCheck}>ログイン状態を確認</button>
-          {notificationValue.message && (
-            <NotificationBanner
-              message={notificationValue.message}
-              color={notificationValue.color}
-            />
-          )}
-
-          <div className={styles.authentication}>
-            <BackgroundImage2 />
-            <div className={styles[`inner-area`]}>
-              <div className={styles[`mail-image-area`]}>
-                <span
-                  className={classNames(
-                    "material-symbols-outlined",
-                    styles.mail
-                  )}
-                >
-                  mail
-                </span>
-              </div>
-
-              <div className={styles[`text-area`]}>
-                <p>
-                  登録したメールアドレス宛に認証メールを送信しました。メール内の指示に従って認証してください。
-                </p>
-              </div>
-              <div className={styles[`to-task-page-area`]}>
-                <span
-                  className={classNames(
-                    "material-symbols-outlined",
-                    styles.icon
-                  )}
-                  onClick={handleNavigateTopPage}
-                >
-                  arrow_circle_right
-                </span>
-                <p>To Login page</p>
-              </div>
+      <BackgroundImage2 />
+      <div className={styles[`inner-area`]}>
+        <div className={styles[`progress-bar-container`]}>
+          <div className={styles[`progress-bar`]}>
+            <div className={styles.step}>
+              <div className={styles.circle}></div>
+              <span>Sign Up</span>
+            </div>
+            <div className={styles.line}></div>
+            <div className={`${styles.step} ${styles.active}`}>
+              <div className={styles.circle}></div>
+              <span className={styles.active}>Email Verification</span>
+            </div>
+            <div className={styles.line}></div>
+            <div className={styles.step}>
+              <div className={styles.circle}></div>
+              <span>Workspace Setup</span>
             </div>
           </div>
-        </>
-      )}
+        </div>
+
+        <div className={styles[`mail-image-area`]}>
+          <span
+            className={classNames("material-symbols-outlined", styles.mail)}
+          >
+            mail
+          </span>
+        </div>
+
+        <div className={styles[`text-area`]}>
+          <p>
+            登録したメールアドレス宛に認証メールを送信しました。
+            <br />
+            メール内の認証が完了したらワークスペース登録に進んでください。
+          </p>
+        </div>
+
+        <div
+          className={styles[`to-workspace-setup-button`]}
+          onClick={() => router.push("/createWorkspace")}
+        >
+          ワークスペース登録へ
+        </div>
+      </div>
     </>
   );
 };

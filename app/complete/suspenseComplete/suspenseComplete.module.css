@@ -10,13 +10,22 @@
   box-shadow: 3px 3px 20px rgba(0, 0, 0, 10);
 }
 
-.text-area h1 {
-  font-weight: 300;
+.success,
+.failure {
+  font-weight: 200;
   font-size: 6.5vh;
   text-align: center;
-  color: #00e425;
   text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.5);
   margin: 10vh auto 4vh;
+}
+
+.success {
+  color: #00e425;
+}
+
+.failure {
+  color: #ff0000;
+  margin: 10vh auto 10vh !important;
 }
 
 .text-area ul {
@@ -39,24 +48,10 @@
   padding-left: 2vh;
 }
 
-.to-task-page-area {
-  text-align: center;
-  display: flex;
-  justify-content: center;
-}
-
-.icon {
-  color: #fff;
-  font-size: 6vh !important;
-  cursor: pointer;
-}
-
-.icon:hover {
-  color: dimgrey;
-}
-
-.to-task-page-area p {
-  margin: auto 0;
-  color: #fff;
-  font-size: 1.8vh;
+.failure-text {
+  width: 80%;
+  margin: 0 auto 5vh;
+  color: white;
+  font-size: 3vh;
+  text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.5);
 }

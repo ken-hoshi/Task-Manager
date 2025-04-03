@@ -32,7 +32,7 @@ const MailNotificationList: React.FC<MailNotificationListProps> = ({
 
               if (isReadUpdateError) {
                 console.error(
-                  "Error updating mail notifications ",
+                  "Update Mail Notifications ",
                   isReadUpdateError
                 );
               }

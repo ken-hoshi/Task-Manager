@@ -14,6 +14,7 @@ import { getTaskGenreData } from "@/app/lib/api/getTaskGenreData";
 import DatePicker from "react-datepicker";
 import { isDeadlineNear } from "@/app/lib/isDeadlineNear";
 import Image from "next/image";
+import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 
 interface StatusProps {
   id: number;
@@ -51,7 +52,7 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
 }) => {
   const { setNotificationValue } = useNotificationContext();
   const { setPageUpdated, pageUpdated } = usePageUpdateContext();
-
+  const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
   const [notYetCompletedTaskList, setNotYetCompletedTaskList] = useState<any[]>(
     []
   );
@@ -166,6 +167,7 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
       }
 
       const postEmailNotificationsError = await postMailNotifications(
+        displayWorkspaceId,
         userId,
         taskId,
         null,
@@ -181,7 +183,7 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
         );
       }
     } catch (error) {
-      console.error("Error Update Status ", error);
+      console.error("Update Status", error);
       setNotificationValue({
         message: "Couldn't update Status.",
         color: 1,
@@ -240,7 +242,7 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
 
       setPageUpdated(true);
     } catch (error) {
-      console.error("Error Update Task Result Data", error);
+      console.error("Update Task Result Data", error);
       setNotificationValue({
         message: "Couldn't update Task Result Data.",
         color: 1,
@@ -281,7 +283,7 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
       setPostLoading(false);
       setPageUpdated(true);
     } catch (error) {
-      console.error("Error Add Task Result ", error);
+      console.error("Add Task Result", error);
       setNotificationValue({
         message: "Couldn't add Task Result Data.",
         color: 1,

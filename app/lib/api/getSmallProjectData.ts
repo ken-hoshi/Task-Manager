@@ -1,42 +1,74 @@
 import { clientSupabase } from "../supabase/client";
 
-export async function getSmallProjectData(userId?: number) {
+export async function getSmallProjectData(
+  userId: number | null,
+  workspaceId: number
+) {
   try {
     let query = clientSupabase
-      .from("small_projects")
-      .select("*")
+      .from("workspace")
+      .select("projects(small_projects(*))")
+      .eq("id", workspaceId)
       .order("id", { ascending: true });
 
     if (userId) {
-      const { data: smallProjectData, error: smallProjectDataSelectError } =
-        await clientSupabase
-          .from("small_project_users")
-          .select("small_projects(id)")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: true });
+      const {
+        data: smallProjectBelongsUserData,
+        error: selectSmallProjectBelongsUserDataError,
+      } = await clientSupabase
+        .from("small_project_users")
+        .select("small_projects(id)")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: true });
 
-      if (smallProjectDataSelectError) {
-        throw smallProjectDataSelectError;
+      if (selectSmallProjectBelongsUserDataError) {
+        throw selectSmallProjectBelongsUserDataError;
       }
-      if (!smallProjectData || smallProjectData.length === 0) {
+      if (
+        !smallProjectBelongsUserData ||
+        smallProjectBelongsUserData.length === 0
+      ) {
         return [];
       }
 
-      const smallProjectIdList = smallProjectData.map(
-        (smallProject: any) => smallProject.small_projects.id
+      const smallProjectBelongsUserIdList: number[] = (
+        smallProjectBelongsUserData as any[]
+      ).flatMap(
+        (smallProjectBelongsUser) => smallProjectBelongsUser.small_projects.id
       );
-      query = query.in("id", smallProjectIdList);
+
+      const { data: projectDataArray, error: selectProjectDataArrayError } =
+        await query;
+
+      if (selectProjectDataArrayError) {
+        throw selectProjectDataArrayError;
+      }
+
+      const filteredSmallProjects = projectDataArray.flatMap((projectData) =>
+        projectData.projects.flatMap((project) =>
+          project.small_projects.filter((smallProject) =>
+            smallProjectBelongsUserIdList.includes(smallProject.id)
+          )
+        )
+      );
+
+      return filteredSmallProjects;
     }
 
-    const { data: smallProjects, error: smallProjectsError } = await query;
+    const { data: projectDataArray, error: selectProjectDataArrayError } =
+      await query;
 
-    if (smallProjectsError) {
-      throw smallProjectsError;
+    if (selectProjectDataArrayError) {
+      throw selectProjectDataArrayError;
     }
 
-    return smallProjects;
+    return (
+      projectDataArray
+        ?.flatMap((projectData) => projectData.projects)
+        .flatMap((project) => project.small_projects) ?? []
+    );
   } catch (error) {
-    console.error("Error Fetch Small Project Data ", error);
+    console.error("Fetch Small Project Data", error);
     return [];
   }
 }

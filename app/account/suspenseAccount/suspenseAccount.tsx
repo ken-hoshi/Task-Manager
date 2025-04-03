@@ -13,14 +13,13 @@ import DeleteAccountConfirmModal from "../deleteAccountConfirmModal/deleteAccoun
 import PasswordEditForm from "../passwordEditForm/passwordEditForm";
 import Profile from "../profile/profile";
 import UserDataEditForm from "../userDataEditForm/userDataEditForm";
-import styles from "./susepenseAccount.module.css";
+import styles from "./suspenseAccount.module.css";
 import { useSessionTimeout } from "@/app/hooks/sessionTimeout";
 
 const SuspenseAccount: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const paramsUserId = searchParams.get("userId");
-  const { isInitialized } = useSessionTimeout();
+  const paramsUserId = Number(searchParams.get("userId"));
   const { notificationValue, setNotificationValue } = useNotificationContext();
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
 
@@ -44,15 +43,7 @@ const SuspenseAccount: React.FC = () => {
   });
 
   useEffect(() => {
-    if (isInitialized === null) {
-      return;
-    }
-    if (!isInitialized) {
-      router.push("/");
-    }
-
-    const userId = Number(paramsUserId);
-    setUserId(userId);
+    setUserId(paramsUserId);
 
     const getUserData = async () => {
       try {
@@ -82,7 +73,7 @@ const SuspenseAccount: React.FC = () => {
           throw new Error("User ID couldn't get.");
         }
       } catch (error) {
-        console.error("Error Fetch User Data ", error);
+        console.error("Fetch User Data", error);
         setNotificationValue({
           message: "Couldn't get User Data.",
           color: 1,
@@ -93,7 +84,9 @@ const SuspenseAccount: React.FC = () => {
     };
     getUserData();
     setPageUpdated(false);
-  }, [pageUpdated, isInitialized]);
+  }, [pageUpdated]);
+
+  useSessionTimeout();
 
   const handleBackTop = () => {
     router.back();
@@ -131,7 +124,7 @@ const SuspenseAccount: React.FC = () => {
       }
       router.push("/");
     } catch (error) {
-      console.error("Error Delete User ", error);
+      console.error("Delete User", error);
       setNotificationValue({
         message: "Couldn't delete Account.",
         color: 1,
@@ -170,7 +163,7 @@ const SuspenseAccount: React.FC = () => {
                 <span
                   className={classNames(
                     "material-symbols-outlined",
-                    styles.icon
+                    styles.back
                   )}
                 >
                   account_circle

@@ -10,14 +10,8 @@ export const signUp = () => {
         email: email,
         password: password,
         options: {
-          emailRedirectTo: `${
-            window.location.origin
-          }/complete?name=${encodeURIComponent(
-            name
-          )}&email=${encodeURIComponent(email)}`,
-          data: {
-            display_name: name,
-          },
+          emailRedirectTo: `${window.location.origin}/complete`,
+          data: { display_name: name, email: email },
         },
       });
 
@@ -34,11 +28,7 @@ export const signUp = () => {
         if (insertError) {
           throw insertError;
         } else {
-          router.push(
-            `/authentication?name=${encodeURIComponent(
-              name
-            )}&email=${encodeURIComponent(email)}`
-          );
+          router.push("/authentication");
         }
       } else {
         throw new Error("User Id couldn't get.");

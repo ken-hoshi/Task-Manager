@@ -218,7 +218,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
         .eq("id", smallProjectId);
 
       if (updateSmallProjectError) {
-        console.error("Error Update Small Projects", updateSmallProjectError);
+        console.error("Update Small Projects", updateSmallProjectError);
         setNotificationValue({
           message: "Couldn't update the Small Project Data.",
           color: 1,
@@ -236,9 +236,6 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
           <thead>
             <tr>
               <th>
-                <p className={styles[`small-project-name`]}>
-                  {displaySmallProject!.small_project_name}
-                </p>
                 {smallProjectData.length > 1 && (
                   <div className={styles[`pull-down-container`]}>
                     <span
@@ -248,7 +245,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                       )}
                       onClick={toggleDropdown}
                     >
-                      arrow_drop_down
+                      arrow_right
                     </span>
                     {isDropdownOpen && (
                       <div
@@ -276,6 +273,9 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                     )}
                   </div>
                 )}
+                <p className={styles[`small-project-name`]}>
+                  {displaySmallProject!.small_project_name}
+                </p>
               </th>
             </tr>
           </thead>
@@ -450,7 +450,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                                       </tbody>
                                     </table>
                                   </div>
-                                 </div>
+                                </div>
                               )
                             )}
                           </div>

@@ -2,7 +2,7 @@ import DeleteButton from "@/app/component/deleteButton/deleteButton";
 import EditButton from "@/app/component/editButton/editButton";
 import { selectBoxStyles } from "../suspenseProject/selectBoxStyles";
 import classNames from "classnames";
-import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Select, { SingleValue } from "react-select";
 import styles from "./taskList.module.css";
 import { useFlashDisplayContext } from "@/app/provider/flashDisplayProvider";
@@ -17,6 +17,7 @@ import DatePicker from "react-datepicker";
 import { useRouter } from "next/navigation";
 import { isDeadlineNear } from "@/app/lib/isDeadlineNear";
 import Image from "next/image";
+import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 
 interface TaskGenreDataProps {
   taskGenreId: number;
@@ -160,6 +161,8 @@ const TaskList: React.FC<TaskListProps> = ({
   const { newItem } = useFlashDisplayContext();
   const { setNotificationValue } = useNotificationContext();
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
+  const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
+
   const router = useRouter();
 
   useEffect(() => {
@@ -293,6 +296,7 @@ const TaskList: React.FC<TaskListProps> = ({
       }
 
       const postEmailNotificationsError = await postMailNotifications(
+        displayWorkspaceId,
         userId,
         taskId,
         null,
@@ -308,7 +312,7 @@ const TaskList: React.FC<TaskListProps> = ({
         );
       }
     } catch (error) {
-      console.error("Error Update Status ", error);
+      console.error("Update Status", error);
       setNotificationValue({
         message: "Couldn't update Status.",
         color: 1,
@@ -584,7 +588,7 @@ const TaskList: React.FC<TaskListProps> = ({
 
       setPageUpdated(true);
     } catch (error) {
-      console.error("Error Update Task Result Data", error);
+      console.error("Update Task Result Data", error);
       setNotificationValue({
         message: "Couldn't update Task Result Data.",
         color: 1,
@@ -625,7 +629,7 @@ const TaskList: React.FC<TaskListProps> = ({
       setPostLoading(false);
       setPageUpdated(true);
     } catch (error) {
-      console.error("Error Add Task Result Data", error);
+      console.error("Add Task Result Data", error);
       setNotificationValue({
         message: "Couldn't add Task Result Data.",
         color: 1,
@@ -930,8 +934,9 @@ const TaskList: React.FC<TaskListProps> = ({
                           <AddButton
                             target={1}
                             userId={userId}
+                            workspaceId={displayWorkspaceId || undefined}
                             projectId={projectId}
-                            smallProjectId={displaySmallProjectId}
+                            smallProjectId={displaySmallProjectId || undefined}
                             taskGenreId={
                               taskDividedByTaskGenreId.taskGenreId || undefined
                             }
@@ -1083,6 +1088,9 @@ const TaskList: React.FC<TaskListProps> = ({
                                 >
                                   <div>
                                     <EditButton
+                                      workspaceId={
+                                        displayWorkspaceId || undefined
+                                      }
                                       taskId={task.id}
                                       projectId={null}
                                       userId={userId}
@@ -1722,8 +1730,9 @@ const TaskList: React.FC<TaskListProps> = ({
                       <AddButton
                         target={1}
                         userId={userId}
+                        workspaceId={displayWorkspaceId || undefined}
                         projectId={projectId}
-                        smallProjectId={displaySmallProjectId}
+                        smallProjectId={displaySmallProjectId || undefined}
                       />
                     </div>
                   </th>

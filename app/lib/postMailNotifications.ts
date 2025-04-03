@@ -1,6 +1,7 @@
 import { clientSupabase } from "./supabase/client";
 
 export async function postMailNotifications(
+  displayWorkspaceId: number | null,
   notSendUserId: number | null,
   taskId: number | null,
   projectName: string | null,
@@ -52,6 +53,7 @@ export async function postMailNotifications(
         const { error: insertMailNotificationsError } = await clientSupabase
           .from("mail_notifications")
           .insert({
+            workspace_id: displayWorkspaceId,
             user_id: taskData.assigned_user_id,
             text: text,
           });
@@ -97,6 +99,7 @@ export async function postMailNotifications(
         const { error: insertMailNotificationsError } = await clientSupabase
           .from("mail_notifications")
           .insert({
+            workspace_id: displayWorkspaceId,
             user_id: taskData.assigned_user_id,
             text: text,
           });
@@ -126,6 +129,7 @@ export async function postMailNotifications(
             const { error: insertMailNotificationsError } = await clientSupabase
               .from("mail_notifications")
               .insert({
+                workspace_id: displayWorkspaceId,
                 user_id: filteredId,
                 text: text,
               });
@@ -158,6 +162,7 @@ export async function postMailNotifications(
             const { error: insertMailNotificationsError } = await clientSupabase
               .from("mail_notifications")
               .insert({
+                workspace_id: displayWorkspaceId,
                 user_id: filteredId,
                 text: text,
               });

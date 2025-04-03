@@ -12,7 +12,7 @@ export const getSession = async () => {
 
     return sessionData.session || userData.user ? sessionData.session : null;
   } catch (error) {
-    console.error("Error Get Session ", error);
+    console.error("Get Session", error);
     return null;
   }
 };

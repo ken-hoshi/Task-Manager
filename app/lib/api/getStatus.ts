@@ -16,7 +16,7 @@ export async function getStatus() {
 
     return statusList;
   } catch (error) {
-    console.error("Error Fetch Status ", error);
+    console.error("Fetch Status", error);
     return [];
   }
 }

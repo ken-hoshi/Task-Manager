@@ -246,6 +246,7 @@
   justify-content: center;
   height: 2.5vh;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .edit-text-container {
@@ -335,6 +336,11 @@
   font-size: 2vh;
   height: 4.5vh;
   width: 10vh;
+}
+
+.button,
+.project-details-button {
+  transition: all 0.3s ease-in-out;
 }
 
 .button:hover,

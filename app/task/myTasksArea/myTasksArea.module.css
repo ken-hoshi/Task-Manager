@@ -92,7 +92,7 @@
 }
 
 .my-task-area th.col-task-name {
-  width: 15.5vw;
+  width: 15vw;
   padding: 0;
   box-sizing: border-box;
 }
@@ -105,15 +105,29 @@
 
 .my-task-area th.col-status,
 .my-task-area td.col-status {
-  width: 5vw;
   padding: 0;
+}
+
+.my-task-area th.col-status {
+  width: 6vw;
+}
+
+.my-task-area td.col-status {
+  width: 5vw;
 }
 
 .my-task-area th.col-deadline,
 .my-task-area td.col-deadline {
-  width: 8vw;
   padding: 0 0.5vh;
   box-sizing: border-box;
+}
+
+.my-task-area th.col-deadline {
+  width: 9vw;
+}
+
+.my-task-area td.col-deadline {
+  width: 8vw;
 }
 
 .my-task-area td.col-deadline {
@@ -172,8 +186,8 @@
 }
 
 .my-task-area th.col-actions {
-  width: 2.5vw;
-  padding: 0 0.5vh;
+  width: 2vw;
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -210,6 +224,7 @@
   float: right;
   font-size: 3vh !important;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .off-filter:hover {
@@ -315,10 +330,12 @@
   font-size: 5vh !important;
   cursor: pointer;
   margin: 0;
+  transition: all 0.3s ease-in-out;
 }
 
 .arrow:hover {
   color: #357ae8;
+  transform: scale(1.4);
 }
 
 .task-name {
@@ -341,6 +358,7 @@
   cursor: pointer;
   float: right;
   font-size: 3vh !important;
+  transition: all 0.3s ease-in-out !important;
 }
 
 .edit:hover,
@@ -505,6 +523,10 @@
   background-color: #fff;
 }
 
+.task-genre-area table tbody tr {
+  transition: all 0.3s ease-in-out;
+}
+
 .task-genre-area table tbody tr:hover {
   background-color: #e3f2fd;
 }
@@ -531,6 +553,7 @@
 .user-result-area::-webkit-scrollbar-thumb {
   background-color: #a0a0a0;
   border-radius: 0.5vh;
+  transition: all 0.3s ease-in-out;
 }
 
 .user-result-area::-webkit-scrollbar-thumb:hover {
@@ -572,6 +595,7 @@
   color: rgb(255, 53, 53);
   font-size: 2.5vh !important;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .cancel-icon:hover {
@@ -750,6 +774,7 @@
   cursor: pointer;
   color: black;
   text-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease-in-out;
 }
 
 .downloadIcon:hover {

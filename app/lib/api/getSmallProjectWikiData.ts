@@ -27,7 +27,7 @@ export async function getSmallProjectWikiData(smallProjectIdList: number[]) {
 
     return wikiDataArrayBySmallProjects;
   } catch (error) {
-    console.error("Error Get Small Project Wiki Data ", error);
+    console.error("Get Small Project Wiki Data", error);
     return [];
   }
 }

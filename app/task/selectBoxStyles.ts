@@ -32,6 +32,7 @@ export const selectBoxStyles = {
       cursor: "pointer",
       backgroundColor: color,
       border: "none",
+      boxShadow: "2px 2px 8px rgba(0, 0, 0, 0.3)",
     };
   },
   valueContainer: (baseStyles: any) => ({

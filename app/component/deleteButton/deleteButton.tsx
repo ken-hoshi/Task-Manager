@@ -6,6 +6,7 @@ import DeleteConfirmModal from "../deleteConfirmModal/deleteConfirmModal";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
+import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 
 interface ProjectDeleteButtonProps {
   projectId: number | null;
@@ -21,6 +22,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { setPageUpdated } = usePageUpdateContext();
   const { setNotificationValue } = useNotificationContext();
+  const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
 
   const handleDelete = async () => {
     try {
@@ -128,6 +130,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
         }
 
         const postEmailNotificationsError = await postMailNotifications(
+          displayWorkspaceId,
           userId,
           taskId,
           null,
@@ -139,7 +142,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
 
         if (postEmailNotificationsError) {
           console.error(
-            "Error post mail notifications ",
+            "Post Mail Notifications ",
             postEmailNotificationsError
           );
         }
@@ -161,10 +164,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
         color: 0,
       });
     } catch (error) {
-      console.error(
-        projectId ? "Error Delete project " : "Error Delete task ",
-        error
-      );
+      console.error(projectId ? "Delete Project" : "Delete Task", error);
       setNotificationValue({
         message: projectId
           ? "Project was not deleted."
@@ -185,7 +185,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
   };
 
   return (
-    <div>
+    <div className={styles[`delete-button-container`]}>
       <span
         className={classNames("material-symbols-outlined", styles.delete)}
         onClick={openModal}
@@ -194,10 +194,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
         delete{" "}
       </span>
       {isModalOpen && (
-        <DeleteConfirmModal
-          onConfirm={handleDelete}
-          closeModal={closeModal}
-        />
+        <DeleteConfirmModal onConfirm={handleDelete} closeModal={closeModal} />
       )}
     </div>
   );

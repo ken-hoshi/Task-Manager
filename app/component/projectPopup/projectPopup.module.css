@@ -42,8 +42,8 @@
 }
 
 .spinner {
-  border: 1.5vh solid #f3f3f3;
-  border-top: 1.5vh solid #3498db;
+  border: 1vh solid #f3f3f3;
+  border-top: 1vh solid #3498db;
   border-radius: 50%;
   width: 10vh;
   height: 10vh;

@@ -1,29 +1,33 @@
 import { clientSupabase } from "../supabase/client";
 
-export async function fetchTasksData(userId?: number) {
+export async function fetchTasksData(workspaceId: number) {
   try {
-    if (userId) {
-      const { data: tasks, error: tasksSelectError } = await clientSupabase
-        .from("tasks")
-        .select(
-          "*, task_status(status), small_projects (small_project_name, projects (project_name)), users(name)"
-        )
-        .eq("assigned_user_id", userId)
-        .order("created_at", { ascending: true });
+    const { data: projectDataArray, error: selectProjectDataArrayError } =
+      await clientSupabase
+        .from("workspace")
+        .select("projects(small_projects(id))")
+        .eq("id", workspaceId)
+        .order("id", { ascending: true });
 
-      if (tasksSelectError) {
-        throw tasksSelectError;
-      }
-      if (!tasks || tasks.length === 0) {
-        return [];
-      }
-      return tasks;
+    if (selectProjectDataArrayError) {
+      throw selectProjectDataArrayError;
     }
+
+    if (!projectDataArray || projectDataArray.length === 0) {
+      return [];
+    }
+
+    const smallProjectIdList: number[] = projectDataArray
+      ?.flatMap((projectData) => projectData.projects)
+      .flatMap((project) => project.small_projects)
+      .map((smallProject) => smallProject.id);
+
     const { data: tasks, error: tasksSelectError } = await clientSupabase
       .from("tasks")
       .select(
         "*, task_status(status), small_projects (small_project_name, projects (project_name), isFinished), users(name)"
       )
+      .in("small_project_id", smallProjectIdList)
       .order("created_at", { ascending: true });
 
     if (tasksSelectError) {
@@ -34,7 +38,7 @@ export async function fetchTasksData(userId?: number) {
     }
     return tasks;
   } catch (error) {
-    console.error("Error Fetch Tasks ", error);
+    console.error("Fetch Tasks", error);
     return [];
   }
 }

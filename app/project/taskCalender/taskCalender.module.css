@@ -29,6 +29,7 @@
   align-items: center;
   padding: 2vh 0;
   margin: 0 auto;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .navigation button {
@@ -42,6 +43,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  transition: all 0.3s ease-in-out;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .arrow {
@@ -111,6 +114,7 @@
 .calender-container::-webkit-scrollbar-thumb:horizontal {
   background-color: #b4b4b4;
   border-radius: 1vh;
+  transition: all 0.3s ease-in-out !important;
 }
 
 .calender-container::-webkit-scrollbar-thumb:horizontal:hover {
@@ -232,6 +236,10 @@ td.task-period-edit {
   background-image: url("/img/calendar.png");
 }
 
+.calendar-white-icon {
+  background-image: url("/img/calendar-white.png");
+}
+
 .alarm-icon {
   background-image: url("/img/alarm.png");
 }
@@ -309,6 +317,7 @@ td.task-period-edit {
   float: right;
   font-size: 3vh !important;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .add:hover {
@@ -337,6 +346,7 @@ td.task-period-edit {
 
 .check-button {
   border: 0.1vh solid rgb(19, 240, 3);
+  transition: all 0.3s ease-in-out;
 }
 
 .check-button:hover {
@@ -347,6 +357,7 @@ td.task-period-edit {
   font-size: 2.5vh !important;
   cursor: pointer;
   color: rgb(19, 240, 3);
+  transition: all 0.3s ease-in-out;
 }
 
 .check:hover {
@@ -355,6 +366,7 @@ td.task-period-edit {
 
 .cancel-button {
   border: 0.1vh solid rgb(245, 74, 17);
+  transition: all 0.3s ease-in-out;
 }
 
 .cancel-button:hover {
@@ -365,6 +377,7 @@ td.task-period-edit {
   font-size: 2.5vh !important;
   cursor: pointer;
   color: rgb(245, 74, 17);
+  transition: all 0.3s ease-in-out;
 }
 
 .cancel:hover {
@@ -374,10 +387,13 @@ td.task-period-edit {
 .edit {
   font-size: 2.5vh !important;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .edit:hover {
   color: #357ae8;
+  transform: scale(1.1);
 }
 
 .result-task-name {

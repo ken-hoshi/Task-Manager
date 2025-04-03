@@ -1,4 +1,4 @@
-.text-area {
+.inner-area {
   background-color: rgba(10, 169, 236, 0.7);
   position: absolute;
   top: 50vh;
@@ -10,15 +10,84 @@
   box-shadow: 3px 3px 20px rgba(0, 0, 0, 10);
 }
 
-.icon {
+.back {
   color: white;
   font-size: 10vh !important;
   cursor: pointer;
   margin: 1.5vh 1.5vh 0 1.5vh;
 }
 
-.icon:hover {
+.back:hover {
   color: dimgrey;
+}
+
+.progress-bar-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  width: 100%;
+  top: 15%;
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.progress-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 50%;
+  position: relative;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 5vw;
+  height: 10vh;
+}
+
+.circle {
+  width: 4.5vh;
+  height: 4.5vh;
+  margin-top: 1vh;
+  border-radius: 50%;
+  background-color: white;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+.step span {
+  font-size: 1.2vh;
+  text-align: center;
+  color: #555555;
+}
+
+.step span.active {
+  color: #000000;
+}
+.active .circle {
+  background-color: #2d7df6;
+  width: 6vh;
+  height: 6vh;
+  margin-top: 0;
+  box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.5);
+}
+
+.line {
+  position: absolute;
+  top: 35%;
+  left: 10%;
+  width: 80%;
+  height: 0.3vh;
+  background-color: #ccc;
+  transform: translateY(-50%);
+  z-index: 1;
 }
 
 .form-area {
@@ -30,12 +99,12 @@
 }
 
 .form-area h1 {
-  font-weight: 300;
+  font-weight: 200;
   font-size: 8vh;
   text-align: center;
   color: #fff;
   text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.5);
-  margin: 1vh auto 2vh;
+  margin: 2vh auto 2vh;
 }
 
 .form-area form {

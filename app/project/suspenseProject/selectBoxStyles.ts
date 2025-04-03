@@ -32,6 +32,7 @@ export const selectBoxStyles = {
       cursor: "pointer",
       backgroundColor: color,
       border: "none",
+      boxShadow: "2px 2px 8px rgba(0, 0, 0, 0.3)",
     };
   },
   valueContainer: (baseStyles: any) => ({
@@ -57,17 +58,16 @@ export const selectBoxStyles = {
     left: "105%",
     zIndex: 1000,
     top: "-4px",
-    border: "none", 
-    boxShadow: "none", 
+    border: "none",
+    boxShadow: "none",
     backgroundColor: "transparent",
     margin: "0 auto",
     height: "9.5vh",
     width: "210%",
-
   }),
   menuList: (baseStyles: any) => ({
     ...baseStyles,
-    display: "flex", 
+    display: "flex",
   }),
   option: (
     baseStyles: any,

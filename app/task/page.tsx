@@ -25,6 +25,14 @@ import { fetchAttachedFiles } from "../lib/api/fetchAttachedFiles";
 import { getProjectData } from "../lib/api/getProjectData";
 import { fetchSmallProjectData } from "../lib/api/fetchSmallProjectData";
 import { getSession } from "../hooks/getSession";
+import { Logout } from "../hooks/logout";
+import { getWorkspace } from "../lib/api/getWorkspace";
+import { useDisplayWorkspaceIdContext } from "../provider/displayWorkspaceIdProvider";
+
+interface WorkspaceProps {
+  id: number;
+  workspaceName: string;
+}
 
 interface StatusProps {
   id: number;
@@ -69,6 +77,9 @@ interface AttachedFileProps {
 
 const Task: React.FC = () => {
   const [userId, setUserId] = useState(0);
+  const [workspaceDataArray, setWorkspaceDataArray] = useState<
+    WorkspaceProps[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [statuses, setStatuses] = useState<StatusProps[]>([]);
 
@@ -90,10 +101,12 @@ const Task: React.FC = () => {
   const [myTasks, setMyTasks] = useState<any[]>([]);
   const [notYetCompletedTasks, setNotYetCompletedTasks] = useState<any[]>([]);
 
+  const { displayWorkspaceId, setDisplayWorkspaceId } =
+    useDisplayWorkspaceIdContext();
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { notificationValue } = useNotificationContext();
   const { setBackForm } = useFormContext();
-  const { isInitialized } = useSessionTimeout();
+  const { useLogout } = Logout();
   const router = useRouter();
 
   const today = new Date();
@@ -109,81 +122,94 @@ const Task: React.FC = () => {
     return memoDayAfterTomorrow;
   }, [today]);
 
-  const handleSessionError = (message?: string) => {
-    setBackForm(true);
-    if (message) alert(message);
-    router.push("/");
-  };
-
   useEffect(() => {
     const fetchData = async () => {
-      if (isInitialized === null) {
-        return;
-      }
-      if (!isInitialized) {
-        handleSessionError("データの取得に失敗しました。");
-      }
-
       try {
         const session = await getSession();
         if (!session?.user.id) {
-          handleSessionError("データの取得に失敗しました。");
+          throw new Error("Session Data couldn't get.");
         }
 
         const userId = await getUserId(session!.user.id);
         if (!userId) {
           throw new Error("User Id couldn't get.");
-        } else {
-          setUserId(userId);
         }
+        setUserId(userId);
 
-        const projectData = await getProjectData();
-        if (!projectData) {
-          throw new Error("Fetch Project Data couldn't get.");
-        }
+        const workspaceUserBelongsData = await getWorkspace(userId);
 
-        const smallProjectData = await fetchSmallProjectData();
-        if (
-          !smallProjectData.smallProjectData ||
-          !smallProjectData.smallProjectMembersData ||
-          !smallProjectData.smallProjectStatusData
-        ) {
-          throw new Error("Fetch ProjectsData couldn't get.");
-        }
-
-        if (projectData.length > 0) {
-          setProjectDataArray(projectData);
-          setSmallProjectDataArray(smallProjectData.smallProjectData);
-          setSmallProjectMemberDataArray(
-            smallProjectData.smallProjectMembersData
-          );
-          setSmallProjectStatusDataArray(
-            smallProjectData.smallProjectStatusData
-          );
-
-          const smallProjectIdList = smallProjectData.smallProjectData.map(
-            (smallProject) => smallProject.id
-          );
-          setSmallProjectTaskGenreArray(
-            await getSmallProjectTaskGenre(smallProjectIdList)
-          );
-
-          const attachedFileData = await fetchAttachedFiles(
-            0,
-            smallProjectIdList
-          );
-          if (
-            attachedFileData.some(
-              (attachedFiles) => attachedFiles.fileDataArray.length > 0
+        if (session && userId && workspaceUserBelongsData.length === 0) {
+          router.push("/createWorkspace?atSignUp=false");
+        } else if (session && userId && workspaceUserBelongsData.length > 0) {
+          const workspaceData = workspaceUserBelongsData
+            .map((workspaceData) =>
+              Array.isArray(workspaceData.workspace)
+                ? workspaceData.workspace[0]
+                : workspaceData.workspace
             )
-          ) {
-            setAttachedFileDataArray(attachedFileData);
+            .map((workspaceData) => ({
+              id: workspaceData.id,
+              workspaceName: workspaceData.workspace_name,
+            }));
+          setWorkspaceDataArray(workspaceData);
+          if (!displayWorkspaceId) {
+            setDisplayWorkspaceId(workspaceData[0].id);
           }
 
-          const tasksData = await fetchTasksData();
-          if (!tasksData) {
-            throw new Error("Fetch TasksData couldn't get.");
-          } else {
+          const projectData = await getProjectData(
+            null,
+            displayWorkspaceId ? displayWorkspaceId : workspaceData[0].id
+          );
+          if (!projectData) {
+            throw new Error("Fetch Project Data couldn't get.");
+          }
+
+          const smallProjectData = await fetchSmallProjectData(
+            displayWorkspaceId ? displayWorkspaceId : workspaceData[0].id
+          );
+          if (
+            !smallProjectData.smallProjectData ||
+            !smallProjectData.smallProjectMembersData ||
+            !smallProjectData.smallProjectStatusData
+          ) {
+            throw new Error("Fetch ProjectsData couldn't get.");
+          }
+
+          if (projectData.length > 0) {
+            setProjectDataArray(projectData);
+            setSmallProjectDataArray(smallProjectData.smallProjectData);
+            setSmallProjectMemberDataArray(
+              smallProjectData.smallProjectMembersData
+            );
+            setSmallProjectStatusDataArray(
+              smallProjectData.smallProjectStatusData
+            );
+
+            const smallProjectIdList = smallProjectData.smallProjectData.map(
+              (smallProject) => smallProject.id
+            );
+            setSmallProjectTaskGenreArray(
+              await getSmallProjectTaskGenre(smallProjectIdList)
+            );
+
+            const attachedFileData = await fetchAttachedFiles(
+              0,
+              smallProjectIdList
+            );
+            if (
+              attachedFileData.some(
+                (attachedFiles) => attachedFiles.fileDataArray.length > 0
+              )
+            ) {
+              setAttachedFileDataArray(attachedFileData);
+            }
+
+            const tasksData = await fetchTasksData(
+              displayWorkspaceId ? displayWorkspaceId : workspaceData[0].id
+            );
+            if (!tasksData) {
+              throw new Error("Fetch TasksData couldn't get.");
+            }
             const myTasksData = tasksData.filter(
               (taskData) => taskData.assigned_user_id === userId
             );
@@ -205,6 +231,7 @@ const Task: React.FC = () => {
 
                     if (checkDateMatch(taskDeadline, dayAfterTomorrow)) {
                       return postMailNotifications(
+                        displayWorkspaceId,
                         null,
                         myTask.id,
                         null,
@@ -215,6 +242,7 @@ const Task: React.FC = () => {
                       );
                     } else if (checkDateMatch(taskDeadline, tomorrow)) {
                       return postMailNotifications(
+                        displayWorkspaceId,
                         null,
                         myTask.id,
                         null,
@@ -225,6 +253,7 @@ const Task: React.FC = () => {
                       );
                     } else if (checkDateMatch(taskDeadline, today)) {
                       return postMailNotifications(
+                        displayWorkspaceId,
                         null,
                         myTask.id,
                         null,
@@ -259,33 +288,39 @@ const Task: React.FC = () => {
             } else {
               setNotYetCompletedTasks([]);
             }
-          }
 
-          const statusData = await getStatus();
-          if (!statuses || statuses.length < 0) {
-            throw new Error("Fetch StatusData couldn't get.");
+            const statusData = await getStatus();
+            if (!statuses || statuses.length < 0) {
+              throw new Error("Fetch StatusData couldn't get.");
+            }
+            setStatuses(statusData);
+          } else {
+            setProjectDataArray([]);
+            setSmallProjectDataArray([]);
+            setSmallProjectMemberDataArray([]);
+            setSmallProjectStatusDataArray([]);
+            setSmallProjectTaskGenreArray([]);
+            setAttachedFileDataArray([]);
+            setMyTasks([]);
+            setNotYetCompletedTasks([]);
           }
-          setStatuses(statusData);
         } else {
-          setProjectDataArray([]);
-          setSmallProjectDataArray([]);
-          setSmallProjectMemberDataArray([]);
-          setSmallProjectStatusDataArray([]);
-          setSmallProjectTaskGenreArray([]);
-          setAttachedFileDataArray([]);
-          setMyTasks([]);
-          setNotYetCompletedTasks([]);
+          throw new Error("Session Data couldn't get.");
         }
-
-        setPageUpdated(false);
         setLoading(false);
+        setPageUpdated(false);
+        return;
       } catch (error) {
-        console.error("Error Fetch Data ", error);
-        handleSessionError("データの取得に失敗しました。");
+        console.error("Fetch Data", error);
+        setBackForm(true);
+        alert("データの取得に失敗しました。");
       }
+      await useLogout();
     };
     fetchData();
-  }, [pageUpdated, isInitialized]);
+  }, [pageUpdated, displayWorkspaceId]);
+
+  useSessionTimeout();
 
   return (
     <>
@@ -301,7 +336,12 @@ const Task: React.FC = () => {
       ) : (
         <div className={styles[`task-container`]}>
           <BackgroundImage1 />
-          <Header projectId={null} projectName={null} userId={userId} />
+          <Header
+            workspaceDataArray={workspaceDataArray}
+            projectId={null}
+            projectName={null}
+            userId={userId}
+          />
           <div className={styles.task}>
             <ProjectsArea
               projectDataArray={projectDataArray}

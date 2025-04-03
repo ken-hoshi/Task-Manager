@@ -112,7 +112,7 @@ export const fetchProjectDetailsData = async (projectId: number) => {
       smallProjectWikiData
     };
   } catch (error) {
-    console.error("Error Fetch Project Details Data ", error);
+    console.error("Fetch Project Details Data", error);
     return {};
   }
 };

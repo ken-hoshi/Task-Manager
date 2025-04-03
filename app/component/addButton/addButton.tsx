@@ -7,14 +7,16 @@ import TaskPopup from "../taskPopup/taskPopup";
 interface AddButtonProps {
   target: number;
   userId: number;
+  workspaceId?: number;
   projectId?: number;
-  smallProjectId?: number|null;
+  smallProjectId?: number;
   taskGenreId?:number;
 }
 
 const AddButton: React.FC<AddButtonProps> = ({
   target,
   userId,
+  workspaceId,
   projectId,
   smallProjectId,
   taskGenreId,
@@ -50,6 +52,7 @@ const AddButton: React.FC<AddButtonProps> = ({
         <TaskPopup
           onClose={toggleTaskPopup}
           userId={userId}
+          workspaceId={workspaceId!}
           projectId={projectId || null}
           smallProjectId={smallProjectId || null}
           taskId={null}

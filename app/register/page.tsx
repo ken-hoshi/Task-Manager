@@ -75,7 +75,7 @@ const Register: React.FC = () => {
 
     const signUpError = await useSignUp(name, email, password);
     if (signUpError) {
-      console.error("Error Sign up ", signUpError);
+      console.error("Sign up ", signUpError);
       setNotificationValue({
         message: "Couldn't sign up.",
         color: 1,
@@ -93,16 +93,35 @@ const Register: React.FC = () => {
         />
       )}
 
-      <div className={styles.register}>
+      <div>
         <BackgroundImage2 />
 
-        <div className={styles[`text-area`]}>
+        <div className={styles[`inner-area`]}>
           <span
-            className={classNames("material-symbols-outlined", styles.icon)}
+            className={classNames("material-symbols-outlined", styles.back)}
             onClick={handleBackTop}
           >
             arrow_back
           </span>
+
+          <div className={styles[`progress-bar-container`]}>
+            <div className={styles[`progress-bar`]}>
+              <div className={`${styles.step} ${styles.active}`}>
+                <div className={styles.circle}></div>
+                <span className={styles.active}>Sign Up</span>
+              </div>
+              <div className={styles.line}></div>
+              <div className={styles.step}>
+                <div className={styles.circle}></div>
+                <span>Email Verification</span>
+              </div>
+              <div className={styles.line}></div>
+              <div className={styles.step}>
+                <div className={styles.circle}></div>
+                <span>Workspace Setup</span>
+              </div>
+            </div>
+          </div>
 
           <div className={styles[`form-area`]}>
             <h1>Sign up</h1>
@@ -112,7 +131,7 @@ const Register: React.FC = () => {
                 type="text"
                 placeholder="Name"
                 name="name"
-                autoComplete="username"
+                autoComplete="off"
                 required
                 value={formData.name}
                 onChange={handleChange}
@@ -125,7 +144,7 @@ const Register: React.FC = () => {
                 type="email"
                 placeholder="Email"
                 name="email"
-                autoComplete="email"
+                autoComplete="off"
                 required
                 value={formData.email}
                 onChange={handleChange}
@@ -141,8 +160,8 @@ const Register: React.FC = () => {
               <input
                 type="password"
                 placeholder="Password"
+                autoComplete="off"
                 name="password"
-                autoComplete="current-password"
                 required
                 value={formData.password}
                 onChange={handleChange}

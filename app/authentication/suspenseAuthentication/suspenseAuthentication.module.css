@@ -10,9 +10,78 @@
   box-shadow: 3px 3px 20px rgba(0, 0, 0, 10);
 }
 
+.progress-bar-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  width: 100%;
+  top: 15%;
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.progress-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 50%;
+  position: relative;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 5vw;
+  height: 10vh;
+}
+
+.circle {
+  width: 4.5vh;
+  height: 4.5vh;
+  margin-top: 1vh;
+  border-radius: 50%;
+  background-color: white;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+.step span {
+  font-size: 1.2vh;
+  text-align: center;
+  color: #555555;
+}
+
+.step span.active {
+  color: #000000;
+}
+.active .circle {
+  background-color: #2d7df6;
+  width: 6vh;
+  height: 6vh;
+  margin-top: 0;
+  box-shadow: 3px 3px 4px rgba(0, 0, 0, 0.5);
+}
+
+.line {
+  position: absolute;
+  top: 35%;
+  left: 10%;
+  width: 80%;
+  height: 0.3vh;
+  background-color: #ccc;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
 .mail-image-area {
   height: 30vh;
-  margin-top: 10vh;
+  margin-top: 15vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -27,30 +96,23 @@
 }
 
 .text-area p {
-  width: 80%;
+  width: 70%;
   margin: 0 auto;
   color: white;
-  font-size: 3vh;
+  font-size: 2.5vh;
+  text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.5);
 }
 
-.to-task-page-area {
-  text-align: center;
-  display: flex;
-  justify-content: center;
-}
-
-.icon {
-  color: #fff;
-  font-size: 6vh !important;
+.to-workspace-setup-button {
+  font-size: 3vh !important;
+  font-weight: 600;
+  text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.5);
+  color: white;
   cursor: pointer;
+  margin-top: 2vh;
+  text-align: center;
 }
 
-.icon:hover {
-  color: dimgrey;
-}
-
-.to-task-page-area p {
-  margin: auto 0;
-  color: #fff;
-  font-size: 2vh;
+.to-workspace-setup-button:hover {
+  color: rgb(187, 187, 187) !important;
 }

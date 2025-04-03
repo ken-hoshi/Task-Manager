@@ -32,6 +32,7 @@
 .task-list-content-area::-webkit-scrollbar-thumb {
   background-color: #b4b4b4;
   border-radius: 1vh;
+  transition: all 0.3s ease-in-out;
 }
 
 .task-list-content-area::-webkit-scrollbar-thumb:hover {
@@ -81,13 +82,13 @@
 }
 
 .task-list-area th.col-task-name {
-  width: 22vw;
+  width: 19vw;
   padding: 0;
   box-sizing: border-box;
 }
 
 .task-list-area td.col-task-name {
-  width: 22vw;
+  width: 20vw;
   padding: 0.2vw 0.5vw 0.2vw 0;
   box-sizing: border-box;
   word-wrap: break-word;
@@ -95,12 +96,12 @@
 }
 
 .task-list-area th.col-status {
-  width: 7.5vw;
+  width: 9.5vw;
   padding: 0;
 }
 
 .task-list-area td.col-status {
-  width: 7.5vw;
+  width: 9vw;
   padding: 0.2vw 0;
   box-sizing: border-box;
 }
@@ -109,25 +110,24 @@
 .task-list-area td.col-start-date,
 .task-list-area th.col-deadline-date,
 .task-list-area td.col-deadline-date {
-  width: 9vw;
   padding: 0.2vw 0.5vw;
   box-sizing: border-box;
 }
 
 .task-list-area th.col-start-date {
-  width: 9vw;
+  width: 10vw;
   padding: 0;
 }
 
 .task-list-area td.col-start-date {
-  width: 9vw;
+  width: 10vw;
   padding: 0.2vw 0.5vw;
   box-sizing: border-box;
 }
 
 .task-list-area th.col-deadline-date {
   font-size: 1.7vh;
-  width: 9vw;
+  width: 10vw;
   padding: 0;
 }
 
@@ -187,7 +187,7 @@
 }
 
 .task-list-area th.col-assigned-person {
-  width: 10vw;
+  width: 9.5vw;
   padding: 0;
 }
 
@@ -205,7 +205,7 @@
 }
 
 .task-list-area th.col-actions {
-  width: 2.5vw;
+  width: 2vw;
   padding: 0;
 }
 
@@ -305,10 +305,12 @@ th.col-assigned-person {
   font-size: 5vh !important;
   cursor: pointer;
   margin: 0;
+  transition: all 0.3s ease-in-out;
 }
 
 .arrow:hover {
   color: #357ae8;
+  transform: scale(1.4);
 }
 
 .task-name {
@@ -424,6 +426,10 @@ th.col-assigned-person {
   background-color: #fff;
 }
 
+.task-genre-area table tbody tr {
+  transition: all 0.3s ease-in-out;
+}
+
 .task-genre-area table tbody tr:hover {
   background-color: #e3f2fd;
 }
@@ -453,6 +459,7 @@ th.col-assigned-person {
 .user-result-area::-webkit-scrollbar-thumb {
   background-color: #a0a0a0;
   border-radius: 1vh;
+  transition: all 0.3s ease-in-out !important;
 }
 
 .user-result-area::-webkit-scrollbar-thumb:hover {
@@ -506,6 +513,7 @@ th.col-assigned-person {
   color: rgb(255, 53, 53);
   font-size: 3vh !important;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .cancel-icon:hover {
@@ -584,7 +592,7 @@ th.col-assigned-person {
 
 .under-input-container {
   display: flex;
-  justify-content:center;
+  justify-content: center;
   align-items: center;
 }
 
@@ -685,6 +693,7 @@ dd.dd-last {
   cursor: pointer;
   color: black;
   text-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease-in-out;
 }
 
 .downloadIcon:hover {

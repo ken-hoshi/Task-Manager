@@ -61,7 +61,7 @@ export async function getSmallProjectMember(
 
     return result;
   } catch (error) {
-    console.error("Error Fetch Project Members ", error);
+    console.error("Fetch Project Members", error);
     return [];
   }
 }

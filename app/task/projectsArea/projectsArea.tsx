@@ -11,6 +11,7 @@ import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import { formatDate } from "@/app/lib/formatDateTime";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import Image from "next/image";
+import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 
 interface SmallProjectMembersProps {
   smallProjectId: any;
@@ -82,6 +83,8 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { newItem } = useFlashDisplayContext();
   const { setNotificationValue } = useNotificationContext();
+  const { displayWorkspaceId } =
+    useDisplayWorkspaceIdContext();
   const router = useRouter();
 
   const [projectData, setProjectData] = useState<any[]>([]);
@@ -305,10 +308,12 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
   ) => {
     if (smallProjectId) {
       router.push(
-        `/project?id=${projectId}&smallProjectId=${smallProjectId}&userId=${userId}`
+        `/project?workspaceId=${displayWorkspaceId}&projectId=${projectId}&smallProjectId=${smallProjectId}&userId=${userId}`
       );
     } else {
-      router.push(`/project?id=${projectId}&userId=${userId}`);
+      router.push(
+        `/project?workspaceId=${displayWorkspaceId}&projectId=${projectId}&userId=${userId}`
+      );
     }
   };
 
@@ -325,7 +330,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
         .eq("id", smallProjectId);
 
       if (updateSmallProjectError) {
-        console.error("Error Update Small Projects", updateSmallProjectError);
+        console.error("Update Small Projects", updateSmallProjectError);
         setNotificationValue({
           message: "Couldn't update the Small Project data.",
           color: 1,

@@ -36,7 +36,7 @@ export const sendGeminiMessage = async (message: string) => {
 
     return messageContent;
   } catch (error) {
-    console.error("Gemini API Error ", error);
+    console.error("Gemini API", error);
     throw error;
   }
 };

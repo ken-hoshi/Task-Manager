@@ -14,13 +14,17 @@ export const selectBoxStyles = {
   }),
   multiValue: (baseStyles: any) => ({
     ...baseStyles,
-    margin: "0 0 0 1vh",
+    margin: "0.2vh 0 0 1vh",
+  }),
+  multiValueRemove: (baseStyles: any) => ({
+    ...baseStyles,
+    cursor: "pointer",
   }),
   valueContainer: (baseStyles: any) => ({
     ...baseStyles,
-    height: "4vh",
-    maxHeight: "4vh",
+    maxHeight: "5vh",
     overflowY: "auto",
+    padding: 0,
   }),
   input: (baseStyles: any) => ({
     ...baseStyles,
@@ -30,6 +34,7 @@ export const selectBoxStyles = {
   clearIndicator: (baseStyles: any) => ({
     ...baseStyles,
     padding: "0",
+    cursor: "pointer",
   }),
   indicatorSeparator: (baseStyles: any) => ({
     ...baseStyles,
@@ -55,7 +60,7 @@ export const selectBoxStyles = {
     border: "1px solid black",
     borderRadius: "0",
     maxHeight: "40vh",
-    overflowY: "visible", 
+    overflowY: "visible",
   }),
   menuList: (baseStyles: any) => ({
     ...baseStyles,
@@ -71,5 +76,6 @@ export const selectBoxStyles = {
       ? "#007bff"
       : undefined,
     color: state.isSelected || state.isFocused ? "white" : undefined,
+    cursor: "pointer",
   }),
 };

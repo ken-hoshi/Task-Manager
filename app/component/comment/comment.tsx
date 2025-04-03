@@ -6,6 +6,7 @@ import { fetchCommentData } from "@/app/lib/api/fetchCommentData";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { formatDateTime } from "@/app/lib/formatDateTime";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
+import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 
 interface CommentProps {
   userId: number;
@@ -19,7 +20,7 @@ const Comment: React.FC<CommentProps> = ({
   projectDetails,
 }) => {
   const { setNotificationValue } = useNotificationContext();
-
+  const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
   const [reRendering, setReRendering] = useState<boolean>(false);
   const [commentData, setCommentData] = useState<{}[]>([]);
   const [sendComment, setSendComment] = useState("");
@@ -96,7 +97,7 @@ const Comment: React.FC<CommentProps> = ({
         throw commentDeleteError;
       }
     } catch (error) {
-      console.error("Error Delete Comment ", error);
+      console.error("Delete Comment", error);
       setNotificationValue({
         message: "Couldn't delete Comment.",
         color: 1,
@@ -117,7 +118,7 @@ const Comment: React.FC<CommentProps> = ({
         throw commentUpdateError;
       }
     } catch (error) {
-      console.error("Error Update Comment ", error);
+      console.error("Update Comment", error);
       setNotificationValue({
         message: "Couldn't update Comment.",
         color: 1,
@@ -144,6 +145,7 @@ const Comment: React.FC<CommentProps> = ({
       }
 
       const postEmailNotificationsError = await postMailNotifications(
+        displayWorkspaceId,
         userId,
         taskId,
         null,
@@ -154,12 +156,12 @@ const Comment: React.FC<CommentProps> = ({
       );
       if (postEmailNotificationsError) {
         console.error(
-          "Error post mail notifications ",
+          "Post Mail Notifications",
           postEmailNotificationsError
         );
       }
     } catch (error) {
-      console.error("Error Insert Comment ", error);
+      console.error("Add Comment", error);
       setNotificationValue({
         message: "Couldn't add Comment.",
         color: 1,

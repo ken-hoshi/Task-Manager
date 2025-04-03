@@ -33,6 +33,7 @@
 .page-list-title {
   text-align: center;
   color: white;
+  margin-bottom: 0.4vh;
 }
 
 .list-container {
@@ -44,6 +45,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .list-area {
@@ -70,6 +72,7 @@
   text-align: flex-start;
   padding: 1vh;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .list:hover {
@@ -84,6 +87,7 @@
 .markdown-explain-title {
   text-align: center;
   color: white;
+  margin-bottom: 0.4vh;
 }
 
 .markdown-explain-container {
@@ -95,6 +99,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .markdown-explain {
@@ -112,6 +117,7 @@
 .markdown-explain::-webkit-scrollbar-thumb {
   background-color: #b4b4b4;
   border-radius: 1vh;
+  transition: all 0.3s ease-in-out;
 }
 
 .markdown-explain::-webkit-scrollbar-thumb:hover {
@@ -264,15 +270,27 @@
 .edit-button,
 .add-button,
 .delete-button {
-  font-size: 4vh !important;
-  color: white;
+  font-size: 3vh !important;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  background: #f0f0f0;
+  border-radius: 50%;
+  width: 4vh;
+  height: 4vh;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 0.3vw 0.4vh 0.3vw;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .edit-button:hover,
 .add-button:hover,
 .delete-button:hover {
-  color: #969696;
+  background: #2d7df6;
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(45, 125, 246, 0.3);
 }
 
 .wiki-content-area {
@@ -283,6 +301,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .wiki-container {
@@ -294,6 +313,7 @@
   font-size: 3vh;
   text-align: center;
   background-color: white;
+  font-weight: 600;
 }
 
 .content-area {
@@ -320,6 +340,7 @@
 .markdown-container::-webkit-scrollbar-thumb {
   background-color: #b4b4b4;
   border-radius: 1vh;
+  transition: all 0.3s ease-in-out;
 }
 
 .markdown-container::-webkit-scrollbar-thumb:hover {
@@ -384,6 +405,7 @@
   color: #1a73e8;
   text-decoration: none;
   font-weight: bold;
+  transition: all 0.3s ease-in-out !important;
 }
 
 .content-area a:hover {
@@ -443,6 +465,7 @@
 .markdown-container::-webkit-scrollbar-thumb:horizontal {
   background-color: #b4b4b4;
   border-radius: 1vh;
+  transition: all 0.3s ease-in-out;
 }
 
 .markdown-container::-webkit-scrollbar-thumb:horizontal:hover {
@@ -544,9 +567,10 @@
   cursor: pointer;
   width: 4.5vw;
   height: 4vh;
-  font-size: 2vh;
+  font-size: 1.5vh;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease-in-out;
 }
 
 .post-button-area .cancel {

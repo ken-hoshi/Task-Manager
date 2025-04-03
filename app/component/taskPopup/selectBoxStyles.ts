@@ -41,7 +41,7 @@ export const selectBoxStyles = {
   menu: (baseStyles: any) => ({
     ...baseStyles,
     zIndex: 10,
-    width: "80%",
+    width: "100%",
     margin: "0.1vh auto 0",
     left: 0,
     right: 0,
@@ -62,5 +62,6 @@ export const selectBoxStyles = {
     justifyContent: "center",
     alignItems: "center",
     margin: "0 auto",
+    cursor: "pointer",
   }),
 };

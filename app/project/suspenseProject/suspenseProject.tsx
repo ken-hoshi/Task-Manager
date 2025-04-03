@@ -20,6 +20,7 @@ import { useSessionTimeout } from "@/app/hooks/sessionTimeout";
 import { fetchProjectDetailsData } from "@/app/lib/api/fetchProjectDetailsData";
 import { getTaskGenreData } from "@/app/lib/api/getTaskGenreData";
 import Wiki from "../wiki/wiki";
+import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 
 interface StatusProps {
   id: number;
@@ -27,6 +28,7 @@ interface StatusProps {
 }
 
 interface Params {
+  workspaceId: number;
   projectId: number;
   smallProjectId?: number;
   userId: number;
@@ -111,6 +113,7 @@ const SuspenseProject: React.FC = () => {
   const [filterMyTasks, setFilterMyTasks] = useState(false);
   const [statusData, setStatusData] = useState<StatusProps[]>([]);
   const [params, setParams] = useState<Params>({
+    workspaceId: 0,
     projectId: 0,
     smallProjectId: undefined,
     userId: 0,
@@ -148,15 +151,16 @@ const SuspenseProject: React.FC = () => {
 
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { notificationValue, setNotificationValue } = useNotificationContext();
+  const { setDisplayWorkspaceId } = useDisplayWorkspaceIdContext();
   const [displaySmallProjectId, setDisplaySmallProjectId] = useState<
     number | null
   >(null);
-  const { isInitialized } = useSessionTimeout();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const paramsProjectId = searchParams.get("id");
-  const paramsSmallProjectId = searchParams.get("smallProjectId");
-  const paramsUserId = searchParams.get("userId");
+  const paramsWorkspaceId = Number(searchParams.get("workspaceId"));
+  const paramsProjectId = Number(searchParams.get("projectId"));
+  const paramsSmallProjectId = Number(searchParams.get("smallProjectId"));
+  const paramsUserId = Number(searchParams.get("userId"));
 
   const getTaskGenre = async (
     tasksDividedBySmallProjectId: TasksDividedBySmallProjectIdProps[]
@@ -179,28 +183,26 @@ const SuspenseProject: React.FC = () => {
   };
 
   useEffect(() => {
+    setDisplayWorkspaceId(paramsWorkspaceId);
+
     if (paramsSmallProjectId) {
-      setDisplaySmallProjectId(Number(paramsSmallProjectId));
+      setDisplaySmallProjectId(paramsSmallProjectId);
       setParams({
-        projectId: Number(paramsProjectId),
-        smallProjectId: Number(paramsSmallProjectId),
-        userId: Number(paramsUserId),
+        workspaceId: paramsWorkspaceId,
+        projectId: paramsProjectId,
+        smallProjectId: paramsSmallProjectId,
+        userId: paramsUserId,
       });
     }
   }, []);
 
   useEffect(() => {
-    if (isInitialized === null) {
-      return;
-    }
-    if (!isInitialized) {
-      router.push("/");
-    }
-
-    const projectId = Number(paramsProjectId);
-    const userId = Number(paramsUserId);
+    const workspaceId = paramsWorkspaceId;
+    const projectId = paramsProjectId;
+    const userId = paramsUserId;
     if (!paramsSmallProjectId) {
       setParams({
+        workspaceId: workspaceId,
         projectId: projectId,
         smallProjectId: undefined,
         userId: userId,
@@ -272,21 +274,21 @@ const SuspenseProject: React.FC = () => {
           throw new Error("Fetch StatusData couldn't get.");
         }
         setStatusData(statusData);
-
         setPageUpdated(false);
-        setLoading(false);
       } catch (error) {
-        console.error("Error Fetch Project Details Data ", error);
+        console.error("Fetch Project Details Data", error);
         setNotificationValue({
           message: "Couldn't get Project Data.",
           color: 1,
         });
-        setLoading(false);
         router.push("/task");
       }
+      setLoading(false);
     };
     fetchProjectDetails();
-  }, [pageUpdated, displaySmallProjectId, isInitialized]);
+  }, [pageUpdated, displaySmallProjectId]);
+
+  useSessionTimeout();
 
   const handleToggleFilterTask = () => {
     setFilterMyTasks(!filterMyTasks);
@@ -353,6 +355,7 @@ const SuspenseProject: React.FC = () => {
           <div className={styles.project}>
             <BackgroundImage1 />
             <Header
+              workspaceDataArray={null}
               projectId={projectData.id}
               projectName={projectData.project_name}
               userId={params.userId}

@@ -75,7 +75,7 @@ export async function getSmallProjectStatus(
 
     return result;
   } catch (error) {
-    console.error("Error Fetching Small Project Statuses", error);
+    console.error("Fetch Small Project Statuses", error);
     return [];
   }
 }

@@ -17,6 +17,7 @@ import { getTaskGenreData } from "@/app/lib/api/getTaskGenreData";
 import DatePicker from "react-datepicker";
 import { isDeadlineNear } from "@/app/lib/isDeadlineNear";
 import Image from "next/image";
+import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 
 interface StatusProps {
   id: number;
@@ -54,6 +55,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
 }) => {
   const { setNotificationValue } = useNotificationContext();
   const { setPageUpdated, pageUpdated } = usePageUpdateContext();
+  const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
   const { newItem } = useFlashDisplayContext();
 
   const [myTaskList, setMyTaskList] = useState<any[]>([]);
@@ -159,7 +161,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
         throw error;
       }
     } catch (error) {
-      console.error("Error Update Status ", error);
+      console.error("Update Status", error);
       setNotificationValue({
         message: "Couldn't update Status.",
         color: 1,
@@ -247,7 +249,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
 
       setPageUpdated(true);
     } catch (error) {
-      console.error("Error Update Task Result Data", error);
+      console.error("Update Task Result Data", error);
       setNotificationValue({
         message: "Couldn't update Task Result Data.",
         color: 1,
@@ -288,7 +290,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
       setPostLoading(false);
       setPageUpdated(true);
     } catch (error) {
-      console.error("Error Add Task Result ", error);
+      console.error("Add Task Result", error);
       setNotificationValue({
         message: "Couldn't add Task Result Data.",
         color: 1,
@@ -360,7 +362,11 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
             </th>
             <th className={styles[`col-actions`]}>
               <div className={styles[`add-button-container`]}>
-                <AddButton target={1} userId={userId} />
+                <AddButton
+                  target={1}
+                  userId={userId}
+                  workspaceId={displayWorkspaceId || undefined}
+                />
               </div>
             </th>
           </tr>
@@ -461,6 +467,7 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
                       <div className={styles[`icon-area`]}>
                         <div>
                           <EditButton
+                            workspaceId={displayWorkspaceId || undefined}
                             taskId={myTask.id}
                             projectId={null}
                             userId={userId}

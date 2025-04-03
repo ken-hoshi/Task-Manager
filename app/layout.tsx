@@ -1,4 +1,5 @@
 import "./globals.css";
+import { DisplayWorkspaceIdProvider } from "./provider/displayWorkspaceIdProvider";
 import { FlashDisplayProvider } from "./provider/flashDisplayProvider";
 import { FormProvider } from "./provider/formProvider";
 import { NotificationProvider } from "./provider/notificationProvider";
@@ -36,13 +37,15 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <FormProvider>
-          <PageUpdateProvider>
-            <FlashDisplayProvider>
-              <NotificationProvider>{children}</NotificationProvider>
-            </FlashDisplayProvider>
-          </PageUpdateProvider>
-        </FormProvider>
+        <DisplayWorkspaceIdProvider>
+          <FormProvider>
+            <PageUpdateProvider>
+              <FlashDisplayProvider>
+                <NotificationProvider>{children}</NotificationProvider>
+              </FlashDisplayProvider>
+            </PageUpdateProvider>
+          </FormProvider>
+        </DisplayWorkspaceIdProvider>
       </body>
     </html>
   );

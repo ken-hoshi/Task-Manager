@@ -10,7 +10,7 @@
   z-index: 1000;
 }
 
-.back-button-container{
+.back-button-container {
   position: absolute;
 }
 
@@ -20,12 +20,14 @@
   font-weight: 800;
   margin: 0 3vh;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .back:hover {
   color: #357ae8;
 }
 
+.workspace-name-area,
 .project-name-area {
   display: flex;
   align-items: center;
@@ -33,9 +35,101 @@
   margin: 0 auto;
 }
 
+.workspace-name,
 .project-name {
   font-size: 3.5vh;
   font-weight: 600;
+  margin: auto 0.5vw ;
+
+}
+
+.edit {
+  font-size: 2.5vh !important;
+  cursor: pointer;
+  width: 3.5vh !important;
+  height: 3.5vh !important;
+  transition: all 0.3s ease-in-out;
+  background: #f0f0f0;
+  border-radius: 50%;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.edit:hover {
+  background: #2d7df6;
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(45, 125, 246, 0.3);
+}
+
+.pull-down-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  width: 3vh;
+  height: 3vh;
+}
+
+.pull-down {
+  float: right;
+  font-size: 7vh !important;
+  cursor: pointer;
+  color: #000000;
+  transition: all 0.3s ease-in-out;
+}
+
+.pull-down:hover {
+  color: dimgrey;
+  transform: rotate(90deg);
+}
+
+.dropdown-menu {
+  color: #000000;
+  position: absolute;
+  top: 100%;
+  left: 42%;
+  background-color: #fff;
+  box-shadow: 0 5px 5px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  width: 29.8vh;
+  box-sizing: border-box;
+  animation: slideIn 0.3s ease-out;
+  text-align: center;
+  border: solid 0.5px black;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.dropdown-item {
+  height: 5vh;
+  line-height: 5vh;
+  padding: 0 1vh;
+  transition: all 0.3s ease-in-out;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  max-width: 18vw;
+}
+
+.dropdown-item:hover {
+  background-color: #007bff;
+  color: #ffffff;
+  cursor: pointer;
 }
 
 .container {

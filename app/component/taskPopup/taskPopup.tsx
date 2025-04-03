@@ -14,8 +14,10 @@ import { fetchAttachedFiles } from "@/app/lib/api/fetchAttachedFiles";
 import { getProjectData } from "@/app/lib/api/getProjectData";
 import { getSmallProjectData } from "@/app/lib/api/getSmallProjectData";
 import { getSmallProjectMember } from "@/app/lib/api/getSmallProjectMember";
+import { getWorkspace } from "@/app/lib/api/getWorkspace";
 
 interface TaskPopupProps {
+  workspaceId: number;
   onClose: (taskGenreId?: number) => void;
   userId: number;
   taskId: number | null;
@@ -54,6 +56,7 @@ interface Option {
 }
 
 const TaskPopup: React.FC<TaskPopupProps> = ({
+  workspaceId,
   onClose,
   userId,
   taskId,
@@ -120,8 +123,8 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
               .select("*, small_projects (project_id)")
               .eq("id", taskId)
               .single(),
-            getProjectData(),
-            getSmallProjectData(),
+            getProjectData(null, workspaceId),
+            getSmallProjectData(null, workspaceId),
             clientSupabase.from("task_genre").select("*"),
             fetchAttachedFiles(1, [taskId]),
           ]);
@@ -153,7 +156,9 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
               label: selectedProject.project_name,
             });
           }
-          setProjects(await getProjectData(taskData.assigned_user_id));
+          setProjects(
+            await getProjectData(taskData.assigned_user_id, workspaceId)
+          );
 
           const selectedSmallProject = smallProjects.find(
             (smallProject) => smallProject.id === taskData.small_project_id
@@ -166,7 +171,8 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           }
 
           const smallProjectList = await getSmallProjectData(
-            taskData.assigned_user_id
+            taskData.assigned_user_id,
+            workspaceId
           );
           setSmallProjects(
             smallProjectList.map((smallProject) => ({
@@ -214,7 +220,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
           setGetLoading(false);
         } catch (error) {
-          console.error("Error Fetch Task Details ", error);
+          console.error("Fetch Task Details", error);
           onClose();
           setNotificationValue({
             message: "Couldn't get the Task Data.",
@@ -226,6 +232,15 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
     } else {
       const fetchData = async () => {
         try {
+          const workspaceUserBelongsData = await getWorkspace(userId);
+          const workspaceIdList = workspaceUserBelongsData
+            .map((workspaceData) =>
+              Array.isArray(workspaceData.workspace)
+                ? workspaceData.workspace[0]
+                : workspaceData.workspace
+            )
+            .map((workspaceData) => workspaceData.id);
+
           let projectList;
           let smallProjectList;
 
@@ -237,8 +252,8 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                   .select("name")
                   .eq("id", userId)
                   .single(),
-                getProjectData(userId),
-                getSmallProjectData(userId),
+                getProjectData(userId, workspaceId),
+                getSmallProjectData(userId, workspaceId),
               ]
             );
 
@@ -257,8 +272,8 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             smallProjectList = smallProjects;
           } else {
             const [projects, smallProjects] = await Promise.all([
-              getProjectData(),
-              getSmallProjectData(),
+              getProjectData(null, workspaceId),
+              getSmallProjectData(null, workspaceId),
             ]);
 
             projectList = projects.filter(
@@ -329,7 +344,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
           setGetLoading(false);
         } catch (error) {
-          console.error("Error Fetch Task Details ", error);
+          console.error("Fetch Task Details", error);
           onClose();
           setNotificationValue({
             message: "Couldn't get the Task Data.",
@@ -380,7 +395,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             }))
         );
       } catch (error) {
-        console.error("Error Fetch Task Details ", error);
+        console.error("Fetch Task Details", error);
         onClose();
         setNotificationValue({
           message: "Couldn't get the Task Data.",
@@ -434,7 +449,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         }));
         setTaskGenreDataArray(taskGenreArray);
       } catch (error) {
-        console.error("Error Fetch Task Details ", error);
+        console.error("Fetch Task Details", error);
         onClose();
         setNotificationValue({
           message: "Couldn't get the Task Data.",
@@ -676,6 +691,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         }
 
         const postEmailNotificationsError = await postMailNotifications(
+          workspaceId,
           userId,
           taskId,
           null,
@@ -740,6 +756,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         }
 
         const postEmailNotificationsError = await postMailNotifications(
+          workspaceId,
           userId,
           taskId,
           null,
@@ -765,7 +782,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         onClose();
       }
     } catch (error) {
-      console.error(taskId ? "Error Update Task " : "Error Add Task ", error);
+      console.error(taskId ? "Error Update Task " : "Error Add Task", error);
       setNotificationValue({
         message: taskId ? "Couldn't update task." : "Couldn't add task.",
         color: 1,

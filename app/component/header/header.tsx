@@ -8,8 +8,17 @@ import { getMailNotifications } from "@/app/lib/api/getMailNotification";
 import { formatDateTime } from "@/app/lib/formatDateTime";
 import { Logout } from "@/app/hooks/logout";
 import EditButton from "../editButton/editButton";
+import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
+import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
+import ProjectPopup from "../projectPopup/projectPopup";
+
+interface WorkspaceProps {
+  id: number;
+  workspaceName: string;
+}
 
 interface HeaderProps {
+  workspaceDataArray: WorkspaceProps[] | null;
   projectId: number | null;
   projectName: string | null;
   userId: number;
@@ -22,10 +31,18 @@ type Notification = {
   timestamp: string;
 };
 
-const Header: React.FC<HeaderProps> = ({ projectId, projectName, userId }) => {
+const Header: React.FC<HeaderProps> = ({
+  workspaceDataArray,
+  projectId,
+  projectName,
+  userId,
+}) => {
   const router = useRouter();
   const { useLogout } = Logout();
-
+  const { displayWorkspaceId, setDisplayWorkspaceId } =
+    useDisplayWorkspaceIdContext();
+  const { setPageUpdated } = usePageUpdateContext();
+  const [showProjectPopup, setShowProjectPopup] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [showButtons, setShowButtons] = useState(false);
   const [showCancelButton, setShowCancelButton] = useState(false);
@@ -33,15 +50,42 @@ const Header: React.FC<HeaderProps> = ({ projectId, projectName, userId }) => {
     useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [workspaceArray, setWorkspaceArray] = useState<WorkspaceProps[] | null>(
+    null
+  );
+  const [displayWorkspaceName, setDisplayWorkspaceName] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [pullDownWorkspaceData, setPullDownWorkspaceData] = useState<
+    any[] | undefined
+  >(undefined);
 
+  const pullDownMenuRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const mailRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutsideList);
+    document.addEventListener("mousedown", handleClickOutsidePullDown);
+
+    if (workspaceDataArray) {
+      setWorkspaceArray(workspaceDataArray);
+      setPullDownWorkspaceData(
+        workspaceDataArray.filter(
+          (workspace: WorkspaceProps) => workspace.id !== displayWorkspaceId
+        )
+      );
+      setDisplayWorkspaceName(
+        workspaceDataArray.find(
+          (workspace) => workspace.id === displayWorkspaceId
+        )!.workspaceName
+      );
+    }
 
     const getNotifications = async () => {
-      const mailNotifications = await getMailNotifications(userId);
+      const mailNotifications = await getMailNotifications(
+        userId,
+        displayWorkspaceId!
+      );
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -82,7 +126,11 @@ const Header: React.FC<HeaderProps> = ({ projectId, projectName, userId }) => {
       }
     };
     getNotifications();
-  }, [isOpen, showMailNotificationList]);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsideList);
+      document.removeEventListener("mousedown", handleClickOutsidePullDown);
+    };
+  }, [isOpen, showMailNotificationList, displayWorkspaceId]);
 
   const handleClickOutsideList = (event: MouseEvent) => {
     if (
@@ -93,6 +141,25 @@ const Header: React.FC<HeaderProps> = ({ projectId, projectName, userId }) => {
     ) {
       setShowMailNotificationList(false);
     }
+  };
+
+  const handleClickOutsidePullDown = (event: MouseEvent) => {
+    if (
+      pullDownMenuRef.current &&
+      !pullDownMenuRef.current.contains(event.target as Node)
+    ) {
+      setIsDropdownOpen(false);
+    }
+  };
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen((prev) => !prev);
+  };
+
+  const handleSelectWorkspace = (workspaceId: number) => {
+    setDisplayWorkspaceId(workspaceId);
+    setPageUpdated(true);
+    setIsDropdownOpen(false);
   };
 
   const toggleMenu = () => {
@@ -139,7 +206,72 @@ const Header: React.FC<HeaderProps> = ({ projectId, projectName, userId }) => {
         {projectName && (
           <div className={styles[`project-name-area`]}>
             <div className={styles[`project-name`]}>{projectName}</div>
-            <EditButton projectId={projectId} taskId={null} userId={userId} />
+            <div className={styles[`edit-button-container`]}>
+              <span
+                className={classNames("material-symbols-outlined", styles.edit)}
+                onClick={() => setShowProjectPopup(!showProjectPopup)}
+              >
+                {" "}
+                edit{" "}
+              </span>
+              {showProjectPopup && (
+                <ProjectPopup
+                  onClose={() => setShowProjectPopup(!showProjectPopup)}
+                  projectId={projectId}
+                  userId={userId}
+                />
+              )}
+            </div>
+          </div>
+        )}
+        {workspaceArray && (
+          <div className={styles[`workspace-name-area`]}>
+            {workspaceArray && workspaceArray.length > 1 && (
+              <div className={styles[`pull-down-container`]}>
+                <span
+                  className={classNames(
+                    "material-symbols-outlined",
+                    styles[`pull-down`]
+                  )}
+                  onClick={toggleDropdown}
+                >
+                  arrow_right
+                </span>
+                {isDropdownOpen && (
+                  <div
+                    className={styles[`dropdown-menu`]}
+                    ref={pullDownMenuRef}
+                  >
+                    {pullDownWorkspaceData ? (
+                      pullDownWorkspaceData.map((workspace: WorkspaceProps) => (
+                        <div
+                          key={workspace.id}
+                          className={styles[`dropdown-item`]}
+                          onClick={() => handleSelectWorkspace(workspace.id)}
+                        >
+                          {workspace.workspaceName}
+                        </div>
+                      ))
+                    ) : (
+                      <div className={styles[`dropdown-item`]}>
+                        No Workspace
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            <div className={styles[`workspace-name`]}>
+              {displayWorkspaceName}
+            </div>
+
+            <span
+              className={classNames("material-symbols-outlined", styles.edit)}
+              onClick={() => router.push(`/editWorkspace?userId=${userId}`)}
+            >
+              {" "}
+              edit{" "}
+            </span>
           </div>
         )}
 

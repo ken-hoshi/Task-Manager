@@ -2,11 +2,9 @@ import { getSmallProjectData } from "./getSmallProjectData";
 import { getSmallProjectMember } from "./getSmallProjectMember";
 import { getSmallProjectStatus } from "./getSmallProjectStatus";
 
-export const fetchSmallProjectData = async (userId?: number) => {
+export const fetchSmallProjectData = async (workspaceId: number) => {
   try {
-    const smallProjectData = userId
-      ? await getSmallProjectData(userId)
-      : await getSmallProjectData();
+    const smallProjectData = await getSmallProjectData(null, workspaceId);
 
     if (!smallProjectData) {
       throw new Error("Small Project Data couldn't get.");
@@ -34,7 +32,7 @@ export const fetchSmallProjectData = async (userId?: number) => {
       smallProjectStatusData,
     };
   } catch (error) {
-    console.error("Error Fetch Small Project Data ", error);
+    console.error("Fetch Small Project Data", error);
     return {};
   }
 };

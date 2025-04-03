@@ -92,7 +92,7 @@ export async function getTaskGenreData(taskIdList: number[]) {
     );
     return taskGenreDataArray;
   } catch (error) {
-    console.error("Error Get Task Genre ", error);
+    console.error("Get Task Genre", error);
     return [];
   }
 }

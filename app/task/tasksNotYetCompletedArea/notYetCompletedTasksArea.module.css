@@ -92,13 +92,13 @@
 }
 
 .not-yet-completed-tasks-area th.col-task-name {
-  width: 19vw;
+  width: 18vw;
   padding: 0 1.5vh;
   box-sizing: border-box;
 }
 
 .not-yet-completed-tasks-area td.col-task-name {
-  width: 19vw;
+  width: 18vw;
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -111,15 +111,30 @@
 
 .not-yet-completed-tasks-area th.col-status,
 .not-yet-completed-tasks-area td.col-status {
-  width: 5vw;
   padding: 0;
+}
+
+.not-yet-completed-tasks-area th.col-status {
+  width: 6vw;
+}
+
+.not-yet-completed-tasks-area td.col-status {
+  width: 6vw;
 }
 
 .not-yet-completed-tasks-area th.col-deadline,
 .not-yet-completed-tasks-area td.col-deadline {
-  width: 9vw;
   padding: 0 0.5vh;
   box-sizing: border-box;
+}
+
+.not-yet-completed-tasks-area th.col-deadline {
+  width: 9.5vw;
+}
+
+.not-yet-completed-tasks-area td.col-deadline {
+  width: 9vw;
+  font-size: 1.6vh;
 }
 
 .deadline-date-container,
@@ -161,9 +176,16 @@
 
 .not-yet-completed-tasks-area th.col-assigned-person,
 .not-yet-completed-tasks-area td.col-assigned-person {
-  width: 9vw;
   padding: 0 0.5vh;
   box-sizing: border-box;
+}
+
+.not-yet-completed-tasks-area th.col-assigned-person {
+  width: 8.5vw;
+}
+
+.not-yet-completed-tasks-area td.col-assigned-person {
+  width: 9vw;
 }
 
 .person-icon {
@@ -234,10 +256,12 @@
   font-size: 5vh !important;
   cursor: pointer;
   margin: 0;
+  transition: all 0.3s ease-in-out;
 }
 
 .arrow:hover {
   color: #357ae8;
+  transform: scale(1.4);
 }
 
 .task-name {
@@ -405,6 +429,10 @@
   background-color: #fff;
 }
 
+.task-genre-area table tbody tr {
+  transition: all 0.3s ease-in-out;
+}
+
 .task-genre-area table tbody tr:hover {
   background-color: #e3f2fd;
 }
@@ -431,6 +459,7 @@
 .user-result-area::-webkit-scrollbar-thumb {
   background-color: #a0a0a0;
   border-radius: 0.5vh;
+  transition: all 0.3s ease-in-out;
 }
 
 .user-result-area::-webkit-scrollbar-thumb:hover {
@@ -472,6 +501,7 @@
   color: rgb(255, 53, 53);
   font-size: 2.5vh !important;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .cancel-icon:hover {
@@ -650,6 +680,7 @@
   cursor: pointer;
   color: black;
   text-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease-in-out;
 }
 
 .downloadIcon:hover {

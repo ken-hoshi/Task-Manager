@@ -3,44 +3,42 @@
 import BackgroundImage2 from "@/app/component/backgroundImage2/backgroundImage2";
 import Loading from "@/app/component/loading/loading";
 import styles from "./suspenseComplete.module.css";
-import classNames from "classnames";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import NotificationBanner from "@/app/component/notificationBanner/notificationBanner";
-import { useFormContext } from "@/app/provider/formProvider";
 import { clientSupabase } from "@/app/lib/supabase/client";
 
 const SuspenseComplete: React.FC = () => {
-  const { setBackForm } = useFormContext();
-  const { setNotificationValue } = useNotificationContext();
   const { notificationValue } = useNotificationContext();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const paramsName = searchParams.get("name");
-  const paramsEmail = searchParams.get("email");
 
   const [loading, setLoading] = useState(true);
+  const [registeredName, setRegisteredName] = useState();
+  const [registeredEmail, setRegisteredEmail] = useState();
 
   useEffect(() => {
-    if (!paramsName || !paramsEmail) {
-      console.error(
-        "Error Register: Params Name or Params Email couldn't get."
-      );
-      setNotificationValue({
-        message: "Couldn't get Registered Data.",
-        color: 1,
-      });
-      router.push("/register");
-      return;
-    }
-    setLoading(false);
-  }, []);
+    const fetchSession = async () => {
+      const { data: sessionData } = await clientSupabase.auth.getSession();
+      const metaDataName =
+        sessionData?.session?.user.user_metadata.display_name;
+      const metaDataEmail = sessionData?.session?.user.user_metadata.email;
+      const emailVerified =
+        sessionData?.session?.user.user_metadata.email_verified;
 
-  const handleNavigateTopPage = async () => {
-    setBackForm(true);
-    router.push("/");
-  };
+      if (!emailVerified || !metaDataName || !metaDataEmail) {
+        console.error(
+          "Error Register: Registered Name or Registered Email couldn't get."
+        );
+        setLoading(false);
+        return;
+      }
+      setRegisteredName(metaDataName);
+      setRegisteredEmail(metaDataEmail);
+      setLoading(false);
+    };
+    fetchSession();
+  }, []);
 
   return (
     <>
@@ -55,31 +53,28 @@ const SuspenseComplete: React.FC = () => {
             />
           )}
 
-          <div className={styles.complete}>
+          <div>
             <BackgroundImage2 />
 
             <div className={styles[`text-area`]}>
-              <h1>Success!</h1>
-
-              <ul>
-                <p>Name</p>
-                <li className={styles[`name-item`]}>{paramsName}</li>
-                <p>Email Address</p>
-                <li className={styles[`email-item`]}>{paramsEmail}</li>
-              </ul>
-
-              <div className={styles[`to-task-page-area`]}>
-                <span
-                  className={classNames(
-                    "material-symbols-outlined",
-                    styles.icon
-                  )}
-                  onClick={handleNavigateTopPage}
-                >
-                  arrow_circle_right
-                </span>
-                <p>To Login page</p>
-              </div>
+              {registeredName && registeredEmail ? (
+                <>
+                  <h1 className={styles.success}>Success!</h1>
+                  <ul>
+                    <p>Name</p>
+                    <li className={styles[`name-item`]}>{registeredName}</li>
+                    <p>Email Address</p>
+                    <li className={styles[`email-item`]}>{registeredEmail}</li>
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <h1 className={styles.failure}>Failure!</h1>
+                  <div className={styles[`failure-text`]}>
+                    メール認証に失敗しました。管理者に連絡してください。
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </>

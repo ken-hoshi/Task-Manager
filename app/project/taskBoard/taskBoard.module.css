@@ -79,11 +79,13 @@
 .arrow {
   color: white;
   font-size: 4.5vh !important;
+  transition: all 0.3s ease-in-out;
 }
 
 .arrow:hover {
   cursor: pointer;
-  color: #f0f0f0;
+  color: dimgrey;
+  transform: scale(1.4);
 }
 
 .task-name {
@@ -122,10 +124,6 @@
 
 .button-area {
   margin-right: 0.5vh;
-}
-
-.button-area span {
-  color: white;
 }
 
 .deadline-area,
@@ -198,6 +196,7 @@
   cursor: pointer;
   color: black;
   text-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease-in-out;
 }
 
 .downloadIcon:hover {

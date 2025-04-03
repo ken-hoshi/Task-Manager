@@ -10,6 +10,7 @@ import EditButton from "@/app/component/editButton/editButton";
 import DeleteButton from "@/app/component/deleteButton/deleteButton";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
 import { useRouter } from "next/navigation";
+import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 
 interface StatusProps {
   id: number;
@@ -61,7 +62,7 @@ const TaskItem = ({
   attachedFileData: AttachedFileProps[];
   moveTask: (id: string, status: string) => void;
 }) => {
-  const { setNotificationValue } = useNotificationContext();
+  const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
   const [isOpen, setIsOpen] = useState(false);
 
   const [{ isDragging }, ref] = useDrag({
@@ -103,7 +104,12 @@ const TaskItem = ({
           <div className={styles[`task-name`]}>{task.task_name}</div>
         </div>
         <div className={styles[`button-area`]}>
-          <EditButton taskId={task.id} projectId={null} userId={userId} />
+          <EditButton
+            workspaceId={displayWorkspaceId || undefined}
+            taskId={task.id}
+            projectId={null}
+            userId={userId}
+          />
           <DeleteButton taskId={task.id} projectId={null} userId={userId} />
         </div>
       </div>
@@ -262,6 +268,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
 
   const { setNotificationValue } = useNotificationContext();
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
+  const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
   const router = useRouter();
 
   useEffect(() => {
@@ -346,6 +353,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         )
       );
       const postEmailNotificationsError = await postMailNotifications(
+        displayWorkspaceId,
         userId,
         Number(id),
         null,
@@ -361,7 +369,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
         );
       }
     } catch (error) {
-      console.error("Error Update Status ", error);
+      console.error("Update Status", error);
       setNotificationValue({
         message: "Couldn't update Status.",
         color: 1,

@@ -169,6 +169,10 @@
   border: 1px solid #878788;
 }
 
+.record-hover {
+  transition: all 0.3s ease-in-out;
+}
+
 .record-hover:hover {
   background-color: #e6e6e6;
 }
@@ -237,6 +241,7 @@
   color: #ffffff;
   font-size: 1.5vh;
   border-radius: 1vh;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .not-started {
@@ -256,6 +261,7 @@
   border-radius: 1vh;
   width: 3.5vh;
   height: 3.5vh;
+  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .edit,
@@ -263,6 +269,7 @@
   cursor: pointer;
   float: right;
   font-size: 3vh !important;
+  transition: all 0.3s ease-in-out !important;
 }
 
 .edit:hover,
@@ -280,6 +287,7 @@
   float: right;
   font-size: 3vh !important;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .add:hover {
@@ -346,10 +354,12 @@
   font-size: 5vh !important;
   cursor: pointer;
   margin: 0;
+  transition: all 0.3s ease-in-out;
 }
 
 .arrow:hover {
   color: #357ae8;
+  transform: scale(1.4);
 }
 
 .project-name {
@@ -357,6 +367,10 @@
   box-sizing: border-box;
   word-wrap: break-word;
   margin: 0;
+}
+
+.col-tr-small-project {
+  transition: all 0.3s ease-in-out;
 }
 
 .col-tr-small-project:hover {
@@ -394,6 +408,7 @@
 
 .finished-button-black {
   background-color: #ebebeb;
+  transition: all 0.3s ease-in-out;
 }
 
 .finished-button-black:hover {
@@ -404,6 +419,7 @@
 .finished-button-green {
   color: #ffffff;
   background-color: #5bcc79;
+  transition: all 0.3s ease-in-out;
 }
 
 .finished-button-green:hover {
@@ -416,7 +432,7 @@
 }
 
 .check {
-  font-size: 3vh !important;
+  font-size: 2vh !important;
 }
 
 .background-image2 {
@@ -534,6 +550,10 @@
   background-color: #fff;
 }
 
+.task-genre-area table tbody tr {
+  transition: all 0.3s ease-in-out;
+}
+
 .task-genre-area table tbody tr:hover {
   background-color: #e3f2fd;
 }
@@ -576,6 +596,7 @@
   cursor: pointer;
   color: black;
   text-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease-in-out;
 }
 
 .download-icon:hover {

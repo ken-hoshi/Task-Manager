@@ -1,10 +1,14 @@
 import { clientSupabase } from "../supabase/client";
 
-export async function getProjectData(userId?: number) {
+export async function getProjectData(
+  userId: number | null,
+  workspaceId: number
+) {
   try {
     let query = clientSupabase
       .from("projects")
       .select("*")
+      .eq("workspace_id", workspaceId)
       .order("created_at", { ascending: true });
 
     if (userId) {
@@ -37,7 +41,7 @@ export async function getProjectData(userId?: number) {
 
     return projects;
   } catch (error) {
-    console.error("Error Fetch Project Data ", error);
+    console.error("Fetch Project Data", error);
     return [];
   }
 }

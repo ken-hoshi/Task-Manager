@@ -47,7 +47,7 @@ export async function fetchAttachedFiles(
                 .download(attached.file_path);
 
             if (fileError) {
-              console.error(`Error downloading file for ID ${id}`, fileError);
+              console.error(`Downloading File for ID ${id}`, fileError);
               return null;
             }
 
@@ -61,7 +61,7 @@ export async function fetchAttachedFiles(
                 const url = URL.createObjectURL(file);
                 return { file: file, url: url };
               } catch (error) {
-                console.error("Failed to create object URL ", error);
+                console.error("Failed to create object URL", error);
                 return null;
               }
             }
@@ -81,7 +81,7 @@ export async function fetchAttachedFiles(
     );
     return result;
   } catch (error) {
-    console.error("Error Fetch Attached Files", error);
+    console.error("Fetch Attached Files", error);
     return ids.map((id) => ({ id, fileDataArray: [] }));
   }
 }

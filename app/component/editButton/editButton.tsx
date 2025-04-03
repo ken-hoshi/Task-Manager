@@ -6,15 +6,17 @@ import TaskPopup from "../taskPopup/taskPopup";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 
 interface EditButtonProps {
+  workspaceId?: number;
   projectId: number | null;
   taskId: number | null;
   userId: number;
 }
 
 const EditButton: React.FC<EditButtonProps> = ({
+  userId,
+  workspaceId,
   projectId,
   taskId,
-  userId,
 }) => {
   const [showProjectPopup, setShowProjectPopup] = useState(false);
   const [showTaskPopup, setShowTaskPopup] = useState(false);
@@ -38,7 +40,7 @@ const EditButton: React.FC<EditButtonProps> = ({
   };
 
   return (
-    <div>
+    <div className={styles[`edit-button-container`]}>
       <span
         className={classNames("material-symbols-outlined", styles.edit)}
         onClick={() => togglePopup()}
@@ -56,11 +58,12 @@ const EditButton: React.FC<EditButtonProps> = ({
       {showTaskPopup && (
         <TaskPopup
           onClose={togglePopup}
+          workspaceId={workspaceId!}
+          userId={userId}
+          projectId={projectId}
+          smallProjectId={null}
           taskId={taskId}
           taskGenreId={null}
-          projectId={projectId}
-          userId={userId}
-          smallProjectId={null}
         />
       )}
     </div>

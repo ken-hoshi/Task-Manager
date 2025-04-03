@@ -35,6 +35,7 @@
   box-sizing: border-box;
   word-wrap: break-word;
   font-weight: 600;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .pull-down-container {
@@ -48,12 +49,15 @@
 
 .pull-down {
   float: right;
-  font-size: 4.5vh !important;
+  font-size: 5vh !important;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .pull-down:hover {
   color: dimgrey;
+  transform: rotate(90deg);
 }
 
 .dropdown-menu {
@@ -66,11 +70,14 @@
   z-index: 1000;
   width: 29.8vh;
   box-sizing: border-box;
+  animation: open 0.3s ease-in-out forwards;
+  transform-origin: top;
 }
 
 .dropdown-item {
   padding: 1vh;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .dropdown-item:hover {
@@ -100,6 +107,7 @@ td.col-status-situation {
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .not-started {
@@ -122,6 +130,7 @@ td.col-status-situation {
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
 }
 
 .scrollable-content-td {
@@ -147,6 +156,7 @@ td.col-status-situation {
   text-align: left;
   font-weight: 600;
   display: flex;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .small-project-area dd {
@@ -169,10 +179,12 @@ td.col-status-situation {
   cursor: pointer;
   margin: 0;
   width: 4vh;
+  transition: all 0.3s ease-in-out;
 }
 
 .arrow:hover {
   color: #357ae8;
+  transform: scale(1.4);
 }
 
 .details-open {
@@ -276,6 +288,10 @@ td.col-status-situation {
   background-color: #fff;
 }
 
+.task-genre-area table tbody tr {
+  transition: all 0.3s ease-in-out;
+}
+
 .task-genre-area table tbody tr:hover {
   background-color: #e3f2fd;
 }
@@ -330,6 +346,7 @@ td.col-status-situation {
   cursor: pointer;
   color: black;
   text-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease-in-out;
 }
 
 .downloadIcon:hover {
@@ -367,6 +384,7 @@ td.col-status-situation {
 
 .finished-button-black {
   background-color: #ebebeb;
+  transition: all 0.3s ease-in-out;
 }
 
 .finished-button-black:hover {
@@ -377,6 +395,7 @@ td.col-status-situation {
 .finished-button-green {
   color: #ffffff;
   background-color: #5bcc79;
+  transition: all 0.3s ease-in-out;
 }
 
 .finished-button-green:hover {
