@@ -81,6 +81,7 @@
 .background-area p {
   margin: auto 0 auto 0.5vh;
   font-size: 1.5vh;
+  font-weight: 600;
 }
 
 .toggle {
