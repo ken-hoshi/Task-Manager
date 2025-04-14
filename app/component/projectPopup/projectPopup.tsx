@@ -92,8 +92,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
   const { setPageUpdated } = usePageUpdateContext();
   const { setNotificationValue } = useNotificationContext();
   const { addItem } = useFlashDisplayContext();
-    const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
-
+  const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1093,7 +1092,10 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         const { data: projectData, error: insertProjectDataError } =
           await clientSupabase
             .from("projects")
-            .insert({ project_name: projectName })
+            .insert({
+              project_name: projectName,
+              workspace_id: displayWorkspaceId,
+            })
             .select();
 
         if (insertProjectDataError) {
