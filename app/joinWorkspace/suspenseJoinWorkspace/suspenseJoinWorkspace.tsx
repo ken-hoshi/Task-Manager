@@ -8,43 +8,37 @@ import { useEffect, useState } from "react";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import NotificationBanner from "@/app/component/notificationBanner/notificationBanner";
 import { clientSupabase } from "@/app/lib/supabase/client";
-import Select, { MultiValue } from "react-select";
 import { useFormContext } from "@/app/provider/formProvider";
 import { getUserId } from "@/app/lib/api/getUserId";
-import { selectBoxStyles } from "./selectBoxStyles";
+import classNames from "classnames";
+import { Logout } from "@/app/hooks/logout";
 
 interface WorkspaceProps {
   id: number;
   name: string;
 }
 
-interface WorkspaceOption {
-  value: number;
-  label: string;
-}
-
-interface SelectWorkspaceProps {
-  workspaceList: WorkspaceProps[];
-  selectedWorkspaceList: WorkspaceOption[];
-}
-
 const SuspenseJoinWorkspace: React.FC = () => {
+  const { useLogout } = Logout();
   const { setBackForm } = useFormContext();
   const { setNotificationValue } = useNotificationContext();
   const { notificationValue } = useNotificationContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramsAtSignUp = searchParams.get("atSignUp") === "true";
+  const workspaceId = searchParams.get("workspaceId");
+  const paramsWorkspaceId = workspaceId ? Number(workspaceId) : undefined;
 
   const [loading, setLoading] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [atSignUp, setAtSignUp] = useState(false);
   const [userId, setUserId] = useState(0);
-
-  const [workspaceArray, setWorkspaceArray] = useState<SelectWorkspaceProps>({
-    workspaceList: [],
-    selectedWorkspaceList: [],
-  });
+  const [spaceId, setSpaceId] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [selectedWorkspaceList, setSelectedWorkspaceList] = useState<
+    WorkspaceProps[]
+  >([]);
 
   useEffect(() => {
     setLoading(true);
@@ -66,7 +60,7 @@ const SuspenseJoinWorkspace: React.FC = () => {
         }
         setUserId(userId);
       } catch (error) {
-        console.error("Display Page", error);
+        console.error("Error Display Page", error);
         setNotificationValue({
           message: "You have not signed up.",
           color: 1,
@@ -76,70 +70,113 @@ const SuspenseJoinWorkspace: React.FC = () => {
       }
     };
     checkUserSession();
+    const storedSpaceId = sessionStorage.getItem("spaceId");
+    if (storedSpaceId) {
+      const getCreatedWorkspace = async () => {
+        const { data: workspaceData, error: selectWorkspaceDataError } =
+          await clientSupabase
+            .from("workspace")
+            .select("id, workspace_name")
+            .eq("space_id", storedSpaceId)
+            .single();
 
-    const fetchWorkspaceData = async () => {
-      try {
-        const { data: workspaceData, error: selectWorkspaceError } =
-          await clientSupabase.from("workspace").select("id, workspace_name");
-
-        if (selectWorkspaceError) {
-          throw selectWorkspaceError;
+        if (!workspaceData || selectWorkspaceDataError) {
+          console.error(
+            "Get Workspace Data",
+            selectWorkspaceDataError && selectWorkspaceDataError
+          );
+          setNotificationValue({
+            message: "Couldn't get Workspace Data.",
+            color: 1,
+          });
+          router.back();
+          return;
         }
+        if (
+          !selectedWorkspaceList.find(
+            (selectedWorkspace) => selectedWorkspace.id === workspaceData.id
+          )
+        ) {
+          setSelectedWorkspaceList([
+            { id: workspaceData.id, name: workspaceData.workspace_name },
+          ]);
+        }
+      };
+      getCreatedWorkspace();
+    }
 
-        setWorkspaceArray((prevWorkspaceArray) => ({
-          ...prevWorkspaceArray,
-          workspaceList: workspaceData.map((workspace) => ({
-            id: workspace.id,
-            name: workspace.workspace_name,
-          })),
-        }));
-      } catch (error) {
-        console.error("Fetch Workspace Data", error);
-        router.back();
-        setNotificationValue({
-          message: "Couldn't get the Workspace Data.",
-          color: 1,
-        });
+    setLoading(false);
+    return () => {
+      if (storedSpaceId) {
+        sessionStorage.removeItem("spaceId");
       }
     };
-    fetchWorkspaceData();
-    setLoading(false);
   }, []);
 
-  const handlePageBack = () => {
-    router.back();
+  const handlePageBack = async () => {
+    if (paramsWorkspaceId) {
+      router.push(
+        `/editWorkspace?workspaceId=${paramsWorkspaceId}&userId=${userId}`
+      );
+    } else {
+      await useLogout();
+    }
   };
 
-  const workspaceOptions = workspaceArray.workspaceList
-    .filter(
-      (workspace) =>
-        !workspaceArray.selectedWorkspaceList.some(
-          (selectedWorkspace) => selectedWorkspace.value === workspace.id
-        )
-    )
-    .map((workspace) => ({
-      value: workspace.id,
-      label: workspace.name,
-    }));
+  const searchSpaceId = async () => {
+    if (searchLoading || !spaceId) return;
+    setSearchLoading(true);
+    setErrorMessage("");
 
-  const handleWorkspaceChange = (
-    selectedOptions: MultiValue<WorkspaceOption>
-  ) => {
-    setWorkspaceArray((prevWorkspaceArray) => ({
-      ...prevWorkspaceArray,
-      selectedWorkspaceList: selectedOptions as WorkspaceOption[],
-    }));
+    const { data: workspaceData, error: selectWorkspaceDataError } =
+      await clientSupabase
+        .from("workspace")
+        .select("id, workspace_name")
+        .eq("space_id", spaceId)
+        .single();
+
+    if (!workspaceData || selectWorkspaceDataError) {
+      setErrorMessage("ワークスペースが見つかりません。再度検索してください。");
+      setSearchLoading(false);
+      return;
+    }
+    if (
+      selectedWorkspaceList.find(
+        (selectedWorkspace) => selectedWorkspace.id === workspaceData.id
+      )
+    ) {
+      setErrorMessage(
+        "ワークスペースは既に選択されています。再度検索してください。"
+      );
+      setSearchLoading(false);
+      return;
+    }
+    setSelectedWorkspaceList((prevSelectedWorkspaceList) => [
+      ...prevSelectedWorkspaceList,
+      { id: workspaceData.id, name: workspaceData.workspace_name },
+    ]);
+    setSpaceId("");
+    setSearchLoading(false);
+  };
+
+  const removeSelectedWorkspace = (workspaceId: number) => {
+    setSelectedWorkspaceList((prevSelectedWorkspaceList) =>
+      prevSelectedWorkspaceList.filter(
+        (workspace) => workspace.id !== workspaceId
+      )
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (buttonLoading) return;
+    if (buttonLoading || selectedWorkspaceList.length === 0) return;
     setButtonLoading(true);
 
-    const workspaceUsers = workspaceArray.selectedWorkspaceList.map(
-      (workspace) => ({ workspace_id: workspace.value, user_id: userId })
-    );
+    const workspaceUsers = selectedWorkspaceList.map((workspace) => ({
+      workspace_id: workspace.id,
+      user_id: userId,
+    }));
     try {
       const { error: insertWorkspaceNameError } = await clientSupabase
         .from("workspace_users")
@@ -148,9 +185,8 @@ const SuspenseJoinWorkspace: React.FC = () => {
       if (insertWorkspaceNameError) {
         throw insertWorkspaceNameError;
       }
-      setButtonLoading(false);
       setNotificationValue({
-        message: "Joined Workspace.",
+        message: "Joined Workspace !",
         color: 0,
       });
       router.push("/task");
@@ -161,6 +197,16 @@ const SuspenseJoinWorkspace: React.FC = () => {
         color: 1,
       });
       setButtonLoading(false);
+    }
+  };
+
+  const handleMoveCreateWorkspace = () => {
+    if (paramsWorkspaceId) {
+      router.push(
+        `/createWorkspace?atSignUp=${atSignUp}&workspaceId=${paramsWorkspaceId}`
+      );
+    } else {
+      router.push(`/createWorkspace?atSignUp=${atSignUp}`);
     }
   };
 
@@ -181,7 +227,17 @@ const SuspenseJoinWorkspace: React.FC = () => {
             <BackgroundImage2 />
 
             <div className={styles[`inner-area`]}>
-              {atSignUp && (
+              {!atSignUp ? (
+                <span
+                  className={classNames(
+                    "material-symbols-outlined",
+                    styles.back
+                  )}
+                  onClick={handlePageBack}
+                >
+                  arrow_back
+                </span>
+              ) : (
                 <div className={styles[`progress-bar-container`]}>
                   <div className={styles[`progress-bar`]}>
                     <div className={styles.step}>
@@ -212,29 +268,92 @@ const SuspenseJoinWorkspace: React.FC = () => {
                 <form onSubmit={handleSubmit}>
                   <div className={styles[`input-area-container`]}>
                     <div className={styles[`input-area`]}>
-                      <Select
-                        isMulti
-                        options={workspaceOptions}
-                        value={workspaceArray.selectedWorkspaceList}
-                        onChange={handleWorkspaceChange}
-                        placeholder="-- Workspace --"
-                        required
-                        styles={selectBoxStyles}
-                      />
-                      <p className={styles.instruction}>Select Workspace</p>
+                      <div className={styles[`search-workspace-area`]}>
+                        <div className={styles[`search-input-container`]}>
+                          <input
+                            type="text"
+                            value={spaceId}
+                            onChange={(e) => setSpaceId(e.target.value)}
+                            placeholder="Space ID"
+                            className={styles[`space-id`]}
+                          />
+                        </div>
+                        <div className={styles[`search-button-container`]}>
+                          <button type="button" onClick={searchSpaceId}>
+                            {searchLoading ? (
+                              <div
+                                className={styles[`search-button-spinner`]}
+                              ></div>
+                            ) : (
+                              "Search"
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      {errorMessage ? (
+                        <div className={styles[`error-message`]}>
+                          {errorMessage}
+                        </div>
+                      ) : (
+                        <p className={styles.instruction}> Enter Space ID</p>
+                      )}
+
+                      <div className={styles[`join-workspace-display-area`]}>
+                        {selectedWorkspaceList.length > 0 && (
+                          <div
+                            className={styles[`workspace-name-block-container`]}
+                          >
+                            {selectedWorkspaceList.map(
+                              (selectedWorkspace, index) => (
+                                <div
+                                  className={styles[`workspace-name-block`]}
+                                  key={index}
+                                >
+                                  <div className={styles[`workspace-name`]}>
+                                    {selectedWorkspace.name}
+                                  </div>
+                                  <div
+                                    className={
+                                      styles[`cancel-button-container`]
+                                    }
+                                  >
+                                    <span
+                                      className={classNames(
+                                        "material-symbols-outlined",
+                                        styles.cancel
+                                      )}
+                                      onClick={() =>
+                                        removeSelectedWorkspace(
+                                          selectedWorkspace.id
+                                        )
+                                      }
+                                    >
+                                      close_small
+                                    </span>
+                                  </div>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <button type="submit" disabled={buttonLoading}>
+                  <button
+                    type="submit"
+                    disabled={buttonLoading}
+                    className={styles[`join-button`]}
+                  >
                     {buttonLoading ? (
-                      <div className={styles.spinner}></div>
+                      <div className={styles[`join-button-spinner`]}></div>
                     ) : (
                       "Join"
                     )}
                   </button>
                   <div
                     className={styles[`to-create-workspace`]}
-                    onClick={() => router.push("/createWorkspace")}
+                    onClick={handleMoveCreateWorkspace}
                   >
                     ワークスペースを作成する
                   </div>

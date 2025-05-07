@@ -502,7 +502,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
       }
 
       setNotificationValue({
-        message: "Task was updated.",
+        message: "Task was updated !",
         color: 0,
       });
     } catch (error) {

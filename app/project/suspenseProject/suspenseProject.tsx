@@ -21,6 +21,8 @@ import { fetchProjectDetailsData } from "@/app/lib/api/fetchProjectDetailsData";
 import { getTaskGenreData } from "@/app/lib/api/getTaskGenreData";
 import Wiki from "../wiki/wiki";
 import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
+import { getSession } from "@/app/hooks/getSession";
+import { useFormContext } from "@/app/provider/formProvider";
 
 interface StatusProps {
   id: number;
@@ -148,7 +150,7 @@ const SuspenseProject: React.FC = () => {
     TaskAttachedFileProps[]
   >([]);
   const [wikiData, setWikiData] = useState<WikiProps[]>([]);
-
+  const { setBackForm } = useFormContext();
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { notificationValue, setNotificationValue } = useNotificationContext();
   const { setDisplayWorkspaceId } = useDisplayWorkspaceIdContext();
@@ -184,7 +186,6 @@ const SuspenseProject: React.FC = () => {
 
   useEffect(() => {
     setDisplayWorkspaceId(paramsWorkspaceId);
-
     if (paramsSmallProjectId) {
       setDisplaySmallProjectId(paramsSmallProjectId);
       setParams({
@@ -210,6 +211,15 @@ const SuspenseProject: React.FC = () => {
     }
 
     const fetchProjectDetails = async () => {
+      const session = await getSession();
+      if (!session?.user.id) {
+        console.error("Fetch Data: User ID couldn't get.");
+        setBackForm(true);
+        alert("データの取得に失敗しました。");
+        router.push("/");
+        return;
+      }
+
       try {
         const {
           projectData,
@@ -375,7 +385,7 @@ const SuspenseProject: React.FC = () => {
 
               <div className={styles[`task-area`]}>
                 <div className={styles[`tab-area`]}>
-                  <div className={styles[`tab-container`]}>
+                  <div className={styles[`button-container`]}>
                     <button
                       className={classNames(
                         styles[`tab-button`],

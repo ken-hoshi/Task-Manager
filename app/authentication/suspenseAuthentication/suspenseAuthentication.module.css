@@ -111,8 +111,10 @@
   cursor: pointer;
   margin-top: 2vh;
   text-align: center;
+  transition: all 0.3s ease-in-out;
 }
 
 .to-workspace-setup-button:hover {
   color: rgb(187, 187, 187) !important;
+  transform: scale(1.05);
 }

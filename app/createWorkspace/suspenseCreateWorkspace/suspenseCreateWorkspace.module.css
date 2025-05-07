@@ -10,6 +10,21 @@
   box-shadow: 3px 3px 20px rgba(0, 0, 0, 10);
 }
 
+.back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: white;
+  font-size: 10vh !important;
+  cursor: pointer;
+  margin: 1.5vh 1.5vh 0 1.5vh;
+  transition: all 0.3s ease-in-out;
+}
+
+.back:hover {
+  color: dimgrey;
+}
+
 .form-area {
   position: relative;
   width: 100%;
@@ -188,6 +203,13 @@
   color: white;
   margin: 3vh auto;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.5);
+}
+
+.to-join-workspace:hover {
+  transform: scale(1.05);
+  color: rgb(187, 187, 187) !important;
 }
 
 .attention-area {
@@ -210,8 +232,31 @@
   color: white;
   text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.5);
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .refresh:hover {
+  transform: scale(1.05);
   color: rgb(187, 187, 187) !important;
+}
+
+.refresh:active {
+  transform: scale(0.9) translateY(3px);
+  text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.8);
+}
+
+.to-login-page-text {
+  color: white;
+}
+
+.to-login-page-button {
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease-in-out;
+  font-style: italic;
+  text-decoration: underline;
+}
+
+.to-login-page-button:hover {
+  color: #0033ff;
 }

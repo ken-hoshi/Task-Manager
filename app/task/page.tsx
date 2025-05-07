@@ -138,9 +138,9 @@ const Task: React.FC = () => {
 
         const workspaceUserBelongsData = await getWorkspace(userId);
 
-        if (session && userId && workspaceUserBelongsData.length === 0) {
+        if (workspaceUserBelongsData.length === 0) {
           router.push("/createWorkspace?atSignUp=false");
-        } else if (session && userId && workspaceUserBelongsData.length > 0) {
+        } else {
           const workspaceData = workspaceUserBelongsData
             .map((workspaceData) =>
               Array.isArray(workspaceData.workspace)
@@ -304,10 +304,8 @@ const Task: React.FC = () => {
             setMyTasks([]);
             setNotYetCompletedTasks([]);
           }
-        } else {
-          throw new Error("Session Data couldn't get.");
+          setLoading(false);
         }
-        setLoading(false);
         setPageUpdated(false);
         return;
       } catch (error) {

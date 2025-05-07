@@ -7,7 +7,6 @@ import MailNotificationList from "../mailNotificationList/mailNotificationList";
 import { getMailNotifications } from "@/app/lib/api/getMailNotification";
 import { formatDateTime } from "@/app/lib/formatDateTime";
 import { Logout } from "@/app/hooks/logout";
-import EditButton from "../editButton/editButton";
 import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import ProjectPopup from "../projectPopup/projectPopup";
@@ -67,18 +66,24 @@ const Header: React.FC<HeaderProps> = ({
     document.addEventListener("mousedown", handleClickOutsideList);
     document.addEventListener("mousedown", handleClickOutsidePullDown);
 
-    if (workspaceDataArray) {
+    if (workspaceDataArray && workspaceDataArray.length > 0) {
       setWorkspaceArray(workspaceDataArray);
       setPullDownWorkspaceData(
         workspaceDataArray.filter(
-          (workspace: WorkspaceProps) => workspace.id !== displayWorkspaceId
+          (workspace: WorkspaceProps) =>
+            workspace.id !==
+            (displayWorkspaceId ? displayWorkspaceId : workspaceDataArray[0].id)
         )
       );
-      setDisplayWorkspaceName(
-        workspaceDataArray.find(
-          (workspace) => workspace.id === displayWorkspaceId
-        )!.workspaceName
-      );
+      const displayWorkspaceName = workspaceDataArray.find(
+        (workspace) =>
+          workspace.id ===
+          (displayWorkspaceId ? displayWorkspaceId : workspaceDataArray[0].id)
+      )?.workspaceName;
+
+      if (displayWorkspaceName) {
+        setDisplayWorkspaceName(displayWorkspaceName);
+      }
     }
 
     const getNotifications = async () => {
@@ -267,7 +272,11 @@ const Header: React.FC<HeaderProps> = ({
 
             <span
               className={classNames("material-symbols-outlined", styles.edit)}
-              onClick={() => router.push(`/editWorkspace?userId=${userId}`)}
+              onClick={() =>
+                router.push(
+                  `/editWorkspace?workspaceId=${displayWorkspaceId}&userId=${userId}`
+                )
+              }
             >
               {" "}
               edit{" "}

@@ -157,7 +157,7 @@ const Wiki: React.FC<WikiProps> = ({
       }
 
       setNotificationValue({
-        message: "Wiki Page was deleted.",
+        message: "Wiki Page was deleted !",
         color: 0,
       });
     } catch (error) {
@@ -238,7 +238,7 @@ const Wiki: React.FC<WikiProps> = ({
         setEditFormOpen(!editFormOpen);
       }
       setNotificationValue({
-        message: "Wiki Page was added.",
+        message: "Wiki Page was added !",
         color: 0,
       });
       setUpdateFlg(true);

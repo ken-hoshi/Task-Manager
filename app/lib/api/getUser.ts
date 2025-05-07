@@ -1,16 +1,27 @@
 import { clientSupabase } from "../supabase/client";
 
-export async function getUsers() {
+export async function getUsers(workspaceId: number) {
   try {
-    const { data: users, error:usersSelectError } = await clientSupabase
-      .from("users")
-      .select("id, name");
+    const { data: usersData, error: selectUsersDataError } =
+      await clientSupabase
+        .from("workspace_users")
+        .select("users(id, name)")
+        .eq("workspace_id", workspaceId);
 
-    if (usersSelectError) {
-      throw usersSelectError;
+    if (selectUsersDataError) {
+      throw selectUsersDataError;
     }
 
-    return users;
+    if (!usersData || usersData.length === 0) {
+      return [];
+    }
+    return usersData.map((userData) => ({
+      id: (Array.isArray(userData.users) ? userData.users[0] : userData.users)
+        .id,
+
+      name: (Array.isArray(userData.users) ? userData.users[0] : userData.users)
+        .name,
+    }));
   } catch (error) {
     console.error("Fetch Users", error);
     return [];

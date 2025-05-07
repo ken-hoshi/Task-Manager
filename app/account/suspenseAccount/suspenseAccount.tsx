@@ -15,6 +15,8 @@ import Profile from "../profile/profile";
 import UserDataEditForm from "../userDataEditForm/userDataEditForm";
 import styles from "./suspenseAccount.module.css";
 import { useSessionTimeout } from "@/app/hooks/sessionTimeout";
+import { getSession } from "@/app/hooks/getSession";
+import { useFormContext } from "@/app/provider/formProvider";
 
 const SuspenseAccount: React.FC = () => {
   const router = useRouter();
@@ -22,6 +24,7 @@ const SuspenseAccount: React.FC = () => {
   const paramsUserId = Number(searchParams.get("userId"));
   const { notificationValue, setNotificationValue } = useNotificationContext();
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
+  const { setBackForm } = useFormContext();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userId, setUserId] = useState(0);
@@ -46,12 +49,21 @@ const SuspenseAccount: React.FC = () => {
     setUserId(paramsUserId);
 
     const getUserData = async () => {
+      const session = await getSession();
+      if (!session?.user.id) {
+        console.error("Fetch Data: User ID couldn't get.");
+        setBackForm(true);
+        alert("データの取得に失敗しました。");
+        router.push("/");
+        return;
+      }
+
       try {
         const { data: userData, error: userDataSelectError } =
           await clientSupabase
             .from("users")
             .select("*")
-            .eq("id", userId)
+            .eq("id", paramsUserId)
             .single();
 
         if (userDataSelectError) {
@@ -78,7 +90,7 @@ const SuspenseAccount: React.FC = () => {
           message: "Couldn't get User Data.",
           color: 1,
         });
-        router.back();
+        router.push("/task");
       }
       setLoading(false);
     };
@@ -163,7 +175,7 @@ const SuspenseAccount: React.FC = () => {
                 <span
                   className={classNames(
                     "material-symbols-outlined",
-                    styles.back
+                    styles[`user-icon`]
                   )}
                 >
                   account_circle

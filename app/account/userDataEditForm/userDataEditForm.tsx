@@ -134,7 +134,7 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
     setUpdateLoading(false);
     setPageUpdated(true);
     setNotificationValue({
-      message: "User data was updated .",
+      message: "User data was updated !",
       color: 0,
     });
     setSwitchDisplay({

@@ -32,10 +32,10 @@ const Register: React.FC = () => {
     let judge = false;
     const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
-    // if (!email.includes(WORD_LINCRAFT)) {
-    //   setEmailError("このメールアドレスは使用できません。");
-    //   judge = true;
-    // }
+    if (!email.includes(WORD_LINCRAFT)) {
+      setEmailError("このメールアドレスは使用できません。");
+      judge = true;
+    }
     if (!regex.test(password)) {
       setPasswordError(
         "パスワードは英字と数字を含む8文字以上でなければなりません。"

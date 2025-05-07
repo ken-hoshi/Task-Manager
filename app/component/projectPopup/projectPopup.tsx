@@ -80,6 +80,9 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
   >(smallProjectArrayDefaultValue);
   const [beforeChangeSmallProjectArray, setBeforeChangeSmallProjectArray] =
     useState<SmallProjectProps[]>(smallProjectArrayDefaultValue);
+  const [workspaceTaskGenre, setWorkspaceTaskGenre] = useState<
+    TaskGenreDataProps[]
+  >([]);
 
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [newSmallProjectName, setNewSmallProjectName] = useState("");
@@ -109,9 +112,38 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
       }
     };
 
-    if (projectId) {
-      const fetchUpdateProjectData = async () => {
-        try {
+    const fetchProjectData = async () => {
+      try {
+        const {
+          data: selectWorkspaceTaskGenreData,
+          error: selectWorkspaceTaskGenreDataError,
+        } = await clientSupabase
+          .from("workspace_task_genre")
+          .select("id, task_genre_name, sort_id")
+          .eq("workspace_id", displayWorkspaceId);
+
+        if (selectWorkspaceTaskGenreDataError) {
+          selectWorkspaceTaskGenreDataError;
+        }
+
+        const workspaceTaskGenreData =
+          selectWorkspaceTaskGenreData &&
+          selectWorkspaceTaskGenreData.length > 0
+            ? [...selectWorkspaceTaskGenreData]
+                .sort((a, b) => a.sort_id - b.sort_id)
+                .map((taskGenre) => ({
+                  id: null,
+                  smallProjectId: null,
+                  taskGenreName: taskGenre.task_genre_name,
+                  selectedStartDate: undefined,
+                  selectedDeadlineDate: undefined,
+                }))
+            : [];
+        if (workspaceTaskGenreData.length > 0) {
+          setWorkspaceTaskGenre(workspaceTaskGenreData);
+        }
+
+        if (projectId) {
           const projectPromise = clientSupabase
             .from("projects")
             .select(
@@ -124,7 +156,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
             })
             .single();
 
-          const usersPromise = getUsers();
+          const usersPromise = getUsers(displayWorkspaceId!);
 
           const [{ data: projectData, error: selectProjectError }, userList] =
             await Promise.all([projectPromise, usersPromise]);
@@ -225,32 +257,45 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           setBeforeChangeProjectName(projectData.project_name);
           setSmallProjectArray(createdSmallProjectArray);
           setBeforeChangeSmallProjectArray(createdSmallProjectArray);
+        } else {
+          const userList = await getUsers(displayWorkspaceId!);
 
-          setGetLoading(false);
-        } catch (error) {
-          console.error("Fetch Project Details", error);
-          onClose();
-          setNotificationValue({
-            message: "Couldn't get the Project Data.",
-            color: 1,
-          });
+          setSmallProjectArray((prevSmallProjectArray) =>
+            prevSmallProjectArray.map((project) =>
+              selectWorkspaceTaskGenreData &&
+              selectWorkspaceTaskGenreData.length > 0
+                ? {
+                    ...project,
+                    users: userList,
+                    taskGenreDataArray: [...selectWorkspaceTaskGenreData]
+                      .sort((a, b) => a.sort_id - b.sort_id)
+                      .map((taskGenre) => ({
+                        id: null,
+                        smallProjectId: null,
+                        taskGenreName: taskGenre.task_genre_name,
+                        selectedStartDate: undefined,
+                        selectedDeadlineDate: undefined,
+                      })),
+                  }
+                : {
+                    ...project,
+                    users: userList,
+                  }
+            )
+          );
+          setUsers(userList);
         }
-      };
-      fetchUpdateProjectData();
-    } else {
-      const fetchUsers = async () => {
-        const userList = await getUsers();
-        setUsers(userList);
-        setSmallProjectArray((prevSmallProjectArray) =>
-          prevSmallProjectArray.map((project) => ({
-            ...project,
-            users: userList,
-          }))
-        );
-      };
-      fetchUsers();
+      } catch (error) {
+        console.error("Fetch Project Details", error);
+        onClose();
+        setNotificationValue({
+          message: "Couldn't get the Project Data.",
+          color: 1,
+        });
+      }
       setGetLoading(false);
-    }
+    };
+    fetchProjectData();
 
     document.addEventListener("keydown", handleKeyDown, true);
     return () => {
@@ -431,7 +476,8 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         users: users,
         selectedUsers: [],
         beforeChangeSelectedUsers: [],
-        taskGenreDataArray: [],
+        taskGenreDataArray:
+          workspaceTaskGenre.length > 0 ? workspaceTaskGenre : [],
         beforeChangeTaskGenreDataArray: [],
         details: "",
         selectedFiles: [],
@@ -1082,7 +1128,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         }
         addItem({ target: 0, id: projectId });
         setNotificationValue({
-          message: "Project was updated.",
+          message: "Project was updated !",
           color: 0,
         });
         setPostLoading(false);
@@ -1256,7 +1302,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
 
         addItem({ target: 0, id: projectId });
         setNotificationValue({
-          message: "Project was added.",
+          message: "Project was added !",
           color: 0,
         });
         setPostLoading(false);

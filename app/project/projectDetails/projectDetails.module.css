@@ -23,7 +23,6 @@
   color: white;
   font-weight: normal;
   position: relative;
-  display: flex;
   padding: 1vh;
 }
 
@@ -36,9 +35,11 @@
   word-wrap: break-word;
   font-weight: 600;
   text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+  text-align: center;
 }
 
 .pull-down-container {
+  position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -63,8 +64,8 @@
 .dropdown-menu {
   color: #000000;
   position: absolute;
-  top: 100%;
-  left: 0;
+  top: 135%;
+  left: -35%;
   background-color: #fff;
   box-shadow: 0 5px 5px rgba(0, 0, 0, 0.5);
   z-index: 1000;

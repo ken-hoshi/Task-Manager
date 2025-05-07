@@ -106,7 +106,7 @@ const PasswordEditForm: React.FC<PasswordEditForm> = ({
     setUpdateLoading(false);
     setPageUpdated(true);
     setNotificationValue({
-      message: "Password was updated .",
+      message: "Password was updated !",
       color: 0,
     });
     setSwitchDisplay({

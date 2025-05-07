@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import SuspenseCreateWorkspace from "./suspenseWorkspace/suspenseCreateWorkspace";
+import SuspenseCreateWorkspace from "./suspenseCreateWorkspace/suspenseCreateWorkspace";
 
 const CreateWorkspace = () => {
   return (

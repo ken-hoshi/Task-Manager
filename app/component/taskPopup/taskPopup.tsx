@@ -232,15 +232,6 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
     } else {
       const fetchData = async () => {
         try {
-          const workspaceUserBelongsData = await getWorkspace(userId);
-          const workspaceIdList = workspaceUserBelongsData
-            .map((workspaceData) =>
-              Array.isArray(workspaceData.workspace)
-                ? workspaceData.workspace[0]
-                : workspaceData.workspace
-            )
-            .map((workspaceData) => workspaceData.id);
-
           let projectList;
           let smallProjectList;
 
@@ -709,7 +700,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
         addItem({ target: 1, id: taskId });
         setNotificationValue({
-          message: "Task was updated.",
+          message: "Task was updated !",
           color: 0,
         });
         setPostLoading(false);
@@ -774,7 +765,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
         addItem({ target: 1, id: taskId });
         setNotificationValue({
-          message: "Task was added.",
+          message: "Task was added !",
           color: 0,
         });
         setPostLoading(false);

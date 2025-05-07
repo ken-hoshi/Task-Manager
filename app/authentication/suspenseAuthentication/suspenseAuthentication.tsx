@@ -51,7 +51,7 @@ const SuspenseAuthentication: React.FC = () => {
 
         <div
           className={styles[`to-workspace-setup-button`]}
-          onClick={() => router.push("/createWorkspace")}
+          onClick={() => router.push("/createWorkspace?atSignUp=true")}
         >
           ワークスペース登録へ
         </div>
