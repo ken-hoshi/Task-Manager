@@ -135,6 +135,13 @@ const SuspenseJoinWorkspace: React.FC = () => {
         .eq("space_id", spaceId)
         .single();
 
+    const { data: workspaceUsersData } = await clientSupabase
+      .from("workspace_users")
+      .select("id")
+      .eq("workspace_id", workspaceData?.id)
+      .eq("user_id", userId)
+      .single();
+
     if (!workspaceData || selectWorkspaceDataError) {
       setErrorMessage("ワークスペースが見つかりません。再度検索してください。");
       setSearchLoading(false);
@@ -151,6 +158,14 @@ const SuspenseJoinWorkspace: React.FC = () => {
       setSearchLoading(false);
       return;
     }
+    if (workspaceUsersData && workspaceUsersData.id) {
+      setErrorMessage(
+        "検索したワークスペースに既に登録されています。再度検索してください。"
+      );
+      setSearchLoading(false);
+      return;
+    }
+
     setSelectedWorkspaceList((prevSelectedWorkspaceList) => [
       ...prevSelectedWorkspaceList,
       { id: workspaceData.id, name: workspaceData.workspace_name },

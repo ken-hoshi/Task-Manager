@@ -26,6 +26,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { getSession } from "@/app/hooks/getSession";
 import { useFormContext } from "@/app/provider/formProvider";
 import { Logout } from "@/app/hooks/logout";
+import { useSessionTimeout } from "@/app/hooks/sessionTimeout";
 
 interface WorkspaceProps {
   id: number;
@@ -468,6 +469,8 @@ const SuspenseEditWorkspace: React.FC = () => {
       });
     }
   };
+
+  useSessionTimeout();
 
   return (
     <>
