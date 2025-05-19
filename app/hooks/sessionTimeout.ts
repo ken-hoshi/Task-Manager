@@ -5,54 +5,52 @@ import { getSession } from "./getSession";
 export const useSessionTimeout = () => {
   const SESSION_TIMEOUT = 1 * 60 * 60 * 1000;
   const { useLogout } = Logout();
-  const LAST_ACTIVITY_KEY = "lastActivityTime";
+  const TIMEOUT_LAST_ACTIVITY_KEY = "timeoutLastActivityTime";
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
 
-    const updateLastActivity = () => {
-      localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+    const updateTimeoutLastActivity = () => {
+      localStorage.setItem(TIMEOUT_LAST_ACTIVITY_KEY, Date.now().toString());
     };
 
     const startInactivityTimer = () => {
       clearTimeout(timer);
       timer = setTimeout(async () => {
-        localStorage.removeItem(LAST_ACTIVITY_KEY);
+        localStorage.removeItem(TIMEOUT_LAST_ACTIVITY_KEY);
         await useLogout();
       }, SESSION_TIMEOUT);
     };
 
     const handleUserActivity = () => {
-      updateLastActivity();
+      updateTimeoutLastActivity();
       startInactivityTimer();
     };
 
     const checkSessionTimeout = async () => {
-      try {
-        const session = await getSession();
-        if (!session?.user?.id) {
-          alert("セッションが切れました。再度ログインしてください。");
-          localStorage.removeItem(LAST_ACTIVITY_KEY);
-          await useLogout();
-        }
+      const session = await getSession();
+      if (!session?.user?.id) {
+        alert("セッションが切れました。再度ログインしてください。");
+        localStorage.removeItem(TIMEOUT_LAST_ACTIVITY_KEY);
+        await useLogout();
+      }
 
-        const lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY);
-        const lastActivityTime = lastActivity
-          ? parseInt(lastActivity, 10)
-          : null;
+      const timeoutLastActivity = localStorage.getItem(
+        TIMEOUT_LAST_ACTIVITY_KEY
+      );
+      const timeoutLastActivityTime = timeoutLastActivity
+        ? parseInt(timeoutLastActivity, 10)
+        : null;
 
-        if (!lastActivityTime) {
-          localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
-          return;
-        }
+      if (!timeoutLastActivityTime) {
+        localStorage.setItem(TIMEOUT_LAST_ACTIVITY_KEY, Date.now().toString());
+        return;
+      }
 
-        const elapsedTime = Date.now() - lastActivityTime;
-        if (elapsedTime > SESSION_TIMEOUT) {
-          localStorage.removeItem(LAST_ACTIVITY_KEY);
-          await useLogout();
-        }
-      } catch (error) {
-        console.error("Session check error", error);
+      const elapsedTime = Date.now() - timeoutLastActivityTime;
+      if (elapsedTime > SESSION_TIMEOUT) {
+        localStorage.removeItem(TIMEOUT_LAST_ACTIVITY_KEY);
+        await useLogout();
       }
     };
 

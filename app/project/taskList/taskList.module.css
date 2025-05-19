@@ -88,7 +88,7 @@
 }
 
 .task-list-area td.col-task-name {
-  width: 20vw;
+  width: 19vw;
   padding: 0.2vw 0.5vw 0.2vw 0;
   box-sizing: border-box;
   word-wrap: break-word;
@@ -101,7 +101,7 @@
 }
 
 .task-list-area td.col-status {
-  width: 9vw;
+  width: 9.5vw;
   padding: 0.2vw 0;
   box-sizing: border-box;
 }
@@ -132,7 +132,7 @@
 }
 
 .task-list-area td.col-deadline-date {
-  width: 9vw;
+  width: 10vw;
   padding: 0.2vw 0.5vw;
   box-sizing: border-box;
 }
@@ -192,7 +192,7 @@
 }
 
 .task-list-area td.col-assigned-person {
-  width: 10vw;
+  width: 9.5vw;
   padding: 0.2vw 0.5vw;
   box-sizing: border-box;
 }
@@ -211,7 +211,7 @@
 
 .task-list-area td.col-actions {
   padding: 0;
-  width: 2.5vw;
+  width: 2vw;
 }
 
 .actions-button-container {

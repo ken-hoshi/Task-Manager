@@ -133,7 +133,7 @@
 }
 
 .not-yet-completed-tasks-area td.col-deadline {
-  width: 9vw;
+  width: 9.5vw;
   font-size: 1.6vh;
 }
 
@@ -185,7 +185,7 @@
 }
 
 .not-yet-completed-tasks-area td.col-assigned-person {
-  width: 9vw;
+  width: 8.5vw;
 }
 
 .person-icon {

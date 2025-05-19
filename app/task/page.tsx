@@ -28,6 +28,7 @@ import { getSession } from "../hooks/getSession";
 import { Logout } from "../hooks/logout";
 import { getWorkspace } from "../lib/api/getWorkspace";
 import { useDisplayWorkspaceIdContext } from "../provider/displayWorkspaceIdProvider";
+import { getDataUpdate } from "../hooks/getDataUpdate";
 
 interface WorkspaceProps {
   id: number;
@@ -319,6 +320,7 @@ const Task: React.FC = () => {
   }, [pageUpdated, displayWorkspaceId]);
 
   useSessionTimeout();
+  getDataUpdate();
 
   return (
     <>

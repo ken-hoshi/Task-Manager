@@ -98,7 +98,7 @@
 }
 
 .my-task-area td.col-task-name {
-  width: 15.2vw;
+  width: 14.5vw;
   padding: 0 0.5vh 0 0;
   box-sizing: border-box;
 }
@@ -113,7 +113,7 @@
 }
 
 .my-task-area td.col-status {
-  width: 5vw;
+  width: 6vw;
 }
 
 .my-task-area th.col-deadline,
@@ -127,7 +127,7 @@
 }
 
 .my-task-area td.col-deadline {
-  width: 8vw;
+  width: 9vw;
 }
 
 .my-task-area td.col-deadline {
@@ -192,7 +192,7 @@
 }
 
 .my-task-area td.col-actions {
-  width: 5vw;
+  width: 4vw;
   padding: 0 0.5vh;
   box-sizing: border-box;
 }

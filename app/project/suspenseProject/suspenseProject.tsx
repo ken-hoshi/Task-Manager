@@ -23,6 +23,7 @@ import Wiki from "../wiki/wiki";
 import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 import { getSession } from "@/app/hooks/getSession";
 import { useFormContext } from "@/app/provider/formProvider";
+import { getDataUpdate } from "@/app/hooks/getDataUpdate";
 
 interface StatusProps {
   id: number;
@@ -299,6 +300,7 @@ const SuspenseProject: React.FC = () => {
   }, [pageUpdated, displaySmallProjectId]);
 
   useSessionTimeout();
+  getDataUpdate();
 
   const handleToggleFilterTask = () => {
     setFilterMyTasks(!filterMyTasks);
