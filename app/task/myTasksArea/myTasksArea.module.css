@@ -134,6 +134,12 @@
   font-size: 1.7vh !important;
 }
 
+th.col-task-name,
+th.col-status,
+th.col-deadline {
+  cursor: pointer;
+}
+
 .deadline-date-container,
 .assigned-person-container {
   display: flex;
@@ -202,6 +208,10 @@
   justify-content: flex-end;
   align-items: center;
   width: 100% !important;
+}
+
+.sort {
+  font-size: 2vh !important;
 }
 
 .separator {

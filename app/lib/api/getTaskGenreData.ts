@@ -75,8 +75,12 @@ export async function getTaskGenreData(taskIdList: number[]) {
           taskGenreId: task.task_genre_id,
           taskGenreName: task.task_genre.task_genre_name,
           numberOfPersons:
-            taskDataMatchedTaskGenreId && taskDataMatchedTaskGenreId.length > 0
-              ? taskDataMatchedTaskGenreId.length
+            assignedUserTaskResults && assignedUserTaskResults.length > 0
+              ? new Set(
+                  assignedUserTaskResults.map(
+                    (assignedUserTaskResult) => assignedUserTaskResult.userId
+                  )
+                ).size
               : 0,
           startDate: task.task_genre.start_date,
           deadlineDate: task.task_genre.deadline_date,

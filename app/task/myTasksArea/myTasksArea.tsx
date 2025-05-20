@@ -48,6 +48,12 @@ interface MyTasksAreaProps {
   statuses: StatusProps[];
 }
 
+enum Sort {
+  taskName,
+  status,
+  deadlineDate,
+}
+
 const MyTasksArea: React.FC<MyTasksAreaProps> = ({
   myTasks,
   userId,
@@ -79,6 +85,9 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
   );
   const [postLoading, setPostLoading] = useState(false);
   const [onFilter, setOnFiler] = useState(false);
+  const [taskNameClickCount, setTaskNameClickCount] = useState(0);
+  const [statusClickCount, setStatusClickCount] = useState(0);
+  const [deadlineDateClickCount, setDeadlineDateClickCount] = useState(0);
 
   const fetchAttachedFilesData = async (myTasks: any[]) => {
     if (myTasks && myTasks.length > 0) {
@@ -212,6 +221,82 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
     setOnFiler(!onFilter);
   };
 
+  const sort = (sortTarget: Sort) => {
+    if (myTaskList.length === 0) return;
+
+    const handleSort = (
+      sortKey: "task_name" | "status_id" | "deadline_date",
+      clickCount: number,
+      setClickCount: React.Dispatch<React.SetStateAction<number>>
+    ) => {
+      if (clickCount === 2) {
+        const taskData = onFilter
+          ? myTasks.filter(
+              (task) => task.status_id !== 3 && !task.small_projects.isFinished
+            )
+          : myTasks.filter((task) => !task.small_projects.isFinished);
+
+        setMyTaskList(taskData);
+        getTaskGenreDataArray(taskData);
+        fetchAttachedFilesData(taskData);
+        setClickCount(0);
+      } else {
+        let sortedTasks: any[] = [];
+        if (sortKey === "task_name") {
+          sortedTasks = [...myTaskList].sort((a, b) => {
+            const comparison = a.task_name.localeCompare(b.task_name, "ja");
+            return clickCount === 0 ? comparison : -comparison;
+          });
+        } else {
+          sortedTasks = [...myTaskList].sort((a, b) => {
+            const dateA = new Date(a[sortKey]).getTime();
+            const dateB = new Date(b[sortKey]).getTime();
+            return clickCount === 0 ? dateA - dateB : dateB - dateA;
+          });
+        }
+        setMyTaskList(sortedTasks);
+        getTaskGenreDataArray(sortedTasks);
+        fetchAttachedFilesData(sortedTasks);
+        setClickCount((clickCount) => clickCount + 1);
+      }
+    };
+    setTaskArrowJudgeData((prevTaskArrowJudgeData) =>
+      prevTaskArrowJudgeData.map((taskArrowJudgeData) => ({
+        taskId: taskArrowJudgeData.taskId,
+        arrowJudge: false,
+      }))
+    );
+
+    const resetClickCounts = (
+      setClickCount: React.Dispatch<React.SetStateAction<number>>[]
+    ) => {
+      setClickCount.forEach((setter) => {
+        setter(0);
+      });
+    };
+
+    switch (sortTarget) {
+      case Sort.taskName:
+        resetClickCounts([setStatusClickCount, setDeadlineDateClickCount]);
+        handleSort("task_name", taskNameClickCount, setTaskNameClickCount);
+        break;
+      case Sort.status:
+        resetClickCounts([setTaskNameClickCount, setDeadlineDateClickCount]);
+        handleSort("status_id", statusClickCount, setStatusClickCount);
+        break;
+      case Sort.deadlineDate:
+        resetClickCounts([setTaskNameClickCount, setStatusClickCount]);
+        handleSort(
+          "deadline_date",
+          deadlineDateClickCount,
+          setDeadlineDateClickCount
+        );
+        break;
+      default:
+        break;
+    }
+  };
+
   const toggleArrow = (taskId: number) => {
     setTaskArrowJudgeData((prevTaskArrowJudgeData) =>
       prevTaskArrowJudgeData.map((taskArrowJudgeData) => {
@@ -322,16 +407,115 @@ const MyTasksArea: React.FC<MyTasksAreaProps> = ({
       <table>
         <thead>
           <tr>
-            <th className={styles[`col-task-name`]}>
+            <th
+              className={styles[`col-task-name`]}
+              onClick={() => sort(Sort.taskName)}
+            >
               Task Name
+              {taskNameClickCount === 0 && (
+                <span
+                  className={classNames(
+                    "material-symbols-outlined",
+                    styles.sort
+                  )}
+                >
+                  swap_vert
+                </span>
+              )}
+              {taskNameClickCount === 1 && (
+                <span
+                  className={classNames(
+                    "material-symbols-outlined",
+                    styles.sort
+                  )}
+                >
+                  keyboard_double_arrow_down
+                </span>
+              )}
+              {taskNameClickCount === 2 && (
+                <span
+                  className={classNames(
+                    "material-symbols-outlined",
+                    styles.sort
+                  )}
+                >
+                  keyboard_double_arrow_up
+                </span>
+              )}
               <div className={styles.separator}></div>
             </th>
-            <th className={styles[`col-status`]}>
+            <th
+              className={styles[`col-status`]}
+              onClick={() => sort(Sort.status)}
+            >
               Status
+              {statusClickCount === 0 && (
+                <span
+                  className={classNames(
+                    "material-symbols-outlined",
+                    styles.sort
+                  )}
+                >
+                  swap_vert
+                </span>
+              )}
+              {statusClickCount === 1 && (
+                <span
+                  className={classNames(
+                    "material-symbols-outlined",
+                    styles.sort
+                  )}
+                >
+                  keyboard_double_arrow_down
+                </span>
+              )}
+              {statusClickCount === 2 && (
+                <span
+                  className={classNames(
+                    "material-symbols-outlined",
+                    styles.sort
+                  )}
+                >
+                  keyboard_double_arrow_up
+                </span>
+              )}
               <div className={styles.separator}></div>
             </th>
-            <th className={styles[`col-deadline`]}>
+            <th
+              className={styles[`col-deadline`]}
+              onClick={() => sort(Sort.deadlineDate)}
+            >
               Deadline
+              {deadlineDateClickCount === 0 && (
+                <span
+                  className={classNames(
+                    "material-symbols-outlined",
+                    styles.sort
+                  )}
+                >
+                  swap_vert
+                </span>
+              )}
+              {deadlineDateClickCount === 1 && (
+                <span
+                  className={classNames(
+                    "material-symbols-outlined",
+                    styles.sort
+                  )}
+                >
+                  keyboard_double_arrow_down
+                </span>
+              )}
+              {deadlineDateClickCount === 2 && (
+                <span
+                  className={classNames(
+                    "material-symbols-outlined",
+                    styles.sort
+                  )}
+                >
+                  keyboard_double_arrow_up
+                </span>
+              )}
               <div className={styles.separator}></div>
             </th>
             <th className={styles[`col-assigned-person`]}>

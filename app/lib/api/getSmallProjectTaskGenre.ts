@@ -4,13 +4,13 @@ export async function getSmallProjectTaskGenre(smallProjectIdList: number[]) {
   try {
     const [
       { data: taskGenreData, error: selectTaskGenreDataError },
-      { data: taskGenreIdList, error: selectTaskGenreIdListError },
+      { data: taskDataList, error: selectTaskGenreIdListError },
     ] = await Promise.all([
       clientSupabase
         .from("task_genre")
         .select("*")
         .order("start_date", { ascending: true }),
-      clientSupabase.from("tasks").select("task_genre_id"),
+      clientSupabase.from("tasks").select("assigned_user_id,task_genre_id"),
     ]);
 
     if (selectTaskGenreDataError) {
@@ -35,11 +35,14 @@ export async function getSmallProjectTaskGenre(smallProjectIdList: number[]) {
               taskGenreId: taskGenre.id,
               taskGenreName: taskGenre.task_genre_name,
               numberOfPersons:
-                taskGenreIdList && taskGenreIdList.length > 0
-                  ? taskGenreIdList.filter(
-                      (taskGenreId) =>
-                        taskGenreId.task_genre_id === taskGenre.id
-                    ).length
+                taskDataList && taskDataList.length > 0
+                  ? new Set(
+                      taskDataList
+                        .filter(
+                          (taskData) => taskData.task_genre_id === taskGenre.id
+                        )
+                        .map((item) => JSON.stringify(item))
+                    ).size
                   : 0,
               startDate: taskGenre.start_date,
               deadlineDate: taskGenre.deadline_date,
