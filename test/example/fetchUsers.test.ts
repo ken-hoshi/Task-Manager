@@ -2,7 +2,7 @@ import { clientSupabase } from "@/app/lib/supabase/client";
 import { fetchUsers, fetchUsersThrowError } from "./fetchUsers";
 
 // Supabase クライアントを Jest でモック化する
-jest.mock("../app/lib/supabase/client", () => ({
+jest.mock("../../app/lib/supabase/client", () => ({
   clientSupabase: {
     // .from() を呼び出せるようにモックし、チェーンできるように mockReturnThis() を使う
     from: jest.fn().mockReturnThis(),

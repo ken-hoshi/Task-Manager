@@ -18,7 +18,7 @@ const SuspenseComplete: React.FC = () => {
   const [registeredEmail, setRegisteredEmail] = useState();
 
   useEffect(() => {
-    const fetchSession = async () => {
+    (async () => {
       const { data: sessionData } = await clientSupabase.auth.getSession();
       const metaDataName =
         sessionData?.session?.user.user_metadata.display_name;
@@ -36,8 +36,7 @@ const SuspenseComplete: React.FC = () => {
       setRegisteredName(metaDataName);
       setRegisteredEmail(metaDataEmail);
       setLoading(false);
-    };
-    fetchSession();
+    })();
   }, []);
 
   return (

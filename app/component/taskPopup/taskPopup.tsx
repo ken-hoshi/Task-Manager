@@ -109,7 +109,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
     };
 
     if (taskId) {
-      const fetchUpdateTaskData = async () => {
+      (async () => {
         try {
           const [
             { data: taskData, error: selectTaskError },
@@ -227,10 +227,9 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             color: 1,
           });
         }
-      };
-      fetchUpdateTaskData();
+      })();
     } else {
-      const fetchData = async () => {
+      (async () => {
         try {
           let projectList;
           let smallProjectList;
@@ -342,8 +341,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             color: 1,
           });
         }
-      };
-      fetchData();
+      })();
     }
 
     document.addEventListener("keydown", handleKeyDown, true);
@@ -353,103 +351,101 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   }, []);
 
   useEffect(() => {
-    const fetchSmallProject = async () => {
-      try {
-        const { data: smallProjectList, error: selectSmallProjectListError } =
-          await clientSupabase
-            .from("small_projects")
-            .select("*, small_project_users(user_id)")
-            .eq("project_id", selectedProject!.value);
-
-        if (selectSmallProjectListError) {
-          throw selectSmallProjectListError;
-        }
-
-        if (!smallProjectList || smallProjectList.length === 0) {
-          throw new Error("Small Project Data couldn't get.");
-        }
-
-        setSmallProjects(
-          smallProjectList
-            .filter((smallProject) =>
-              selectedUser
-                ? smallProject.small_project_users.some(
-                    (user: any) => user.user_id === selectedUser.value
-                  )
-                : true
-            )
-            .map((smallProject) => ({
-              id: smallProject.id,
-              small_project_name: smallProject.small_project_name,
-              details: smallProject.details,
-              project_id: smallProject.project_id,
-            }))
-        );
-      } catch (error) {
-        console.error("Fetch Task Details", error);
-        onClose();
-        setNotificationValue({
-          message: "Couldn't get the Task Data.",
-          color: 1,
-        });
-      }
-    };
     if (selectedProject) {
-      fetchSmallProject();
+      (async () => {
+        try {
+          const { data: smallProjectList, error: selectSmallProjectListError } =
+            await clientSupabase
+              .from("small_projects")
+              .select("*, small_project_users(user_id)")
+              .eq("project_id", selectedProject!.value);
+
+          if (selectSmallProjectListError) {
+            throw selectSmallProjectListError;
+          }
+
+          if (!smallProjectList || smallProjectList.length === 0) {
+            throw new Error("Small Project Data couldn't get.");
+          }
+
+          setSmallProjects(
+            smallProjectList
+              .filter((smallProject) =>
+                selectedUser
+                  ? smallProject.small_project_users.some(
+                      (user: any) => user.user_id === selectedUser.value
+                    )
+                  : true
+              )
+              .map((smallProject) => ({
+                id: smallProject.id,
+                small_project_name: smallProject.small_project_name,
+                details: smallProject.details,
+                project_id: smallProject.project_id,
+              }))
+          );
+        } catch (error) {
+          console.error("Fetch Task Details", error);
+          onClose();
+          setNotificationValue({
+            message: "Couldn't get the Task Data.",
+            color: 1,
+          });
+        }
+      })();
     }
   }, [selectedProject]);
 
   useEffect(() => {
-    const fetchSmallProjectMembersAndTaskGenre = async () => {
-      try {
-        const smallProjectMembersList = await getSmallProjectMember([
-          selectedSmallProject!.value,
-        ]);
-
-        if (
-          selectedUser &&
-          !smallProjectMembersList[0].membersDataArray.some(
-            (membersData) => membersData.id === selectedUser.value
-          )
-        ) {
-          setSelectedUser(null);
-        }
-
-        setSmallProjectMember(
-          smallProjectMembersList[0].membersDataArray.map((membersData) => ({
-            id: membersData.id,
-            name: membersData.name,
-          }))
-        );
-
-        const { data: taskGenreData, error: selectTaskGenreError } =
-          await clientSupabase
-            .from("task_genre")
-            .select("id, task_genre_name, start_date, deadline_date")
-            .eq("small_project_id", selectedSmallProject!.value);
-
-        if (selectTaskGenreError) {
-          throw selectTaskGenreError;
-        }
-
-        const taskGenreArray = taskGenreData.map((taskGenre) => ({
-          id: taskGenre.id,
-          taskGenreName: taskGenre.task_genre_name,
-          selectedStartDate: taskGenre.start_date,
-          selectedDeadlineDate: taskGenre.deadline_date,
-        }));
-        setTaskGenreDataArray(taskGenreArray);
-      } catch (error) {
-        console.error("Fetch Task Details", error);
-        onClose();
-        setNotificationValue({
-          message: "Couldn't get the Task Data.",
-          color: 1,
-        });
-      }
-    };
     if (selectedSmallProject) {
-      fetchSmallProjectMembersAndTaskGenre();
+      (async () => {
+        try {
+          const smallProjectMembersList = await getSmallProjectMember([
+            selectedSmallProject!.value,
+          ]);
+
+          if (
+            selectedUser &&
+            !smallProjectMembersList[0].membersDataArray.some(
+              (membersData) => membersData.id === selectedUser.value
+            )
+          ) {
+            setSelectedUser(null);
+          }
+
+          setSmallProjectMember(
+            smallProjectMembersList[0].membersDataArray.map((membersData) => ({
+              id: membersData.id,
+              name: membersData.name,
+            }))
+          );
+
+          const { data: taskGenreData, error: selectTaskGenreError } =
+            await clientSupabase
+              .from("task_genre")
+              .select("id, task_genre_name, start_date, deadline_date")
+              .eq("small_project_id", selectedSmallProject!.value);
+
+          if (selectTaskGenreError) {
+            throw selectTaskGenreError;
+          }
+
+          const taskGenreArray = taskGenreData.map((taskGenre) => ({
+            id: taskGenre.id,
+            taskGenreName: taskGenre.task_genre_name,
+            selectedStartDate: taskGenre.start_date,
+            selectedDeadlineDate: taskGenre.deadline_date,
+          }));
+          setTaskGenreDataArray(taskGenreArray);
+        } catch (error) {
+          console.error("Fetch Task Details", error);
+          onClose();
+          setNotificationValue({
+            message: "Couldn't get the Task Data.",
+            color: 1,
+          });
+        }
+      })();
     }
   }, [selectedSmallProject]);
 

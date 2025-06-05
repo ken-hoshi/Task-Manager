@@ -48,7 +48,7 @@ const SuspenseAccount: React.FC = () => {
   useEffect(() => {
     setUserId(paramsUserId);
 
-    const getUserData = async () => {
+    (async () => {
       const session = await getSession();
       if (!session?.user.id) {
         console.error("Fetch Data: User ID couldn't get.");
@@ -93,8 +93,7 @@ const SuspenseAccount: React.FC = () => {
         router.push("/task");
       }
       setLoading(false);
-    };
-    getUserData();
+    })();
     setPageUpdated(false);
   }, [pageUpdated]);
 

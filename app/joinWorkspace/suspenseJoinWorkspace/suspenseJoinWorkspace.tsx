@@ -44,7 +44,7 @@ const SuspenseJoinWorkspace: React.FC = () => {
     setLoading(true);
     setAtSignUp(paramsAtSignUp);
 
-    const checkUserSession = async () => {
+    (async () => {
       try {
         const {
           data: { session },
@@ -68,11 +68,10 @@ const SuspenseJoinWorkspace: React.FC = () => {
         setBackForm(true);
         router.back();
       }
-    };
-    checkUserSession();
+    })();
     const storedSpaceId = sessionStorage.getItem("spaceId");
     if (storedSpaceId) {
-      const getCreatedWorkspace = async () => {
+      (async () => {
         const { data: workspaceData, error: selectWorkspaceDataError } =
           await clientSupabase
             .from("workspace")
@@ -101,8 +100,7 @@ const SuspenseJoinWorkspace: React.FC = () => {
             { id: workspaceData.id, name: workspaceData.workspace_name },
           ]);
         }
-      };
-      getCreatedWorkspace();
+      })();
     }
 
     setLoading(false);

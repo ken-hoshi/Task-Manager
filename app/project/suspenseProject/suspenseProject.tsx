@@ -211,7 +211,7 @@ const SuspenseProject: React.FC = () => {
       });
     }
 
-    const fetchProjectDetails = async () => {
+    (async () => {
       const session = await getSession();
       if (!session?.user.id) {
         console.error("Fetch Data: User ID couldn't get.");
@@ -295,8 +295,7 @@ const SuspenseProject: React.FC = () => {
         router.push("/task");
       }
       setLoading(false);
-    };
-    fetchProjectDetails();
+    })();
   }, [pageUpdated, displaySmallProjectId]);
 
   useSessionTimeout();

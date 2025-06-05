@@ -104,7 +104,7 @@ const SuspenseEditWorkspace: React.FC = () => {
   const [deleteUserId, setDeleteUserId] = useState(0);
 
   useEffect(() => {
-    const fetchWorkspaceData = async () => {
+    (async () => {
       const session = await getSession();
       if (!paramsWorkspaceId || !paramsUserId || !session?.user.id) {
         console.error("Fetch Data: User ID couldn't get.");
@@ -176,8 +176,7 @@ const SuspenseEditWorkspace: React.FC = () => {
         });
       }
       setLoading(false);
-    };
-    fetchWorkspaceData();
+    })();
   }, []);
 
   const handlePageBack = () => {

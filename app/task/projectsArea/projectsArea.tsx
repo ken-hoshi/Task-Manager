@@ -83,8 +83,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { newItem } = useFlashDisplayContext();
   const { setNotificationValue } = useNotificationContext();
-  const { displayWorkspaceId } =
-    useDisplayWorkspaceIdContext();
+  const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
   const router = useRouter();
 
   const [projectData, setProjectData] = useState<any[]>([]);
@@ -321,7 +320,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
     smallProjectId: number,
     boolValue: boolean
   ) => {
-    const updateSmallProjectFinishedValue = async () => {
+    (async () => {
       const { error: updateSmallProjectError } = await clientSupabase
         .from("small_projects")
         .update({
@@ -336,8 +335,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
           color: 1,
         });
       }
-    };
-    updateSmallProjectFinishedValue();
+    })();
     setPageUpdated(true);
   };
 

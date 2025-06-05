@@ -112,7 +112,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
       }
     };
 
-    const fetchProjectData = async () => {
+    (async () => {
       try {
         const {
           data: selectWorkspaceTaskGenreData,
@@ -294,8 +294,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         });
       }
       setGetLoading(false);
-    };
-    fetchProjectData();
+    })();
 
     document.addEventListener("keydown", handleKeyDown, true);
     return () => {
@@ -714,9 +713,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           };
 
           if (updatedTaskGenreDataArray.length > 0) {
-            const updateTaskGenres = async (
-              updatedTaskGenreDataArray: TaskGenreDataProps[]
-            ) => {
+            (async (updatedTaskGenreDataArray: TaskGenreDataProps[]) => {
               await Promise.all(
                 updatedTaskGenreDataArray.map(async (updatedTaskGenreData) => {
                   const { error: updateTaskGenreError } = await clientSupabase
@@ -736,8 +733,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                   }
                 })
               );
-            };
-            updateTaskGenres(updatedTaskGenreDataArray);
+            })(updatedTaskGenreDataArray);
           }
 
           const deletedTaskGenreIdList = notAddedSmallProjectArray.flatMap(

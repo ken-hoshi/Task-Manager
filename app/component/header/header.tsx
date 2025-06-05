@@ -86,7 +86,7 @@ const Header: React.FC<HeaderProps> = ({
       }
     }
 
-    const getNotifications = async () => {
+    (async () => {
       const mailNotifications = await getMailNotifications(
         userId,
         displayWorkspaceId!
@@ -129,8 +129,7 @@ const Header: React.FC<HeaderProps> = ({
             .length
         );
       }
-    };
-    getNotifications();
+    })();
     return () => {
       document.removeEventListener("mousedown", handleClickOutsideList);
       document.removeEventListener("mousedown", handleClickOutsidePullDown);

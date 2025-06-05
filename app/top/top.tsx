@@ -24,7 +24,7 @@ const Top: React.FC = () => {
 
   return (
     <div className={styles[`top-page-area`]}>
-      {notificationValue.message && (
+      {notificationValue && notificationValue.message && (
         <NotificationBanner
           message={notificationValue.message}
           color={notificationValue.color}

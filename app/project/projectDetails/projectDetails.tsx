@@ -209,7 +209,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
     smallProjectId: number,
     boolValue: boolean
   ) => {
-    const updateSmallProjectFinishedValue = async () => {
+    (async () => {
       const { error: updateSmallProjectError } = await clientSupabase
         .from("small_projects")
         .update({
@@ -224,8 +224,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
           color: 1,
         });
       }
-    };
-    updateSmallProjectFinishedValue();
+    })();
     setPageUpdated(true);
   };
 

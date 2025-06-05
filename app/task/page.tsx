@@ -124,7 +124,7 @@ const Task: React.FC = () => {
   }, [today]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    (async () => {
       try {
         const session = await getSession();
         if (!session?.user.id) {
@@ -224,7 +224,7 @@ const Task: React.FC = () => {
                 );
               };
 
-              const postDeadlineNotifications = async () => {
+              (async () => {
                 const notificationPromises = myTasksData
                   .filter((myTask) => myTask.status_id !== 3)
                   .map(async (myTask: any) => {
@@ -268,8 +268,7 @@ const Task: React.FC = () => {
                     }
                   });
                 await Promise.all(notificationPromises);
-              };
-              postDeadlineNotifications();
+              })();
 
               setMyTasks(myTasksData);
             } else {
@@ -315,8 +314,7 @@ const Task: React.FC = () => {
         alert("データの取得に失敗しました。");
       }
       await useLogout();
-    };
-    fetchData();
+    })();
   }, [pageUpdated, displayWorkspaceId]);
 
   useSessionTimeout();

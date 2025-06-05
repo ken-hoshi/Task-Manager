@@ -35,7 +35,7 @@ const SuspenseCreateWorkspace: React.FC = () => {
 
   useEffect(() => {
     setAtSignUp(paramsAtSignUp);
-    const fetchSession = async () => {
+    (async () => {
       if (!paramsAtSignUp) {
         try {
           const {
@@ -73,8 +73,7 @@ const SuspenseCreateWorkspace: React.FC = () => {
       setVerifiedEmail(true);
       setLoading(false);
       setIsRefreshed(false);
-    };
-    fetchSession();
+    })();
   }, [isRefreshed]);
 
   const handleFocus = (event: React.FocusEvent<HTMLInputElement>) => {

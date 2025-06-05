@@ -36,7 +36,7 @@ const Comment: React.FC<CommentProps> = ({
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
 
-    const getCommentData = async () => {
+    (async () => {
       const commentData = await fetchCommentData(taskId);
       if (commentData) {
         setCommentData(commentData);
@@ -44,8 +44,7 @@ const Comment: React.FC<CommentProps> = ({
       } else {
         throw new Error("Fetch CommentData couldn't get.");
       }
-    };
-    getCommentData();
+    })();
 
     setReRendering(false);
     return () => {
@@ -155,10 +154,7 @@ const Comment: React.FC<CommentProps> = ({
         []
       );
       if (postEmailNotificationsError) {
-        console.error(
-          "Post Mail Notifications",
-          postEmailNotificationsError
-        );
+        console.error("Post Mail Notifications", postEmailNotificationsError);
       }
     } catch (error) {
       console.error("Add Comment", error);

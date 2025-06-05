@@ -21,7 +21,7 @@ const MailNotificationList: React.FC<MailNotificationListProps> = ({
 }) => {
   useEffect(() => {
     return () => {
-      const updateNotifications = async () => {
+      (async () => {
         const promiseUpdateNotifications = notifications.map(
           async (notification) => {
             if (!notification.isRead) {
@@ -31,17 +31,13 @@ const MailNotificationList: React.FC<MailNotificationListProps> = ({
                 .eq("id", notification.id);
 
               if (isReadUpdateError) {
-                console.error(
-                  "Update Mail Notifications ",
-                  isReadUpdateError
-                );
+                console.error("Update Mail Notifications ", isReadUpdateError);
               }
             }
           }
         );
         await Promise.all(promiseUpdateNotifications);
-      };
-      updateNotifications();
+      })();
     };
   }, [notifications]);
 

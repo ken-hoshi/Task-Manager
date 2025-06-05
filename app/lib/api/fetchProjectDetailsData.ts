@@ -42,25 +42,22 @@ export const fetchProjectDetailsData = async (projectId: number) => {
       throw new Error("Small Project Id couldn't get.");
     }
 
-    const smallProjectIdList: number[] = smallProjectPromiseResult.data
-      .sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )
-      .map((smallProject) => smallProject.id);
+    const smallProjectIdList: number[] = smallProjectPromiseResult.data.map(
+      (smallProject) => smallProject.id
+    );
 
     const [
       smallProjectMembersData,
       smallProjectStatusData,
       smallProjectTaskGenreData,
       smallProjectAttachedFileData,
-      smallProjectWikiData
+      smallProjectWikiData,
     ] = await Promise.all([
       getSmallProjectMember(smallProjectIdList),
       getSmallProjectStatus(smallProjectIdList),
       getSmallProjectTaskGenre(smallProjectIdList),
       fetchAttachedFiles(0, smallProjectIdList),
-      getSmallProjectWikiData(smallProjectIdList)
+      getSmallProjectWikiData(smallProjectIdList),
     ]);
 
     const { data: tasksData, error: selectTasksDataError } =
@@ -109,7 +106,7 @@ export const fetchProjectDetailsData = async (projectId: number) => {
       tasksDividedBySmallProjectId,
       smallProjectAttachedFileData,
       taskAttachedFileData,
-      smallProjectWikiData
+      smallProjectWikiData,
     };
   } catch (error) {
     console.error("Fetch Project Details Data", error);
