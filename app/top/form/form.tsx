@@ -64,7 +64,7 @@ const Form: React.FC<FormProps> = ({ className }) => {
           <form role="form" onSubmit={handleLogin}>
             <h4>Welcome!</h4>
             <p className={styles.message}>
-              This site is only permitted for use by Lincraft employees.
+              This site may only be used by employees of the designated company.
             </p>
 
             <input
