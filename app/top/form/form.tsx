@@ -4,37 +4,37 @@ import Link from "next/link";
 import Image from "next/image";
 import styles from "./form.module.css";
 import classNames from "classnames";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { login } from "../../hooks/login";
+import { useNotificationContext } from "@/app/provider/notificationProvider";
 
 interface FormProps {
   className?: string;
 }
 
 const Form: React.FC<FormProps> = ({ className }) => {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const { useLogin } = login();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-
-  useEffect(() => {
-    return () => {
-      setLoading(true);
-    };
-  }, []);
+  const { setNotificationValue } = useNotificationContext();
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     const { email, password } = formData;
 
-    if (!loading) return;
-    setLoading(false);
+    if (loading) return;
+    setLoading(true);
 
     const loginError = await useLogin(email, password);
     if (loginError) {
-      setLoading(true);
+      setNotificationValue({
+        message: "Password or Email address is wrong.",
+        color: 1,
+      });
+      setLoading(false);
     }
   };
 
@@ -61,7 +61,7 @@ const Form: React.FC<FormProps> = ({ className }) => {
           />
         </div>
         <div className={styles[`login-area`]}>
-          <form onSubmit={handleLogin}>
+          <form role="form" onSubmit={handleLogin}>
             <h4>Welcome!</h4>
             <p className={styles.message}>
               This site is only permitted for use by Lincraft employees.
@@ -91,8 +91,8 @@ const Form: React.FC<FormProps> = ({ className }) => {
               required
             />
             <p className={styles.instruction}>Enter Password</p>
-            <button type="submit" disabled={!loading}>
-              {loading ? "Login" : <div className={styles.spinner}></div>}
+            <button role="button" type="submit" disabled={loading}>
+              {loading ? <div className={styles.spinner}></div> : "Login"}
             </button>
           </form>
           <Link href="/register">Sign Up</Link>

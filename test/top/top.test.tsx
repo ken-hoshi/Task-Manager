@@ -1,5 +1,8 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import Top from "@/app/top/top";
+import { useFormContext } from "@/app/provider/formProvider";
+import { useNotificationContext } from "@/app/provider/notificationProvider";
 
 // ---- ① Context をモック ---------------------------------
 jest.mock("../../app/provider/formProvider", () => ({
@@ -8,10 +11,6 @@ jest.mock("../../app/provider/formProvider", () => ({
 jest.mock("../../app/provider/notificationProvider", () => ({
   useNotificationContext: jest.fn(),
 }));
-
-import Top from "@/app/top/top";
-import { useFormContext } from "@/app/provider/formProvider";
-import { useNotificationContext } from "@/app/provider/notificationProvider";
 
 // ---- ② 子コンポーネントをダミー化 ------------------------
 jest.mock("../../app/top/form/form", () => (props: any) => (
@@ -38,7 +37,7 @@ jest.mock(
     )
 );
 
-describe("Top component", () => {
+describe("Top コンポーネント", () => {
   beforeAll(() => jest.useFakeTimers()); // タイマーをモック化して、setTimeoutの挙動を制御
   afterAll(() => jest.useRealTimers()); // テスト後にタイマーを元に戻す
 

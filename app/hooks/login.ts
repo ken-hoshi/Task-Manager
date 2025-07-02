@@ -4,8 +4,6 @@ import { useNotificationContext } from "../provider/notificationProvider";
 
 export const login = () => {
   const router = useRouter();
-  const { setNotificationValue } = useNotificationContext();
-
   const useLogin = async (email: string, password: string) => {
     try {
       const { error } = await clientSupabase.auth.signInWithPassword({
@@ -19,10 +17,6 @@ export const login = () => {
       router.push("/task");
     } catch (error) {
       console.error("Login", error);
-      setNotificationValue({
-        message: "Password or Email address is wrong.",
-        color: 1,
-      });
       return error;
     }
   };

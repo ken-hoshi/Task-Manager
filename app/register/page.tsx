@@ -126,7 +126,7 @@ const Register: React.FC = () => {
           <div className={styles[`form-area`]}>
             <h1>Sign up</h1>
 
-            <form onSubmit={handleSubmit}>
+            <form role="form" onSubmit={handleSubmit}>
               <input
                 type="text"
                 placeholder="Name"
