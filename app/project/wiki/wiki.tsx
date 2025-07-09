@@ -101,6 +101,13 @@ const Wiki: React.FC<WikiProps> = ({
     };
   }, [pageUpdated, displaySmallProjectId]);
 
+  const handleClickWikiPage = (index: number) => {
+    if (editFormOpen) {
+      return;
+    }
+    setDisplayWikiNumber(index);
+  };
+
   const onClose = () => {
     setEditFormOpen(false);
     setAddFormOpen(false);
@@ -284,7 +291,7 @@ const Wiki: React.FC<WikiProps> = ({
                               styles[`display-list`]
                           )}
                           key={index}
-                          onClick={() => setDisplayWikiNumber(index)}
+                          onClick={() => handleClickWikiPage(index)}
                         >
                           {wiki.title}
                         </div>
