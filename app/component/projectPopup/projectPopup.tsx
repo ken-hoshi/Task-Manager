@@ -64,7 +64,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
   const smallProjectArrayDefaultValue = [
     {
       id: null,
-      smallProjectName: "Small Project Name 1",
+      smallProjectName: "",
       users: [],
       selectedUsers: [],
       beforeChangeSelectedUsers: [],
@@ -83,10 +83,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
   const [workspaceTaskGenre, setWorkspaceTaskGenre] = useState<
     TaskGenreDataProps[]
   >([]);
-
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [newSmallProjectName, setNewSmallProjectName] = useState("");
-
+  const [tabNumber, setTabNumber] = useState<number[]>([1]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [getLoading, setGetLoading] = useState(true);
@@ -257,6 +254,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           setBeforeChangeProjectName(projectData.project_name);
           setSmallProjectArray(createdSmallProjectArray);
           setBeforeChangeSmallProjectArray(createdSmallProjectArray);
+          setTabNumber(createdSmallProjectArray.map((_, index) => index + 1));
         } else {
           const userList = await getUsers(displayWorkspaceId!);
 
@@ -301,6 +299,16 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
       document.removeEventListener("keydown", handleKeyDown, true);
     };
   }, []);
+
+  const handleSmallProjectChange = (value: string) => {
+    setSmallProjectArray((prevSmallProjectArray) =>
+      prevSmallProjectArray.map((smallProject, index) =>
+        index === displaySmallProjectNameValue
+          ? { ...smallProject, smallProjectName: value }
+          : smallProject
+      )
+    );
+  };
 
   const handleUserChange = (selectedOptions: MultiValue<UserOption>) => {
     setSmallProjectArray((prevSmallProjectArray) =>
@@ -471,7 +479,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
       ...prevSmallProjectArray,
       {
         id: null,
-        smallProjectName: "Small Project Name " + value,
+        smallProjectName: "",
         users: users,
         selectedUsers: [],
         beforeChangeSelectedUsers: [],
@@ -482,6 +490,10 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         selectedFiles: [],
         beforeChangeFiles: [],
       },
+    ]);
+    setTabNumber((prevTabName) => [
+      ...prevTabName,
+      tabNumber[smallProjectArray.length - 1] + 1,
     ]);
     setDisplaySmallProjectNameValue(value - 1);
   };
@@ -496,36 +508,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
     setSmallProjectArray((prevSmallProjectArray) =>
       prevSmallProjectArray.filter((_, i) => i !== index)
     );
-  };
-
-  const handleDoubleClick = (index: number) => {
-    setEditingIndex(index);
-    setNewSmallProjectName(smallProjectArray[index].smallProjectName);
-  };
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewSmallProjectName(e.target.value);
-  };
-
-  const handleNameSave = () => {
-    setSmallProjectArray((prevSmallProjectArray) =>
-      prevSmallProjectArray.map((smallProject, index) =>
-        index === editingIndex
-          ? { ...smallProject, smallProjectName: newSmallProjectName }
-          : smallProject
-      )
-    );
-    setEditingIndex(null);
-  };
-
-  const handleEnterKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleNameSave();
-    }
-  };
-
-  const handleBlur = () => {
-    handleNameSave();
+    setTabNumber((prevTabName) => prevTabName.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
@@ -1369,27 +1352,14 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                         index === displaySmallProjectNameValue && styles.active
                       )}
                       onClick={() => setDisplaySmallProjectNameValue(index)}
-                      onDoubleClick={() => handleDoubleClick(index)}
                       key={index}
                     >
-                      {editingIndex === index ? (
-                        <input
-                          type="text"
-                          value={newSmallProjectName}
-                          onChange={handleNameChange}
-                          onBlur={handleBlur}
-                          onKeyDown={handleEnterKeyDown}
-                          className={`${styles[`tab-input`]} tab-input`}
-                          autoFocus
-                        />
-                      ) : (
-                        smallProject.smallProjectName
-                      )}
+                      {"No." + tabNumber[index]}
                     </div>
                   </div>
                 ))}
 
-                {smallProjectArray.length < 4 && (
+                {smallProjectArray.length < 10 && (
                   <span
                     className={classNames(
                       "material-symbols-outlined",
@@ -1405,6 +1375,18 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
               </div>
 
               <div className={styles[`small-project-area`]}>
+                <div className={styles[`form-group`]}>
+                  <input
+                    type="text"
+                    value={
+                      smallProjectArray[displaySmallProjectNameValue]
+                        .smallProjectName
+                    }
+                    onChange={(e) => handleSmallProjectChange(e.target.value)}
+                    placeholder="Small Project Name"
+                  />
+                  <p className={styles.instruction}>Enter Small Project Name</p>
+                </div>
                 <div className={styles[`form-group`]}>
                   <Select
                     isMulti

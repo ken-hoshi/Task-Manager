@@ -273,7 +273,8 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                   </div>
                 )}
                 <p className={styles[`small-project-name`]}>
-                  {displaySmallProject!.small_project_name}
+                  {displaySmallProject!.small_project_name ||
+                    "No Small Project Name"}
                 </p>
               </th>
             </tr>

@@ -88,7 +88,7 @@
 }
 
 .form-group {
-  margin-bottom: 1.5vh;
+  margin-bottom: 1vh;
   width: 100%;
 }
 
@@ -150,15 +150,15 @@
 }
 
 .tab-button {
-  width: 18vh;
+  cursor: pointer;
+  width: 6vh;
   height: 4vh;
-  cursor: url("/img/edit.png"), text;
   border: none;
   box-shadow: 1.5px -0.5px 1px 0px rgba(0, 0, 0, 0.3);
   transition: background-color 0.3s;
   font-size: 1.5vh;
   z-index: 1;
-  padding: 0.5vh 1vh 0.5vh 1vh;
+  padding: 0 1vh;
   border-top-left-radius: 1vh;
   border-top-right-radius: 1vh;
   display: flex;
@@ -215,7 +215,7 @@
 .form-area {
   flex: 1;
   overflow-y: auto;
-  height: 24.5vh;
+  height: 20.5vh;
 }
 
 .form-area::-webkit-scrollbar {
@@ -292,7 +292,7 @@
 
 .non-task-genre {
   width: 100%;
-  height: 24.5vh;
+  height: 20.5vh;
   font-size: 3vh;
   color: #9b9b9b;
   display: flex;
@@ -307,7 +307,7 @@
 
 .popup-inner textarea {
   resize: none;
-  height: 24.5vh;
+  height: 20.5vh;
   padding-left: 1vh;
   width: 100%;
   border: none;

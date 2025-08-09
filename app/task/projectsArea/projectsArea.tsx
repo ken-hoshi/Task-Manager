@@ -521,8 +521,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
 
                   {smallProjectArrayMatchedProjectId.length > 0 &&
                     (smallProjectArrayMatchedProjectId.length === 1 &&
-                    smallProjectArrayMatchedProjectId[0].small_project_name ===
-                      "Small Project Name 1" ? (
+                    !smallProjectArrayMatchedProjectId[0].small_project_name ? (
                       <tr
                         className={classNames(
                           projectArrowJudge
