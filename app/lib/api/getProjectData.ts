@@ -11,7 +11,7 @@ export async function getProjectData(
       .eq("workspace_id", workspaceId)
       .order("created_at", { ascending: true });
 
-    if (userId) {
+    if (userId || userId === 0) {
       const { data: projectIdData, error: projectIdDataSelectError } =
         await clientSupabase
           .from("small_project_users")

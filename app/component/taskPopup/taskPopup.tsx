@@ -14,7 +14,6 @@ import { fetchAttachedFiles } from "@/app/lib/api/fetchAttachedFiles";
 import { getProjectData } from "@/app/lib/api/getProjectData";
 import { getSmallProjectData } from "@/app/lib/api/getSmallProjectData";
 import { getSmallProjectMember } from "@/app/lib/api/getSmallProjectMember";
-import { getWorkspace } from "@/app/lib/api/getWorkspace";
 
 interface TaskPopupProps {
   workspaceId: number;
@@ -156,6 +155,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
               label: selectedProject.project_name,
             });
           }
+
           setProjects(
             await getProjectData(taskData.assigned_user_id, workspaceId)
           );
@@ -174,8 +174,14 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             taskData.assigned_user_id,
             workspaceId
           );
+
+          const filteredSmallProjects = smallProjectList.filter(
+            (smallProject) =>
+              smallProject.project_id === taskData.small_projects.project_id
+          );
+
           setSmallProjects(
-            smallProjectList.map((smallProject) => ({
+            filteredSmallProjects.map((smallProject) => ({
               id: smallProject.id,
               small_project_name: smallProject.small_project_name,
               details: smallProject.details,
@@ -372,9 +378,11 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             smallProjectList
               .filter((smallProject) =>
                 selectedUser
-                  ? smallProject.small_project_users.some(
-                      (user: any) => user.user_id === selectedUser.value
-                    )
+                  ? selectedUser.value === 0
+                    ? true
+                    : smallProject.small_project_users.some(
+                        (user: any) => user.user_id === selectedUser.value
+                      )
                   : true
               )
               .map((smallProject) => ({
@@ -413,12 +421,15 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             setSelectedUser(null);
           }
 
-          setSmallProjectMember(
-            smallProjectMembersList[0].membersDataArray.map((membersData) => ({
-              id: membersData.id,
-              name: membersData.name,
-            }))
-          );
+          setSmallProjectMember([
+            { id: 0, name: "未定" },
+            ...smallProjectMembersList[0].membersDataArray.map(
+              (membersData) => ({
+                id: membersData.id,
+                name: membersData.name,
+              })
+            ),
+          ]);
 
           const { data: taskGenreData, error: selectTaskGenreError } =
             await clientSupabase
@@ -829,7 +840,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                     required
                     styles={selectBoxStyles}
                   />
-                  <p className={styles.instruction}>※Select Small Project</p>
+                  <p className={styles.instruction}>Select Small Project</p>
                 </div>
               </div>
 

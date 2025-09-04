@@ -1301,8 +1301,10 @@ const TaskList: React.FC<TaskListProps> = ({
                                                               {" days"}
                                                             </div>
                                                           </div>
-                                                          {userId ===
-                                                            assignedUserTaskResult.userId && (
+                                                          {(userId ===
+                                                            assignedUserTaskResult.userId ||
+                                                            assignedUserTaskResult.userId ===
+                                                              0) && (
                                                             <div
                                                               className={
                                                                 styles[

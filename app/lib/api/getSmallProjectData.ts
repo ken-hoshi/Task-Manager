@@ -11,15 +11,21 @@ export async function getSmallProjectData(
       .eq("id", workspaceId)
       .order("id", { ascending: true });
 
-    if (userId) {
+    if (userId || userId === 0) {
       const {
         data: smallProjectBelongsUserData,
         error: selectSmallProjectBelongsUserDataError,
-      } = await clientSupabase
-        .from("small_project_users")
-        .select("small_projects(id)")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: true });
+      } =
+        userId === 0
+          ? await clientSupabase
+              .from("small_project_users")
+              .select("small_projects(id)")
+              .order("created_at", { ascending: true })
+          : await clientSupabase
+              .from("small_project_users")
+              .select("small_projects(id)")
+              .eq("user_id", userId)
+              .order("created_at", { ascending: true });
 
       if (selectSmallProjectBelongsUserDataError) {
         throw selectSmallProjectBelongsUserDataError;

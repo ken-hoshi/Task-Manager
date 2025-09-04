@@ -17,7 +17,6 @@ export const getSmallProjectIdList = async (projectId: number) => {
       (smallProjectId) => smallProjectId.id
     );
     return smallProjectIdList;
-
   } catch (error) {
     console.error("Get Small Project ID List", error);
     return [];
