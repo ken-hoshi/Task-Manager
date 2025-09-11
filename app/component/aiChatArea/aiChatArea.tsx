@@ -5,6 +5,8 @@ import classNames from "classnames";
 import Image from "next/image";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { sendGeminiMessage } from "@/app/api/sendGeminiMessage";
+import rehypeRaw from "rehype-raw";
+import remarkGfm from "remark-gfm";
 
 interface ChatMessage {
   user: string;
@@ -69,14 +71,28 @@ const AiChatArea: React.FC<AiChatAreaProps> = ({ setIsOpen }) => {
             ))}
           </div>
         ) : (
-          <ReactMarkdown >
+          <ReactMarkdown
+            rehypePlugins={[rehypeRaw]}
+            remarkPlugins={[remarkGfm]}
+            components={{
+              table: ({ node, ...props }) => (
+                <div className={styles["table-scroll"]}>
+                  <table {...props} />
+                </div>
+              ),
+              a: ({ node, ...props }) => (
+                <a {...props} target="_blank" rel="noopener noreferrer">
+                  {props.children}
+                </a>
+              ),
+            }}
+          >
             {message.content}
           </ReactMarkdown>
         )}
       </div>
     );
   };
-
 
   return (
     <div className={styles[`chat-area`]}>

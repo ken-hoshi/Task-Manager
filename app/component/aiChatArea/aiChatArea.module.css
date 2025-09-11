@@ -118,15 +118,51 @@
 }
 
 .ai-message code {
-  display: block;
+  display: inline-block;
   max-width: 100%;
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow-wrap: break-word;
   background-color: #000000;
   color: white;
-  padding: 1vh;
-  border-radius: 0.5vh;
+  padding: 0.5vh 1vh;
+  margin: 0.5vh;
+  border-radius: 0.8vh;
+}
+
+.ai-message strong code {
+  color: rgb(219, 73, 73);
+  background-color: none;
+}
+
+.ai-message .table-scroll {
+  width: 100% !important;
+  overflow-x: auto;
+  display: block;
+}
+
+.ai-message table {
+  border-collapse: collapse;
+  width: max-content;
+}
+
+.ai-message th,
+.ai-message td {
+  border: 1px solid #000000;
+  padding: 0.5vh;
+  text-align: center;
+}
+
+.ai-message th {
+  background-color: #001eff;
+  color: white;
+}
+.ai-message tr:nth-child(even) {
+  background-color: #d3d3d3;
+}
+
+.ai-message tr:nth-child(odd) {
+  background-color: #ffffff;
 }
 
 .form-area {
