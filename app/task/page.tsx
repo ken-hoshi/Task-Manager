@@ -364,9 +364,9 @@ const Task: React.FC = () => {
               />
             </div>
           </div>
-          {/* <div className={styles[`robot-button-container`]}>
+          <div className={styles[`robot-button-container`]}>
             <RobotButton />
-          </div> */}
+          </div>
         </div>
       )}
     </>
