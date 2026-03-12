@@ -122,8 +122,8 @@ const SuspenseProject: React.FC = () => {
     userId: 0,
   });
   const [tabJudgeList, setTabJudgeList] = useState({
-    calender: true,
-    list: false,
+    list: true,
+    calender: false,
     board: false,
     wiki: false,
   });
@@ -142,7 +142,7 @@ const SuspenseProject: React.FC = () => {
   >([]);
 
   const [taskData, setTaskData] = useState<TasksDividedBySmallProjectIdProps[]>(
-    []
+    [],
   );
   const [taskGenreData, setTaskGenreData] = useState<TaskGenreProps[]>([]);
   const [smallProjectAttachedFileData, setSmallProjectAttachedFileData] =
@@ -166,10 +166,10 @@ const SuspenseProject: React.FC = () => {
   const paramsUserId = Number(searchParams.get("userId"));
 
   const getTaskGenre = async (
-    tasksDividedBySmallProjectId: TasksDividedBySmallProjectIdProps[]
+    tasksDividedBySmallProjectId: TasksDividedBySmallProjectIdProps[],
   ) => {
     const allTaskIds = tasksDividedBySmallProjectId.flatMap((taskDivided) =>
-      taskDivided.taskDataArray.map((taskData) => taskData.id)
+      taskDivided.taskDataArray.map((taskData) => taskData.id),
     );
     const allTaskGenreData = await getTaskGenreData(allTaskIds);
 
@@ -180,7 +180,7 @@ const SuspenseProject: React.FC = () => {
           taskId: allTaskGenre.taskId,
           taskGenre: allTaskGenre,
         })),
-      })
+      }),
     );
     setTaskGenreData(taskGenreDataBySmallProject);
   };
@@ -270,7 +270,7 @@ const SuspenseProject: React.FC = () => {
           const filteredTask = tasksDividedBySmallProjectId.map((taskData) => ({
             ...taskData,
             taskDataArray: taskData.taskDataArray.filter(
-              (task) => task.assigned_user_id == paramsUserId
+              (task) => task.assigned_user_id == paramsUserId,
             ),
           }));
           setTaskData(filteredTask);
@@ -390,16 +390,7 @@ const SuspenseProject: React.FC = () => {
                     <button
                       className={classNames(
                         styles[`tab-button`],
-                        tabJudgeList.calender && styles.active
-                      )}
-                      onClick={() => handleTabSwitch(Switch.calender)}
-                    >
-                      Calender
-                    </button>
-                    <button
-                      className={classNames(
-                        styles[`tab-button`],
-                        tabJudgeList.list && styles.active
+                        tabJudgeList.list && styles.active,
                       )}
                       onClick={() => handleTabSwitch(Switch.list)}
                     >
@@ -408,7 +399,16 @@ const SuspenseProject: React.FC = () => {
                     <button
                       className={classNames(
                         styles[`tab-button`],
-                        tabJudgeList.board && styles.active
+                        tabJudgeList.calender && styles.active,
+                      )}
+                      onClick={() => handleTabSwitch(Switch.calender)}
+                    >
+                      Calender
+                    </button>
+                    <button
+                      className={classNames(
+                        styles[`tab-button`],
+                        tabJudgeList.board && styles.active,
                       )}
                       onClick={() => handleTabSwitch(Switch.board)}
                     >
@@ -417,7 +417,7 @@ const SuspenseProject: React.FC = () => {
                     <button
                       className={classNames(
                         styles[`tab-button`],
-                        tabJudgeList.wiki && styles.active
+                        tabJudgeList.wiki && styles.active,
                       )}
                       onClick={() => handleTabSwitch(Switch.wiki)}
                     >
@@ -460,18 +460,6 @@ const SuspenseProject: React.FC = () => {
                       filterMyTasks={filterMyTasks}
                     />
                   )}
-                  {tabJudgeList.board && (
-                    <TaskBoard
-                      userId={params.userId}
-                      smallProjectIdList={smallProjectIds}
-                      displaySmallProjectId={displaySmallProjectId}
-                      taskData={taskData}
-                      statusData={statusData}
-                      taskAttachedFileData={taskAttachedFileData}
-                      filterMyTasks={filterMyTasks}
-                    />
-                  )}
-
                   {tabJudgeList.calender && (
                     <TaskCalender
                       userId={params.userId}
@@ -482,6 +470,17 @@ const SuspenseProject: React.FC = () => {
                       smallProjectTaskGenreData={smallProjectTaskGenreData}
                       filterMyTasks={filterMyTasks}
                       statusData={statusData}
+                    />
+                  )}
+                  {tabJudgeList.board && (
+                    <TaskBoard
+                      userId={params.userId}
+                      smallProjectIdList={smallProjectIds}
+                      displaySmallProjectId={displaySmallProjectId}
+                      taskData={taskData}
+                      statusData={statusData}
+                      taskAttachedFileData={taskAttachedFileData}
+                      filterMyTasks={filterMyTasks}
                     />
                   )}
                   {tabJudgeList.wiki && (

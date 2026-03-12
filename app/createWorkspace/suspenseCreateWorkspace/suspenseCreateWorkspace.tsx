@@ -120,7 +120,7 @@ const SuspenseCreateWorkspace: React.FC = () => {
 
       let judgeExistSpaceId = true;
       let spaceId = "";
-      while (judgeExistSpaceId) {
+      while (judgeExistSpaceId) { 
         spaceId = generateSpaceId();
 
         const { data: existSpaceId } = await clientSupabase
