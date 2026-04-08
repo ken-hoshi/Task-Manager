@@ -21,7 +21,7 @@
 
 | レイヤー | 技術 |
 |---------|------|
-| **Frontend** | Next.js 13 (App Router), React, TypeScript |
+| **Frontend** | Next.js 14 (App Router), React, TypeScript |
 | **Backend / DB** | Supabase (PostgreSQL)、リアルタイムリスナー |
 | **AI連携** | Gemini API |
 | **Deployment** | Vercel |

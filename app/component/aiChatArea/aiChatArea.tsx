@@ -4,7 +4,6 @@ import styles from "./aiChatArea.module.css";
 import classNames from "classnames";
 import Image from "next/image";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
-import { sendGeminiMessage } from "@/app/api/sendGeminiMessage";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 
@@ -26,12 +25,33 @@ const AiChatArea: React.FC<AiChatAreaProps> = ({ setIsOpen }) => {
 
   const userMessageRef = useRef<HTMLDivElement | null>(null);
 
+  const sendMessage = async (message: string) => {
+  try {
+    const response = await fetch('/api/sendGeminiMessage', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message }),
+    });
+
+    if (!response.ok) {
+      throw new Error('APIエラー');
+    }
+
+    const data = await response.json();
+    return data.content;
+  } catch (error) {
+    console.error('エラー:', error);
+  }
+};
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const response = await sendGeminiMessage(inputMessage);
+      const response = await sendMessage(inputMessage);
 
       setDisplayMessages([
         ...displayMessages,
