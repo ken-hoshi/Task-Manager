@@ -41,7 +41,7 @@ describe("Form コンポーネント", () => {
     // サイトの説明文が表示されることを確認
     expect(
       screen.getByText(
-        "This site is only permitted for use by Lincraft employees."
+        "This site may only be used by employees of the designated company."
       )
     ).toBeInTheDocument();
 

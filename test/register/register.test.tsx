@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { use } from "react";
 import { act } from "react-dom/test-utils";
 
+process.env.NEXT_PUBLIC_ALLOWED_EMAIL_DOMAIN = "example.com";
+
 let signUpSuccessFlag: boolean = false;
 
 jest.mock("../../app/hooks/signUp", () => ({
@@ -93,7 +95,7 @@ describe("Register コンポーネント", () => {
   it("④ 不正なメールアドレスを入力場合、サインアップ処理が失敗する", async () => {
     render(<Register />);
 
-    fillForm("test", "invalid@example.com", "abcd1234");
+    fillForm("test", "invalid@example.org", "abcd1234");
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Sign Up" }));
     });
@@ -109,7 +111,7 @@ describe("Register コンポーネント", () => {
   it("⑤ 不正なパスワードを入力場合、サインアップ処理が失敗する", async () => {
     render(<Register />);
 
-    fillForm("test", "email@elincraft.com", "abcd");
+    fillForm("test", "email@example.com", "abcd");
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Sign Up" }));
     });
@@ -133,7 +135,7 @@ describe("Register コンポーネント", () => {
 
     render(<Register />);
 
-    fillForm("test", "email@elincraft.com", "abcd1234");
+    fillForm("test", "email@example.com", "abcd1234");
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Sign Up" }));
     });
@@ -151,7 +153,7 @@ describe("Register コンポーネント", () => {
 
     expect(useSignUp).toHaveBeenCalledWith(
       "test",
-      "email@elincraft.com",
+      "email@example.com",
       "abcd1234"
     );
     expect(signUpSuccessFlag).toBe(true);
