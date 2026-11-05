@@ -3,8 +3,7 @@ import styles from "./userDataEditForm.module.css";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
-
-const WORD_LINCRAFT = "lincraft";
+import { isAllowedEmail } from "@/app/lib/isAllowedEmail";
 
 type formData = {
   name: string;
@@ -51,7 +50,7 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
     let judge = false;
     const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
-    if (!email.includes(WORD_LINCRAFT)) {
+    if (!isAllowedEmail(email)) {
       setEmailError("このメールアドレスは使用できません。");
       judge = true;
     }

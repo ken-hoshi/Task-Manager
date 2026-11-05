@@ -9,8 +9,7 @@ import { signUp } from "../hooks/signUp";
 import BackgroundImage2 from "../component/backgroundImage2/backgroundImage2";
 import { useNotificationContext } from "../provider/notificationProvider";
 import NotificationBanner from "../component/notificationBanner/notificationBanner";
-
-const WORD_LINCRAFT = "lincraft";
+import { isAllowedEmail } from "../lib/isAllowedEmail";
 
 const Register: React.FC = () => {
   const { setBackForm } = useFormContext();
@@ -32,7 +31,7 @@ const Register: React.FC = () => {
     let judge = false;
     const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
-    if (!email.includes(WORD_LINCRAFT)) {
+    if (!isAllowedEmail(email)) {
       setEmailError("このメールアドレスは使用できません。");
       judge = true;
     }
