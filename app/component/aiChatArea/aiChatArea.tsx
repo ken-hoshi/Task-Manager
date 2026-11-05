@@ -4,7 +4,7 @@ import styles from "./aiChatArea.module.css";
 import classNames from "classnames";
 import Image from "next/image";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
-import rehypeRaw from "rehype-raw";
+import { clientSupabase } from "@/app/lib/supabase/client";
 import remarkGfm from "remark-gfm";
 
 interface ChatMessage {
@@ -27,10 +27,12 @@ const AiChatArea: React.FC<AiChatAreaProps> = ({ setIsOpen }) => {
 
   const sendMessage = async (message: string) => {
   try {
+    const { data: sessionData } = await clientSupabase.auth.getSession();
     const response = await fetch('/api/sendGeminiMessage', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionData.session?.access_token ?? ""}`,
       },
       body: JSON.stringify({ message }),
     });
@@ -92,7 +94,6 @@ const AiChatArea: React.FC<AiChatAreaProps> = ({ setIsOpen }) => {
           </div>
         ) : (
           <ReactMarkdown
-            rehypePlugins={[rehypeRaw]}
             remarkPlugins={[remarkGfm]}
             components={{
               table: ({ node, ...props }) => (

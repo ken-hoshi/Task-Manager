@@ -1,5 +1,6 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
+import { clientSupabase } from "@/app/lib/supabase/client";
 
 const apiKey = process.env.GEMINI_API_KEY;
 
@@ -8,6 +9,15 @@ interface Part {
 }
 
 export async function POST(request: NextRequest) {
+  // ログインしている人だけに Gemini を使わせる
+  const token = request.headers.get("authorization")?.replace(/^Bearer /, "");
+  const { data } = token
+    ? await clientSupabase.auth.getUser(token)
+    : { data: { user: null } };
+  if (!data.user) {
+    return NextResponse.json({ error: "ログインが必要です。" }, { status: 401 });
+  }
+
   try {
     const { message } = await request.json();
 
@@ -16,13 +26,14 @@ export async function POST(request: NextRequest) {
     }
 
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
       {
         contents: [{ parts: [{ text: message }] }],
       },
       {
         headers: {
           "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
         },
       }
     );
@@ -44,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ content: messageContent });
   } catch (error) {
-    console.error("Gemini APIエラー:", error);
+    console.error("Gemini APIエラー:", error instanceof Error ? error.message : error);
     return NextResponse.json({ error: "API呼び出しに失敗しました。" }, { status: 500 });
   }
 }

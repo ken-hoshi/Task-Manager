@@ -3,6 +3,7 @@ import styles from "./wiki.module.css";
 import React, { useEffect, useState } from "react";
 import classNames from "classnames";
 import rehypeRaw from "rehype-raw";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import Image from "next/image";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
@@ -11,6 +12,15 @@ import { useNotificationContext } from "@/app/provider/notificationProvider";
 import DeleteConfirmModal from "@/app/component/deleteConfirmModal/deleteConfirmModal";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
 import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
+
+// 書いた HTML のうち、スクリプトが動くもの（<script>・onerror など）だけを取り除く。説明にある style 属性は残す
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    "*": [...(defaultSchema.attributes?.["*"] ?? []), "style"],
+  },
+};
 
 interface WikiDataProps {
   id: number;
@@ -602,7 +612,7 @@ const Wiki: React.FC<WikiProps> = ({
                       <div className={styles[`markdown-container`]}>
                         {" "}
                         <ReactMarkdown
-                          rehypePlugins={[rehypeRaw]}
+                          rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
                           remarkPlugins={[remarkGfm]}
                           components={{
                             a: ({ node, ...props }) => (
