@@ -7,7 +7,7 @@ import { clientSupabase } from "@/app/lib/supabase/client";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import classNames from "classnames";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import DeleteAccountConfirmModal from "../deleteAccountConfirmModal/deleteAccountConfirmModal";
 import PasswordEditForm from "../passwordEditForm/passwordEditForm";
@@ -17,11 +17,10 @@ import styles from "./suspenseAccount.module.css";
 import { useSessionTimeout } from "@/app/hooks/sessionTimeout";
 import { getSession } from "@/app/hooks/getSession";
 import { useFormContext } from "@/app/provider/formProvider";
+import { getUserId } from "@/app/lib/api/getUserId";
 
 const SuspenseAccount: React.FC = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const paramsUserId = Number(searchParams.get("userId"));
   const { notificationValue, setNotificationValue } = useNotificationContext();
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { setBackForm } = useFormContext();
@@ -46,11 +45,11 @@ const SuspenseAccount: React.FC = () => {
   });
 
   useEffect(() => {
-    setUserId(paramsUserId);
-
     (async () => {
       const session = await getSession();
-      if (!session?.user.id) {
+      // URL ではなくログイン中の人から決める（他人の id を渡されても読まない）
+      const sessionUserId = session ? await getUserId(session.user.id) : null;
+      if (!sessionUserId) {
         console.error("Fetch Data: User ID couldn't get.");
         setBackForm(true);
         alert("データの取得に失敗しました。");
@@ -58,12 +57,14 @@ const SuspenseAccount: React.FC = () => {
         return;
       }
 
+      setUserId(sessionUserId);
+
       try {
         const { data: userData, error: userDataSelectError } =
           await clientSupabase
             .from("users")
             .select("*")
-            .eq("id", paramsUserId)
+            .eq("id", sessionUserId)
             .single();
 
         if (userDataSelectError) {

@@ -22,6 +22,7 @@ import { getTaskGenreData } from "@/app/lib/api/getTaskGenreData";
 import Wiki from "../wiki/wiki";
 import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 import { getSession } from "@/app/hooks/getSession";
+import { getUserId } from "@/app/lib/api/getUserId";
 import { useFormContext } from "@/app/provider/formProvider";
 import { getDataUpdate } from "@/app/hooks/getDataUpdate";
 
@@ -34,7 +35,6 @@ interface Params {
   workspaceId: number;
   projectId: number;
   smallProjectId?: number;
-  userId: number;
 }
 
 interface SmallProjectMembersProps {
@@ -119,8 +119,8 @@ const SuspenseProject: React.FC = () => {
     workspaceId: 0,
     projectId: 0,
     smallProjectId: undefined,
-    userId: 0,
   });
+  const [userId, setUserId] = useState(0);
   const [tabJudgeList, setTabJudgeList] = useState({
     list: true,
     calender: false,
@@ -163,7 +163,6 @@ const SuspenseProject: React.FC = () => {
   const paramsWorkspaceId = Number(searchParams.get("workspaceId"));
   const paramsProjectId = Number(searchParams.get("projectId"));
   const paramsSmallProjectId = Number(searchParams.get("smallProjectId"));
-  const paramsUserId = Number(searchParams.get("userId"));
 
   const getTaskGenre = async (
     tasksDividedBySmallProjectId: TasksDividedBySmallProjectIdProps[],
@@ -193,7 +192,6 @@ const SuspenseProject: React.FC = () => {
         workspaceId: paramsWorkspaceId,
         projectId: paramsProjectId,
         smallProjectId: paramsSmallProjectId,
-        userId: paramsUserId,
       });
     }
   }, []);
@@ -201,25 +199,27 @@ const SuspenseProject: React.FC = () => {
   useEffect(() => {
     const workspaceId = paramsWorkspaceId;
     const projectId = paramsProjectId;
-    const userId = paramsUserId;
     if (!paramsSmallProjectId) {
       setParams({
         workspaceId: workspaceId,
         projectId: projectId,
         smallProjectId: undefined,
-        userId: userId,
       });
     }
 
     (async () => {
       const session = await getSession();
-      if (!session?.user.id) {
+      // URL ではなくログイン中の人から決める
+      const sessionUserId = session ? await getUserId(session.user.id) : null;
+      if (!sessionUserId) {
         console.error("Fetch Data: User ID couldn't get.");
         setBackForm(true);
         alert("データの取得に失敗しました。");
         router.push("/");
         return;
       }
+
+      setUserId(sessionUserId);
 
       try {
         const {
@@ -270,7 +270,7 @@ const SuspenseProject: React.FC = () => {
           const filteredTask = tasksDividedBySmallProjectId.map((taskData) => ({
             ...taskData,
             taskDataArray: taskData.taskDataArray.filter(
-              (task) => task.assigned_user_id == paramsUserId,
+              (task) => task.assigned_user_id == sessionUserId,
             ),
           }));
           setTaskData(filteredTask);
@@ -369,11 +369,11 @@ const SuspenseProject: React.FC = () => {
               workspaceDataArray={null}
               projectId={projectData.id}
               projectName={projectData.project_name}
-              userId={params.userId}
+              userId={userId}
             />
             <div className={styles[`project-container`]}>
               <ProjectDetails
-                userId={params.userId}
+                userId={userId}
                 smallProjectData={smallProjectData}
                 smallProjectStatusData={smallProjectStatusData}
                 smallProjectMemberData={smallProjectMemberData}
@@ -448,7 +448,7 @@ const SuspenseProject: React.FC = () => {
                 <div className={classNames(styles[`tab-content`])}>
                   {tabJudgeList.list && (
                     <TaskList
-                      userId={params.userId}
+                      userId={userId}
                       projectId={params.projectId}
                       smallProjectIdList={smallProjectIds}
                       displaySmallProjectId={displaySmallProjectId}
@@ -462,7 +462,7 @@ const SuspenseProject: React.FC = () => {
                   )}
                   {tabJudgeList.calender && (
                     <TaskCalender
-                      userId={params.userId}
+                      userId={userId}
                       projectId={params.projectId}
                       smallProjectIdList={smallProjectIds}
                       displaySmallProjectId={displaySmallProjectId}
@@ -474,7 +474,7 @@ const SuspenseProject: React.FC = () => {
                   )}
                   {tabJudgeList.board && (
                     <TaskBoard
-                      userId={params.userId}
+                      userId={userId}
                       smallProjectIdList={smallProjectIds}
                       displaySmallProjectId={displaySmallProjectId}
                       taskData={taskData}
@@ -485,7 +485,7 @@ const SuspenseProject: React.FC = () => {
                   )}
                   {tabJudgeList.wiki && (
                     <Wiki
-                      userId={params.userId}
+                      userId={userId}
                       smallProjectIdList={smallProjectIds}
                       displaySmallProjectId={displaySmallProjectId}
                       wikiDataList={wikiData}

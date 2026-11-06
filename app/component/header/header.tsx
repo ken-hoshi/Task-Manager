@@ -189,7 +189,7 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   const handleTransitionAccount = () => {
-    router.push(`/account?userId=${userId}`);
+    router.push("/account");
   };
 
   return (
@@ -273,7 +273,7 @@ const Header: React.FC<HeaderProps> = ({
               className={classNames("material-symbols-outlined", styles.edit)}
               onClick={() =>
                 router.push(
-                  `/editWorkspace?workspaceId=${displayWorkspaceId}&userId=${userId}`
+                  `/editWorkspace?workspaceId=${displayWorkspaceId}`
                 )
               }
             >

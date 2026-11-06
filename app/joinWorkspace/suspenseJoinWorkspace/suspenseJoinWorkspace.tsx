@@ -114,7 +114,7 @@ const SuspenseJoinWorkspace: React.FC = () => {
   const handlePageBack = async () => {
     if (paramsWorkspaceId) {
       router.push(
-        `/editWorkspace?workspaceId=${paramsWorkspaceId}&userId=${userId}`
+        `/editWorkspace?workspaceId=${paramsWorkspaceId}`
       );
     } else {
       await useLogout();

@@ -31,7 +31,6 @@ const SuspenseCreateWorkspace: React.FC = () => {
   const [buttonLoading, setButtonLoading] = useState(false);
   const [workspaceName, setWorkspaceName] = useState("");
   const [workspaceNameError, setWorkspaceNameError] = useState("");
-  const [userId, setUserId] = useState(0);
 
   useEffect(() => {
     setAtSignUp(paramsAtSignUp);
@@ -50,7 +49,6 @@ const SuspenseCreateWorkspace: React.FC = () => {
           if (!userId) {
             throw new Error("User Id couldn't get.");
           }
-          setUserId(userId);
         } catch (error) {
           console.error("Error Display Page", error);
           setNotificationValue({
@@ -160,7 +158,7 @@ const SuspenseCreateWorkspace: React.FC = () => {
   const handlePageBack = async () => {
     if (paramsWorkspaceId) {
       router.push(
-        `/editWorkspace?workspaceId=${paramsWorkspaceId}&userId=${userId}`
+        `/editWorkspace?workspaceId=${paramsWorkspaceId}`
       );
     } else {
       await useLogout();

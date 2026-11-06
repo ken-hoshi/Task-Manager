@@ -2,48 +2,33 @@ import { clientSupabase } from "../supabase/client";
 
 export async function getSmallProjectTaskGenre(smallProjectIdList: number[]) {
   try {
-    const [
-      { data: taskGenreData, error: selectTaskGenreDataError },
-      { data: taskDataList, error: selectTaskGenreIdListError },
-    ] = await Promise.all([
-      clientSupabase
+    const { data: taskGenreData, error: selectTaskGenreDataError } =
+      await clientSupabase
         .from("task_genre")
-        .select("*")
-        .order("start_date", { ascending: true }),
-      clientSupabase.from("tasks").select("assigned_user_id,task_genre_id"),
-    ]);
+        .select("*, tasks(assigned_user_id)")
+        .in("small_project_id", smallProjectIdList)
+        .order("start_date", { ascending: true });
 
     if (selectTaskGenreDataError) {
       throw selectTaskGenreDataError;
     }
 
-    if (!taskGenreData || taskGenreData.length === 0) {
-      return [];
-    }
-
-    if (selectTaskGenreIdListError) {
-      throw selectTaskGenreIdListError;
-    }
-
+    // ジャンルが無い小プロジェクトも、空の配列を持つ要素として返す（呼び出し側は要素がある前提）
     const taskGenreArrayBySmallProjects = smallProjectIdList.map(
       (smallProjectId) => ({
         smallProjectId: smallProjectId,
-        taskGenreDataArray: taskGenreData
+        taskGenreDataArray: (taskGenreData ?? [])
           .filter((taskGenre) => taskGenre.small_project_id === smallProjectId)
           .map((taskGenre) => {
             return {
               taskGenreId: taskGenre.id,
               taskGenreName: taskGenre.task_genre_name,
-              numberOfPersons:
-                taskDataList && taskDataList.length > 0
-                  ? new Set(
-                      taskDataList
-                        .filter(
-                          (taskData) => taskData.task_genre_id === taskGenre.id
-                        )
-                        .map((item) => JSON.stringify(item))
-                    ).size
-                  : 0,
+              numberOfPersons: new Set(
+                (taskGenre.tasks ?? []).map(
+                  (task: { assigned_user_id: number | null }) =>
+                    task.assigned_user_id
+                )
+              ).size,
               startDate: taskGenre.start_date,
               deadlineDate: taskGenre.deadline_date,
               numberOfDays: Math.ceil(

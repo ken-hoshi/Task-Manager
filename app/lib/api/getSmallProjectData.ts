@@ -12,37 +12,6 @@ export async function getSmallProjectData(
       .order("id", { ascending: true });
 
     if (userId || userId === 0) {
-      const {
-        data: smallProjectBelongsUserData,
-        error: selectSmallProjectBelongsUserDataError,
-      } =
-        userId === 0
-          ? await clientSupabase
-              .from("small_project_users")
-              .select("small_projects(id)")
-              .order("created_at", { ascending: true })
-          : await clientSupabase
-              .from("small_project_users")
-              .select("small_projects(id)")
-              .eq("user_id", userId)
-              .order("created_at", { ascending: true });
-
-      if (selectSmallProjectBelongsUserDataError) {
-        throw selectSmallProjectBelongsUserDataError;
-      }
-      if (
-        !smallProjectBelongsUserData ||
-        smallProjectBelongsUserData.length === 0
-      ) {
-        return [];
-      }
-
-      const smallProjectBelongsUserIdList: number[] = (
-        smallProjectBelongsUserData as any[]
-      ).flatMap(
-        (smallProjectBelongsUser) => smallProjectBelongsUser.small_projects.id
-      );
-
       const { data: projectDataArray, error: selectProjectDataArrayError } =
         await query;
 
@@ -50,15 +19,41 @@ export async function getSmallProjectData(
         throw selectProjectDataArrayError;
       }
 
-      const filteredSmallProjects = projectDataArray.flatMap((projectData) =>
-        projectData.projects.flatMap((project) =>
-          project.small_projects.filter((smallProject) =>
-            smallProjectBelongsUserIdList.includes(smallProject.id)
-          )
-        )
+      const workspaceSmallProjects = projectDataArray.flatMap((projectData) =>
+        projectData.projects.flatMap((project) => project.small_projects)
       );
+      if (workspaceSmallProjects.length === 0) {
+        return [];
+      }
 
-      return filteredSmallProjects;
+      // メンバーの行は、このワークスペースの小プロジェクトの分だけ読む（userId が 0 なら全員分）
+      let smallProjectUsersQuery = clientSupabase
+        .from("small_project_users")
+        .select("small_project_id")
+        .in(
+          "small_project_id",
+          workspaceSmallProjects.map((smallProject) => smallProject.id)
+        );
+      if (userId !== 0) {
+        smallProjectUsersQuery = smallProjectUsersQuery.eq("user_id", userId);
+      }
+
+      const {
+        data: smallProjectBelongsUserData,
+        error: selectSmallProjectBelongsUserDataError,
+      } = await smallProjectUsersQuery;
+
+      if (selectSmallProjectBelongsUserDataError) {
+        throw selectSmallProjectBelongsUserDataError;
+      }
+
+      const smallProjectBelongsUserIdList = (
+        smallProjectBelongsUserData ?? []
+      ).map((smallProjectUser) => smallProjectUser.small_project_id);
+
+      return workspaceSmallProjects.filter((smallProject) =>
+        smallProjectBelongsUserIdList.includes(smallProject.id)
+      );
     }
 
     const { data: projectDataArray, error: selectProjectDataArrayError } =
