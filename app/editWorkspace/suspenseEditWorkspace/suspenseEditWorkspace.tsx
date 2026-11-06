@@ -27,6 +27,7 @@ import { getSession } from "@/app/hooks/getSession";
 import { useFormContext } from "@/app/provider/formProvider";
 import { Logout } from "@/app/hooks/logout";
 import { useSessionTimeout } from "@/app/hooks/sessionTimeout";
+import { getUserId } from "@/app/lib/api/getUserId";
 
 interface WorkspaceProps {
   id: number;
@@ -63,7 +64,6 @@ const SuspenseEditWorkspace: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paramsWorkspaceId = Number(searchParams.get("workspaceId"));
-  const paramsUserId = Number(searchParams.get("userId"));
   const sensors = useSensors(useSensor(PointerSensor));
 
   const [loading, setLoading] = useState(true);
@@ -106,7 +106,9 @@ const SuspenseEditWorkspace: React.FC = () => {
   useEffect(() => {
     (async () => {
       const session = await getSession();
-      if (!paramsWorkspaceId || !paramsUserId || !session?.user.id) {
+      // URL ではなくログイン中の人から決める（他人の id を渡されても使わない）
+      const sessionUserId = session ? await getUserId(session.user.id) : null;
+      if (!paramsWorkspaceId || !sessionUserId) {
         console.error("Fetch Data: User ID couldn't get.");
         setBackForm(true);
         alert("データの取得に失敗しました。");
@@ -114,7 +116,7 @@ const SuspenseEditWorkspace: React.FC = () => {
         return;
       }
       setDisplayWorkspaceId(paramsWorkspaceId);
-      setUserId(paramsUserId);
+      setUserId(sessionUserId);
 
       try {
         const { data: workspaceData, error: selectWorkspaceDataError } =

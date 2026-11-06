@@ -302,16 +302,15 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
 
   const handleTransitionProjectDetails = (
     projectId: number,
-    smallProjectId: number | null,
-    userId: number
+    smallProjectId: number | null
   ) => {
     if (smallProjectId) {
       router.push(
-        `/project?workspaceId=${displayWorkspaceId}&projectId=${projectId}&smallProjectId=${smallProjectId}&userId=${userId}`
+        `/project?workspaceId=${displayWorkspaceId}&projectId=${projectId}&smallProjectId=${smallProjectId}`
       );
     } else {
       router.push(
-        `/project?workspaceId=${displayWorkspaceId}&projectId=${projectId}&userId=${userId}`
+        `/project?workspaceId=${displayWorkspaceId}&projectId=${projectId}`
       );
     }
   };
@@ -445,11 +444,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                         <p
                           className={styles[`project-name`]}
                           onClick={() =>
-                            handleTransitionProjectDetails(
-                              project.id,
-                              null,
-                              userId
-                            )
+                            handleTransitionProjectDetails(project.id, null)
                           }
                         >
                           {project.project_name}
@@ -459,7 +454,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                     <td
                       className={styles[`col-status-situation`]}
                       onClick={() =>
-                        handleTransitionProjectDetails(project.id, null, userId)
+                        handleTransitionProjectDetails(project.id, null)
                       }
                     >
                       <div className={styles[`status-situation-part`]}>
@@ -775,8 +770,7 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                                     onClick={() =>
                                       handleTransitionProjectDetails(
                                         project.id,
-                                        smallProject.id,
-                                        userId
+                                        smallProject.id
                                       )
                                     }
                                   >
