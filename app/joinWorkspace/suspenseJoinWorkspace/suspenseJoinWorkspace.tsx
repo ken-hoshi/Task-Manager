@@ -16,6 +16,7 @@ import { Logout } from "@/app/hooks/logout";
 interface WorkspaceProps {
   id: number;
   name: string;
+  spaceId: string;
 }
 
 const SuspenseJoinWorkspace: React.FC = () => {
@@ -72,12 +73,11 @@ const SuspenseJoinWorkspace: React.FC = () => {
     const storedSpaceId = sessionStorage.getItem("spaceId");
     if (storedSpaceId) {
       (async () => {
+        // まだメンバーでないワークスペースは表から読めないので、合言葉で引く関数を使う
         const { data: workspaceData, error: selectWorkspaceDataError } =
           await clientSupabase
-            .from("workspace")
-            .select("id, workspace_name")
-            .eq("space_id", storedSpaceId)
-            .single();
+            .rpc("find_workspace_by_space_id", { p_space_id: storedSpaceId })
+            .single<{ id: number; workspace_name: string }>();
 
         if (!workspaceData || selectWorkspaceDataError) {
           console.error(
@@ -97,7 +97,11 @@ const SuspenseJoinWorkspace: React.FC = () => {
           )
         ) {
           setSelectedWorkspaceList([
-            { id: workspaceData.id, name: workspaceData.workspace_name },
+            {
+              id: workspaceData.id,
+              name: workspaceData.workspace_name,
+              spaceId: storedSpaceId,
+            },
           ]);
         }
       })();
@@ -128,10 +132,8 @@ const SuspenseJoinWorkspace: React.FC = () => {
 
     const { data: workspaceData, error: selectWorkspaceDataError } =
       await clientSupabase
-        .from("workspace")
-        .select("id, workspace_name")
-        .eq("space_id", spaceId)
-        .single();
+        .rpc("find_workspace_by_space_id", { p_space_id: spaceId })
+        .single<{ id: number; workspace_name: string }>();
 
     const { data: workspaceUsersData } = await clientSupabase
       .from("workspace_users")
@@ -166,7 +168,7 @@ const SuspenseJoinWorkspace: React.FC = () => {
 
     setSelectedWorkspaceList((prevSelectedWorkspaceList) => [
       ...prevSelectedWorkspaceList,
-      { id: workspaceData.id, name: workspaceData.workspace_name },
+      { id: workspaceData.id, name: workspaceData.workspace_name, spaceId },
     ]);
     setSpaceId("");
     setSearchLoading(false);
@@ -186,14 +188,12 @@ const SuspenseJoinWorkspace: React.FC = () => {
     if (buttonLoading || selectedWorkspaceList.length === 0) return;
     setButtonLoading(true);
 
-    const workspaceUsers = selectedWorkspaceList.map((workspace) => ({
-      workspace_id: workspace.id,
-      user_id: userId,
-    }));
     try {
-      const { error: insertWorkspaceNameError } = await clientSupabase
-        .from("workspace_users")
-        .insert(workspaceUsers);
+      // 合言葉を確かめて参加させるのは DB の関数（1つでも合わなければ、どれにも参加しない）
+      const { error: insertWorkspaceNameError } = await clientSupabase.rpc(
+        "join_workspaces",
+        { p_space_ids: selectedWorkspaceList.map((workspace) => workspace.spaceId) }
+      );
 
       if (insertWorkspaceNameError) {
         throw insertWorkspaceNameError;

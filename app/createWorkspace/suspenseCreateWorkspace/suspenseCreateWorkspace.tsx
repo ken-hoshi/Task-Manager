@@ -90,53 +90,20 @@ const SuspenseCreateWorkspace: React.FC = () => {
     setButtonLoading(true);
     setWorkspaceNameError("");
 
-    function generateSpaceId(length = 8): string {
-      const chars =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-      return Array.from(
-        { length },
-        () => chars[Math.floor(Math.random() * chars.length)]
-      ).join("");
-    }
-
     try {
-      const { data: workspaceId, error: selectWorkspaceIdError } =
-        await clientSupabase
-          .from("workspace")
-          .select("id")
-          .eq("workspace_name", workspaceName);
+      // 同じ名前の確認と合言葉（space_id）の発行は DB の関数が行う（supabase/schema.sql）
+      const { data: spaceId, error: createWorkspaceError } =
+        await clientSupabase.rpc("create_workspace", {
+          p_workspace_name: workspaceName,
+        });
 
-      if (selectWorkspaceIdError) {
-        throw selectWorkspaceIdError;
-      }
-
-      if (workspaceId.length > 0) {
+      if (createWorkspaceError?.code === "23505") {
         setWorkspaceNameError("既に同名のワークスペースがあります。");
         setButtonLoading(false);
         return;
       }
-
-      let judgeExistSpaceId = true;
-      let spaceId = "";
-      while (judgeExistSpaceId) { 
-        spaceId = generateSpaceId();
-
-        const { data: existSpaceId } = await clientSupabase
-          .from("workspace")
-          .select("space_id")
-          .eq("space_id", spaceId)
-          .single();
-
-        if (!existSpaceId) {
-          const { error: insertWorkspaceNameError } = await clientSupabase
-            .from("workspace")
-            .insert({ workspace_name: workspaceName, space_id: spaceId });
-
-          if (insertWorkspaceNameError) {
-            throw insertWorkspaceNameError;
-          }
-          judgeExistSpaceId = false;
-        }
+      if (createWorkspaceError) {
+        throw createWorkspaceError;
       }
 
       setNotificationValue({

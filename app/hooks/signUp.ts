@@ -19,20 +19,11 @@ export const signUp = () => {
         throw error;
       }
 
-      const userId = data.user?.id;
-      if (userId) {
-        const { error: insertError } = await clientSupabase
-          .from("users")
-          .insert({ email: email, name: name, auth_user_id: userId });
-
-        if (insertError) {
-          throw insertError;
-        } else {
-          router.push("/authentication");
-        }
-      } else {
+      // users の行は、DB のトリガーが登録と同時に作る（supabase/schema.sql）
+      if (!data.user?.id) {
         throw new Error("User Id couldn't get.");
       }
+      router.push("/authentication");
     } catch (error) {
       return error;
     }
