@@ -23,6 +23,10 @@ export const signUp = () => {
       if (!data.user?.id) {
         throw new Error("User Id couldn't get.");
       }
+      // 登録済みのメールでは、Supabase は identities が空の仮の user を返す
+      if (data.user.identities?.length === 0) {
+        throw new Error("This email is already registered.");
+      }
       router.push("/authentication");
     } catch (error) {
       return error;

@@ -195,6 +195,11 @@ const SuspenseJoinWorkspace: React.FC = () => {
         { p_space_ids: selectedWorkspaceList.map((workspace) => workspace.spaceId) }
       );
 
+      if (insertWorkspaceNameError?.code === "P0002") {
+        setErrorMessage("ワークスペースが見つかりません。再度検索してください。");
+        setButtonLoading(false);
+        return;
+      }
       if (insertWorkspaceNameError) {
         throw insertWorkspaceNameError;
       }

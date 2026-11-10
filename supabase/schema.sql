@@ -202,15 +202,43 @@ as $$
   )
 $$;
 
-create function private.shares_workspace(p_user_id integer)
+create function private.is_member(p_user_id integer, p_workspace_id integer)
 returns boolean
 language sql stable security definer set search_path = ''
 as $$
   select exists (
     select 1 from public.workspace_users
-    where user_id = p_user_id
-      and workspace_id in (select private.my_workspace_ids())
+    where user_id = p_user_id and workspace_id = p_workspace_id
   )
+$$;
+
+-- 名前を読めるのは、自分・同じワークスペースの人・自分のワークスペースのタスクやコメントや小プロジェクトに出てくる人
+-- （メンバーから外れた人も、担当のタスクや書いたコメントに名前が出せるようにする）
+create function private.is_visible_user(p_user_id integer)
+returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select p_user_id = (select private.current_user_id())
+    or exists (
+      select 1 from public.workspace_users wu
+      where wu.user_id = p_user_id and wu.workspace_id in (select private.my_workspace_ids())
+    )
+    or exists (
+      select 1 from public.tasks t
+      where t.assigned_user_id = p_user_id
+        and private.workspace_of_small_project(t.small_project_id) in (select private.my_workspace_ids())
+    )
+    or exists (
+      select 1 from public.comments c
+      join public.tasks t on t.id = c.task_id
+      where c.user_id = p_user_id
+        and private.workspace_of_small_project(t.small_project_id) in (select private.my_workspace_ids())
+    )
+    or exists (
+      select 1 from public.small_project_users spu
+      where spu.user_id = p_user_id
+        and private.workspace_of_small_project(spu.small_project_id) in (select private.my_workspace_ids())
+    )
 $$;
 
 revoke all on all functions in schema private from public;
@@ -240,10 +268,10 @@ alter table public.mail_notifications enable row level security;
 create policy "signed in reads statuses" on public.task_status
   for select to authenticated using (true);
 
--- users の行は登録時のトリガーが作る。読めるのは自分と、同じワークスペースの人
-create policy "read self and workspace mates" on public.users
+-- users の行は登録時のトリガーが作る。読める範囲は is_visible_user
+create policy "read visible users" on public.users
   for select to authenticated
-  using (id = (select private.current_user_id()) or private.shares_workspace(id));
+  using (private.is_visible_user(id));
 create policy "update self" on public.users
   for update to authenticated
   using (auth_user_id = (select auth.uid()))
@@ -282,7 +310,7 @@ create policy "members only" on public.small_project_users
   using (private.workspace_of_small_project(small_project_id) in (select private.my_workspace_ids()))
   with check (
     private.workspace_of_small_project(small_project_id) in (select private.my_workspace_ids())
-    and (user_id = (select private.current_user_id()) or private.shares_workspace(user_id))
+    and private.is_member(user_id, private.workspace_of_small_project(small_project_id))
   );
 
 create policy "members only" on public.task_genre
@@ -301,6 +329,8 @@ create policy "members only" on public.small_project_attachments
   with check (private.workspace_of_small_project(small_project_id) in (select private.my_workspace_ids()));
 
 -- 小プロジェクトに属さないタスクだけ、担当者本人の扱い。属するタスクはメンバーだけ
+-- 担当者がそのワークスペースのメンバーかは、下のトリガーが担当者を変えたときだけ確かめる
+-- （外れたメンバーが担当のタスクも、状態の変更などはできるようにする）
 create policy "members or own loose task" on public.tasks
   for all to authenticated
   using (
@@ -308,12 +338,31 @@ create policy "members or own loose task" on public.tasks
     or (small_project_id is null and assigned_user_id = (select private.current_user_id()))
   )
   with check (
-    (small_project_id is null and assigned_user_id = (select private.current_user_id()))
-    or (
-      private.workspace_of_small_project(small_project_id) in (select private.my_workspace_ids())
-      and (assigned_user_id = (select private.current_user_id()) or private.shares_workspace(assigned_user_id))
-    )
+    private.workspace_of_small_project(small_project_id) in (select private.my_workspace_ids())
+    or (small_project_id is null and assigned_user_id = (select private.current_user_id()))
   );
+
+create function private.check_task_assignee()
+returns trigger
+language plpgsql security definer set search_path = ''
+as $$
+begin
+  if tg_op = 'UPDATE'
+     and new.assigned_user_id is not distinct from old.assigned_user_id
+     and new.small_project_id is not distinct from old.small_project_id then
+    return new;
+  end if;
+  if new.small_project_id is not null
+     and not private.is_member(new.assigned_user_id, private.workspace_of_small_project(new.small_project_id)) then
+    raise exception 'assignee is not a member of the workspace' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger check_task_assignee
+  before insert or update on public.tasks
+  for each row execute function private.check_task_assignee();
 
 create policy "task members only" on public.task_attachments
   for all to authenticated
@@ -344,7 +393,7 @@ create policy "send to workspace mates" on public.mail_notifications
   for insert to authenticated
   with check (
     workspace_id in (select private.my_workspace_ids())
-    and (user_id = (select private.current_user_id()) or private.shares_workspace(user_id))
+    and private.is_member(user_id, workspace_id)
   );
 
 -- ---------------------------------------------------------------
@@ -374,7 +423,7 @@ create trigger on_auth_user_created
 -- ワークスペースの作成と参加（RPC）
 -- ---------------------------------------------------------------
 
--- 同じ名前があれば 23505 を返す。作ったワークスペースの参加用の合言葉（space_id）を返す
+-- 同じ名前があれば 23505 を返す。作った人をメンバーに入れ、参加用の合言葉（space_id）を返す
 create function public.create_workspace(p_workspace_name text)
 returns text
 language plpgsql security definer set search_path = ''
@@ -383,6 +432,7 @@ declare
   chars constant text := 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   random_bytes bytea;
   new_space_id text;
+  new_workspace_id integer;
 begin
   if (select private.current_user_id()) is null then
     raise exception 'not signed in' using errcode = '42501';
@@ -398,7 +448,10 @@ begin
       from unnest(array[0, 1, 2, 3, 4, 5, 10, 11]) as i;
     exit when not exists (select 1 from public.workspace where space_id = new_space_id);
   end loop;
-  insert into public.workspace (workspace_name, space_id) values (p_workspace_name, new_space_id);
+  insert into public.workspace (workspace_name, space_id) values (p_workspace_name, new_space_id)
+    returning id into new_workspace_id;
+  insert into public.workspace_users (workspace_id, user_id)
+    values (new_workspace_id, (select private.current_user_id()));
   return new_space_id;
 end;
 $$;
@@ -467,6 +520,14 @@ insert into storage.buckets (id, name, public) values
 create policy "signed in uploads attachments" on storage.objects
   for insert to authenticated
   with check (bucket_id in ('task_attachments', 'small_project_attachments'));
+
+-- 置いた本人は消せる（添付の行の追加に失敗したとき、置いたファイルを片付けるため）
+create policy "uploader deletes own files" on storage.objects
+  for delete to authenticated
+  using (
+    bucket_id in ('task_attachments', 'small_project_attachments')
+    and owner_id = (select auth.uid())::text
+  );
 
 create policy "task members read files" on storage.objects
   for select to authenticated

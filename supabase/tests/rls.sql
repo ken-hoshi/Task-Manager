@@ -21,6 +21,10 @@ begin
   end if;
 end $$;
 
+insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, created_at, updated_at) values
+  ('00000000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+   'rls-test-c@example.com', '{"display_name": "RLS Test C"}', now(), now());
+
 insert into public.workspace (workspace_name, space_id) values
   ('RLS Test WS A', 'rlstestA'),
   ('RLS Test WS B', 'rlstestB');
@@ -30,7 +34,8 @@ insert into public.workspace_users (workspace_id, user_id)
   from public.workspace w
   join public.users u
     on (w.space_id = 'rlstestA' and u.email = 'rls-test-a@example.com')
-    or (w.space_id = 'rlstestB' and u.email = 'rls-test-b@example.com');
+    or (w.space_id = 'rlstestB' and u.email = 'rls-test-b@example.com')
+    or (w.space_id = 'rlstestB' and u.email = 'rls-test-c@example.com');
 
 insert into public.projects (project_name, workspace_id)
   select 'RLS Test P ' || space_id, id from public.workspace where space_id in ('rlstestA', 'rlstestB');
@@ -48,10 +53,20 @@ insert into public.tasks (task_name, deadline_date, start_date, number_of_days, 
 insert into public.comments (task_id, user_id, comment_text)
   select id, assigned_user_id, 'RLS Test comment' from public.tasks where task_name like 'RLS Test T %';
 
+-- C が担当のタスクを B の小プロジェクトに作ってから、C をメンバーから外す
+insert into public.tasks (task_name, deadline_date, start_date, number_of_days, assigned_user_id, small_project_id)
+  select 'RLS Test C task', current_date, current_date, 1, u.id, sp.id
+  from public.small_projects sp, public.users u
+  where sp.small_project_name = 'RLS Test SP rlstestB' and u.email = 'rls-test-c@example.com';
+delete from public.workspace_users
+  where user_id = (select id from public.users where email = 'rls-test-c@example.com');
+
 -- A からは見えない B の id を、なりすます前に控える
 select set_config('rls_test.ws_b', (select id::text from public.workspace where space_id = 'rlstestB'), true);
 select set_config('rls_test.user_b', (select id::text from public.users where email = 'rls-test-b@example.com'), true);
 select set_config('rls_test.task_b', (select id::text from public.tasks where task_name = 'RLS Test T rlstestB'), true);
+select set_config('rls_test.user_c', (select id::text from public.users where email = 'rls-test-c@example.com'), true);
+select set_config('rls_test.task_c', (select id::text from public.tasks where task_name = 'RLS Test C task'), true);
 select set_config('rls_test.sp_b', (select id::text from public.small_projects where small_project_name = 'RLS Test SP rlstestB'), true);
 
 insert into public.task_attachments (task_id, file_path, file_name)
@@ -68,15 +83,15 @@ do $$
 declare
   n integer;
 begin
-  if (select count(*) from public.workspace where workspace_name like 'RLS Test %') <> 1 then
+  if (select count(*) from public.workspace where workspace_name in ('RLS Test WS A', 'RLS Test WS B')) <> 1 then
     raise exception 'FAIL 1: A に B のワークスペースが見える';
   end if;
-  if (select count(*) from public.users where email like 'rls-test-%') <> 1 then
+  if (select count(*) from public.users where email in ('rls-test-a@example.com', 'rls-test-b@example.com')) <> 1 then
     raise exception 'FAIL 2: A に B の users の行が見える';
   end if;
   if (select count(*) from public.projects where project_name like 'RLS Test %') <> 1
      or (select count(*) from public.small_projects where small_project_name like 'RLS Test %') <> 1
-     or (select count(*) from public.tasks where task_name like 'RLS Test %') <> 1
+     or (select count(*) from public.tasks where task_name like 'RLS Test T %') <> 1
      or (select count(*) from public.comments where comment_text = 'RLS Test comment') <> 1 then
     raise exception 'FAIL 3: A に B のプロジェクト・タスク・コメントが見える';
   end if;
@@ -147,6 +162,9 @@ begin
   if public.create_workspace('RLS Test WS new') !~ '^[A-Za-z0-9]{8}$' then
     raise exception 'FAIL 26: 作ったワークスペースの合言葉が英数字8文字でない';
   end if;
+  if not exists (select 1 from public.workspace where workspace_name = 'RLS Test WS new') then
+    raise exception 'FAIL 27: ワークスペースを作った人がそのメンバーになっていない';
+  end if;
 
   if exists (select 1 from public.find_workspace_by_space_id('no-such-id')) then
     raise exception 'FAIL 12: 存在しない合言葉でワークスペースが引ける';
@@ -160,7 +178,7 @@ begin
     raise exception 'FAIL 14: 合わない合言葉が混ざっていても参加できる';
   exception when no_data_found then null;
   end;
-  if (select count(*) from public.workspace where workspace_name like 'RLS Test %') <> 1 then
+  if (select count(*) from public.workspace where workspace_name in ('RLS Test WS A', 'RLS Test WS B')) <> 1 then
     raise exception 'FAIL 15: 参加に失敗したのに一部だけ参加している';
   end if;
 end $$;
@@ -172,13 +190,13 @@ do $$
 declare
   n integer;
 begin
-  if (select count(*) from public.workspace where workspace_name like 'RLS Test %') <> 2 then
+  if (select count(*) from public.workspace where workspace_name in ('RLS Test WS A', 'RLS Test WS B')) <> 2 then
     raise exception 'FAIL 16: 参加したのに B のワークスペースが見えない';
   end if;
-  if (select count(*) from public.users where email like 'rls-test-%') <> 2 then
+  if (select count(*) from public.users where email in ('rls-test-a@example.com', 'rls-test-b@example.com')) <> 2 then
     raise exception 'FAIL 17: 参加したのに B の users の行が見えない';
   end if;
-  if (select count(*) from public.tasks where task_name like 'RLS Test %') <> 2 then
+  if (select count(*) from public.tasks where task_name like 'RLS Test T %') <> 2 then
     raise exception 'FAIL 18: 参加したのに B のタスクが見えない';
   end if;
 
@@ -194,6 +212,37 @@ begin
   if exists (select 1 from public.mail_notifications where text = 'RLS Test mail') then
     raise exception 'FAIL 20: A が B 宛ての通知を読める';
   end if;
+
+  -- メンバーから外れた C
+  if (select count(*) from public.users where email = 'rls-test-c@example.com') <> 1 then
+    raise exception 'FAIL 28: 外れたメンバーが担当のタスクがあるのに、その人の名前が読めない';
+  end if;
+  update public.tasks set status_id = 2 where id = current_setting('rls_test.task_c')::integer;
+  get diagnostics n = row_count;
+  if n <> 1 then
+    raise exception 'FAIL 29: 外れたメンバーが担当のタスクの状態を変えられない';
+  end if;
+
+  begin
+    update public.tasks set assigned_user_id = current_setting('rls_test.user_c')::integer
+      where id = current_setting('rls_test.task_b')::integer;
+    raise exception 'FAIL 30: メンバーでない人をタスクの担当者にできる';
+  exception when insufficient_privilege then null;
+  end;
+
+  begin
+    insert into public.small_project_users (small_project_id, user_id)
+      values (current_setting('rls_test.sp_b')::integer, current_setting('rls_test.user_c')::integer);
+    raise exception 'FAIL 31: メンバーでない人を小プロジェクトに入れられる';
+  exception when insufficient_privilege then null;
+  end;
+
+  begin
+    insert into public.mail_notifications (user_id, workspace_id, text)
+      values (current_setting('rls_test.user_c')::integer, current_setting('rls_test.ws_b')::integer, 'RLS Test mail');
+    raise exception 'FAIL 32: メンバーでない人に通知を送れる';
+  exception when insufficient_privilege then null;
+  end;
 end $$;
 
 -- ---------------------------------------------------------------
