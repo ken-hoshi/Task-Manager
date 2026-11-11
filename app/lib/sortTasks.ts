@@ -7,7 +7,8 @@ export type TaskSortKey =
   | "assigned_user_id";
 
 // 押した回数が 0 なら昇順、それ以外なら降順に並べた新しい配列を返す（元の配列は変えない）。
-// task_name は日本語の並び順、ほかの列は new Date(値) の数値で比べる（数値の列もこの方法で同じ順になる）
+// task_name は日本語の並び順、ほかの列は new Date(値) の数値で比べる。
+// shortcut: 数値の列も new Date を通すので小数を切り捨てる（日数の 1.2 と 1.8 が同じ扱い）。直すときは数値の列だけ値をそのまま比べる
 export const sortTasks = <T extends Record<TaskSortKey, any>>(
   tasks: T[],
   sortKey: TaskSortKey,

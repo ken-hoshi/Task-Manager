@@ -54,6 +54,7 @@ const TaskResultList: React.FC<TaskResultListProps> = ({
                       "material-symbols-outlined",
                       styles[`cancel-icon`]
                     )}
+                    // shortcut: ジャンルの無いタスクの実績は getTaskGenreData が taskId を返さず、消すと失敗する（既知の問題）
                     onClick={(e) => onReset(e, result.taskId as number)}
                   >
                     cancel
