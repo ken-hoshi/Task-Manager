@@ -470,7 +470,7 @@ th.col-assigned-person {
   background-color: #f0f0f0;
 }
 
-.result-area-task-name {
+.result-task-name {
   max-width: 9vw;
   margin: 0 auto;
   word-break: break-all;

@@ -1,7 +1,6 @@
 import classNames from "classnames";
 import styles from "./notYetCompletedTasksArea.module.css";
 import React, { useEffect, useState } from "react";
-import Comment from "../../component/comment/comment";
 import { clientSupabase } from "../../lib/supabase/client";
 import { useNotificationContext } from "../../provider/notificationProvider";
 import { usePageUpdateContext } from "../../provider/pageUpdateProvider";
@@ -11,10 +10,10 @@ import { postMailNotifications } from "@/app/lib/postMailNotifications";
 import { formatDate } from "@/app/lib/formatDateTime";
 import { fetchAttachedFiles } from "@/app/lib/api/fetchAttachedFiles";
 import { getTaskGenreData } from "@/app/lib/api/getTaskGenreData";
-import DatePicker from "react-datepicker";
 import { isDeadlineNear } from "@/app/lib/isDeadlineNear";
-import Image from "next/image";
 import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
+import TaskDetails from "@/app/component/taskDetails/taskDetails";
+import { useTaskResultForm } from "@/app/hooks/useTaskResultForm";
 
 interface StatusProps {
   id: number;
@@ -62,20 +61,12 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
   const [taskArrowJudgeData, setTaskArrowJudgeData] = useState<
     TaskArrowJudgeProps[]
   >([]);
-  const [selectedResultDeadlineDate, setSelectedResultDeadlineDate] = useState<
-    Date | undefined
-  >(undefined);
-  const [selectedResultStartDate, setSelectedResultStartDate] = useState<
-    Date | undefined
-  >(undefined);
-  const [numberOfResultDays, setNumberOfResultDays] = useState<
-    number | string | undefined
-  >("");
   const [attachedFileList, setAttachedFileList] = useState<AttachedFileProps[]>(
     []
   );
 
-  const [postLoading, setPostLoading] = useState(false);
+
+  const resultForm = useTaskResultForm();
 
   const fetchAttachedFilesData = async () => {
     if (notYetCompletedTasks && notYetCompletedTasks.length > 0) {
@@ -192,19 +183,6 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
     setPageUpdated(true);
   };
 
-  const handleResultDateRangeChange = (dates: [Date | null, Date | null]) => {
-    const [start, deadline] = dates;
-    setSelectedResultStartDate(start ?? undefined);
-    setSelectedResultDeadlineDate(deadline ?? undefined);
-
-    if (start && deadline) {
-      const numberOfResultDays = Math.ceil(
-        (deadline.getTime() - start.getTime()) / (1000 * 60 * 60 * 24) + 1
-      );
-      setNumberOfResultDays(numberOfResultDays);
-    }
-  };
-
   const toggleArrow = (taskId: number) => {
     setTaskArrowJudgeData((prevTaskArrowJudgeData) =>
       prevTaskArrowJudgeData.map((taskArrowJudgeData) => {
@@ -218,82 +196,6 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
         }
       })
     );
-  };
-
-  const handleResetResult = async (
-    e: { preventDefault: () => void },
-    taskId: number
-  ) => {
-    e.preventDefault();
-
-    try {
-      const { error: taskResultUpdateError } = await clientSupabase
-        .from("tasks")
-        .update({
-          result_start_date: null,
-          result_deadline_date: null,
-          number_of_result_days: null,
-        })
-        .eq("id", taskId);
-
-      if (taskResultUpdateError) {
-        throw taskResultUpdateError;
-      }
-
-      setPageUpdated(true);
-    } catch (error) {
-      console.error("Update Task Result Data", error);
-      setNotificationValue({
-        message: "Couldn't update Task Result Data.",
-        color: 1,
-      });
-      setPageUpdated(true);
-    }
-  };
-
-  const handleSubmit = async (
-    e: { preventDefault: () => void },
-    taskId: number
-  ) => {
-    e.preventDefault();
-
-    if (postLoading) return;
-    setPostLoading(true);
-
-    const startDateWithTime = new Date(selectedResultStartDate!);
-    startDateWithTime.setHours(9, 0, 0, 0);
-
-    const deadlineDateWithTime = new Date(selectedResultDeadlineDate!);
-    deadlineDateWithTime.setHours(9, 0, 0, 0);
-
-    try {
-      const { error: taskResultUpdateError } = await clientSupabase
-        .from("tasks")
-        .update({
-          result_start_date: startDateWithTime,
-          result_deadline_date: deadlineDateWithTime,
-          number_of_result_days: numberOfResultDays,
-        })
-        .eq("id", taskId);
-
-      if (taskResultUpdateError) {
-        throw taskResultUpdateError;
-      }
-
-      setPostLoading(false);
-      setPageUpdated(true);
-    } catch (error) {
-      console.error("Add Task Result", error);
-      setNotificationValue({
-        message: "Couldn't add Task Result Data.",
-        color: 1,
-      });
-      setPostLoading(false);
-      setPageUpdated(true);
-    }
-    setSelectedResultDeadlineDate(undefined);
-    setSelectedResultStartDate(undefined);
-    setNumberOfResultDays(undefined);
   };
 
   return (
@@ -345,11 +247,6 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
               const taskGenreData = taskGenreList.find(
                 (taskGenre) => taskGenre.taskId === notYetCompletedTask.id
               );
-
-              const taskGenreProductionCostTotalValue = taskGenreData
-                ? (taskGenreData.numberOfDays ?? 0) *
-                  (taskGenreData.numberOfPersons ?? 0)
-                : 0;
 
               const taskArrowJudge = taskArrowJudgeData.find(
                 (taskArrowJudge) =>
@@ -425,452 +322,16 @@ const NotYetCompletedTasksArea: React.FC<NotYetCompletedTasksAreaProps> = ({
                       </div>
                     </td>
                   </tr>
-                  <tr
-                    className={
-                      taskArrowJudge
-                        ? styles[`details-open`]
-                        : styles[`details-hidden`]
-                    }
-                  >
-                    <td colSpan={6}>
-                      <Image
-                        src="/img/background-image2.jpeg"
-                        alt="background-image2"
-                        className={styles[`background-image2`]}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        priority={true}
-                      />
-                      <div className={styles[`scrollable-content`]}>
-                        <dl>
-                          <div
-                            className={styles[`scrollable-content-container`]}
-                          >
-                            <div className={styles[`flex-area`]}>
-                              <div className={styles.flex}>
-                                <dt>Project Name</dt>
-                                <dd className={styles[`project-name`]}>
-                                  <div
-                                    className={styles[`project-name-container`]}
-                                  >
-                                    <div className={styles[`project-element`]}>
-                                      Project :
-                                    </div>
-                                    <div
-                                      className={styles[`white-text-container`]}
-                                    >
-                                      <div className={styles[`white-text`]}>
-                                        {
-                                          notYetCompletedTask.small_projects
-                                            .projects.project_name
-                                        }
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div
-                                    className={
-                                      styles[`small-project-name-container`]
-                                    }
-                                  >
-                                    <div
-                                      className={
-                                        styles[`small-project-element`]
-                                      }
-                                    >
-                                      Small Project :
-                                    </div>
-                                    <div
-                                      className={styles[`white-text-container`]}
-                                    >
-                                      <div className={styles[`white-text`]}>
-                                        {
-                                          notYetCompletedTask.small_projects
-                                            .small_project_name
-                                        }
-                                      </div>
-                                    </div>
-                                  </div>
-                                </dd>
-                              </div>
-                              <div className={styles.flex}>
-                                <dt>Period</dt>
-                                <dd>
-                                  <div>
-                                    <div className={styles[`white-text`]}>
-                                      {formatDate(
-                                        notYetCompletedTask.start_date
-                                      )}
-                                    </div>
-                                    〜
-                                    <div className={styles[`white-text`]}>
-                                      {formatDate(
-                                        notYetCompletedTask.deadline_date
-                                      )}
-                                    </div>
-                                  </div>
-                                </dd>
-                              </div>
-                            </div>
-
-                            <div className={styles[`flex-area`]}>
-                              <div className={styles.flex}>
-                                <dt>Task Genre</dt>
-                                <dd>
-                                  {taskGenreData &&
-                                  taskGenreData.taskGenreId ? (
-                                    <div className={styles[`task-genre-area`]}>
-                                      <div
-                                        className={styles[`task-genre-block`]}
-                                      >
-                                        <div
-                                          className={styles[`task-genre-name`]}
-                                        >
-                                          {taskGenreData.taskGenreName}
-                                        </div>
-
-                                        <div
-                                          className={
-                                            styles[`task-genre-table-container`]
-                                          }
-                                        >
-                                          <table>
-                                            <tbody>
-                                              <tr>
-                                                <td>Period</td>
-                                                <td>
-                                                  {formatDate(
-                                                    taskGenreData.startDate
-                                                  )}{" "}
-                                                  ~
-                                                  {formatDate(
-                                                    taskGenreData.deadlineDate
-                                                  )}
-                                                </td>
-                                              </tr>
-                                              <tr>
-                                                <td>Days</td>
-                                                <td>
-                                                  {(
-                                                    taskGenreData.numberOfDays ??
-                                                    0
-                                                  ).toFixed(1)}
-                                                </td>
-                                              </tr>
-                                              <tr>
-                                                <td>Persons</td>
-                                                <td>
-                                                  {
-                                                    taskGenreData.numberOfPersons
-                                                  }
-                                                </td>
-                                              </tr>
-                                              <tr>
-                                                <td>Persons/Days</td>
-                                                <td>
-                                                  {(
-                                                    (taskGenreData.numberOfDays ??
-                                                      0) *
-                                                    (taskGenreData.numberOfPersons ??
-                                                      0)
-                                                  ).toFixed(1)}
-                                                </td>
-                                              </tr>
-                                            </tbody>
-                                          </table>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className={styles[`non-task-genre`]}>
-                                      No Task Genre
-                                    </div>
-                                  )}
-                                </dd>
-                              </div>
-                              <div className={styles.flex}>
-                                <dt>Task Result</dt>
-                                <dd>
-                                  {taskGenreData &&
-                                    taskGenreData.assignedUserTaskResultData
-                                      .length > 0 && (
-                                      <div className={styles["result-area"]}>
-                                        <div
-                                          className={styles["user-result-area"]}
-                                        >
-                                          <div>
-                                            {taskGenreData.assignedUserTaskResultData.map(
-                                              (
-                                                assignedUserTaskResult: {
-                                                  userId: number;
-                                                  userName: string;
-                                                  taskId: number;
-                                                  taskName: string;
-                                                  numberOfResultDays: number;
-                                                },
-                                                index: number
-                                              ) => (
-                                                <div
-                                                  className={
-                                                    styles[
-                                                      "assigned-user-list-container"
-                                                    ]
-                                                  }
-                                                  key={index}
-                                                >
-                                                  <div
-                                                    className={
-                                                      styles[
-                                                        "assigned-user-list"
-                                                      ]
-                                                    }
-                                                  >
-                                                    <div>
-                                                      {
-                                                        assignedUserTaskResult.userName
-                                                      }
-                                                    </div>
-                                                    <div
-                                                      className={
-                                                        styles[
-                                                          "result-task-name"
-                                                        ]
-                                                      }
-                                                    >
-                                                      {
-                                                        assignedUserTaskResult.taskName
-                                                      }
-                                                    </div>
-                                                    <div>
-                                                      {(assignedUserTaskResult.numberOfResultDays
-                                                        ? assignedUserTaskResult.numberOfResultDays
-                                                        : 0
-                                                      ).toFixed(1)}
-                                                      {" days"}
-                                                    </div>
-                                                  </div>
-                                                  {userId ===
-                                                    assignedUserTaskResult.userId && (
-                                                    <div
-                                                      className={
-                                                        styles[
-                                                          "cancel-icon-container"
-                                                        ]
-                                                      }
-                                                    >
-                                                      <span
-                                                        className={classNames(
-                                                          "material-symbols-outlined",
-                                                          styles[`cancel-icon`]
-                                                        )}
-                                                        onClick={(e) =>
-                                                          handleResetResult(
-                                                            e,
-                                                            assignedUserTaskResult.taskId
-                                                          )
-                                                        }
-                                                      >
-                                                        cancel
-                                                      </span>
-                                                    </div>
-                                                  )}
-                                                </div>
-                                              )
-                                            )}
-                                          </div>
-                                        </div>
-                                        <div
-                                          className={
-                                            styles["sum-result-area-container"]
-                                          }
-                                        >
-                                          <div
-                                            className={
-                                              styles["sum-result-area"]
-                                            }
-                                          >
-                                            <div>Result</div>
-                                            <div
-                                              className={styles["sum-value"]}
-                                            >
-                                              <div
-                                                className={
-                                                  taskGenreData.assignedUserTaskResultData.reduce(
-                                                    (
-                                                      acc: number,
-                                                      curr: {
-                                                        userName: string;
-                                                        numberOfResultDays: number;
-                                                      }
-                                                    ) =>
-                                                      acc +
-                                                      curr.numberOfResultDays,
-                                                    0
-                                                  ) <=
-                                                    taskGenreProductionCostTotalValue ||
-                                                  taskGenreProductionCostTotalValue ===
-                                                    0
-                                                    ? styles[`value-green`]
-                                                    : styles[`value-red`]
-                                                }
-                                              >
-                                                {taskGenreData.assignedUserTaskResultData
-                                                  .reduce(
-                                                    (
-                                                      acc: number,
-                                                      curr: {
-                                                        userName: string;
-                                                        numberOfResultDays: number;
-                                                      }
-                                                    ) =>
-                                                      acc +
-                                                      curr.numberOfResultDays,
-                                                    0
-                                                  )
-                                                  .toFixed(1)}
-                                              </div>
-                                              <div>
-                                                {" / "}
-                                                {(
-                                                  (taskGenreData.numberOfDays ??
-                                                    0) *
-                                                  (taskGenreData.numberOfPersons ??
-                                                    0)
-                                                ).toFixed(1)}
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    )}
-                                  {userId ===
-                                    notYetCompletedTask.assigned_user_id && (
-                                    <form
-                                      onSubmit={(e) =>
-                                        handleSubmit(e, notYetCompletedTask.id)
-                                      }
-                                      className={styles[`task-result-form`]}
-                                    >
-                                      <DatePicker
-                                        selected={selectedResultStartDate}
-                                        onChange={handleResultDateRangeChange}
-                                        startDate={selectedResultStartDate}
-                                        endDate={selectedResultDeadlineDate}
-                                        selectsRange
-                                        dateFormat="yyyy/MM/dd"
-                                        className={styles[`date-picker`]}
-                                        calendarClassName={
-                                          styles[`custom-calendar`]
-                                        }
-                                        showIcon
-                                        required
-                                      />
-
-                                      <div className={styles["form-container"]}>
-                                        <div>
-                                          <input
-                                            type="number"
-                                            name="numberOfResultDays"
-                                            step="0.1"
-                                            min="0"
-                                            className={
-                                              styles[
-                                                `number-of-result-days-form`
-                                              ]
-                                            }
-                                            value={
-                                              numberOfResultDays !== undefined
-                                                ? numberOfResultDays
-                                                : ""
-                                            }
-                                            onChange={(e) => {
-                                              const inputValue = e.target.value;
-                                              setNumberOfResultDays(
-                                                inputValue
-                                                  ? Number(inputValue)
-                                                  : undefined
-                                              );
-                                            }}
-                                            required
-                                          />
-                                          {" days"}
-                                        </div>
-                                        <div
-                                          className={styles[`button-container`]}
-                                        >
-                                          <button
-                                            className={styles.confirm}
-                                            type="submit"
-                                          >
-                                            {postLoading ? (
-                                              <div
-                                                className={
-                                                  styles[`button-spinner`]
-                                                }
-                                              ></div>
-                                            ) : (
-                                              "confirm"
-                                            )}
-                                          </button>
-                                        </div>
-                                      </div>
-                                    </form>
-                                  )}
-                                </dd>
-                              </div>
-                            </div>
-                          </div>
-                          <dt>Details</dt>
-                          <dd className={styles[`details-area`]}>
-                            {notYetCompletedTask.details ? (
-                              <div className={styles[`details-text`]}>
-                                {notYetCompletedTask.details}
-                              </div>
-                            ) : (
-                              "No Details"
-                            )}
-                          </dd>
-                          <dt>Attached File</dt>
-                          <dd className={styles["attachedFile-area"]}>
-                            {attachedFileMatchedTaskId &&
-                            attachedFileMatchedTaskId.fileDataArray.length > 0
-                              ? attachedFileMatchedTaskId.fileDataArray.map(
-                                  (fileData, index) => (
-                                    <div
-                                      className={
-                                        styles["display-attachedFile-container"]
-                                      }
-                                      key={index}
-                                    >
-                                      <div className={styles["file-info"]}>
-                                        <a
-                                          href={fileData.url || "#"}
-                                          download={fileData.file.name}
-                                        >
-                                          <span
-                                            className={classNames(
-                                              "material-symbols-outlined",
-                                              styles.downloadIcon
-                                            )}
-                                          >
-                                            download
-                                          </span>
-                                        </a>
-                                      </div>
-                                      <p>{fileData.file.name}</p>
-                                    </div>
-                                  )
-                                )
-                              : "No Attached File"}
-                          </dd>
-
-                          <Comment
-                            userId={userId}
-                            taskId={notYetCompletedTask.id}
-                          />
-                        </dl>
-                      </div>
-                    </td>
-                  </tr>
+                  <TaskDetails
+                    task={notYetCompletedTask}
+                    taskGenre={taskGenreData}
+                    attachedFiles={attachedFileMatchedTaskId?.fileDataArray}
+                    userId={userId}
+                    isOpen={!!taskArrowJudge}
+                    colSpan={6}
+                    resultForm={resultForm}
+                    styles={styles}
+                  />
                 </React.Fragment>
               );
             })
