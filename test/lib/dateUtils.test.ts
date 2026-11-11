@@ -1,7 +1,7 @@
 import { formatDate, formatDateTime } from "@/app/lib/formatDateTime";
 import { isDeadlineNear } from "@/app/lib/isDeadlineNear";
 
-// 日付の文字列は時刻つき（ローカル時刻）で渡し、テストを動かす場所のタイムゾーンに左右されないようにする
+// タイムゾーンは test/globalSetup.js で日本時間に固定している
 describe("isDeadlineNear", () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -27,6 +27,12 @@ describe("isDeadlineNear", () => {
   it("3日後より先なら 0", () => {
     expect(isDeadlineNear("2024-04-13T00:00:00", 1)).toBe(0);
   });
+
+  it("Supabase の date 列と同じ日付だけの文字列でも、日本時間で同じ判定になる", () => {
+    expect(isDeadlineNear("2024-04-09", 1)).toBe(2);
+    expect(isDeadlineNear("2024-04-10", 1)).toBe(1);
+    expect(isDeadlineNear("2024-04-13", 1)).toBe(0);
+  });
 });
 
 describe("formatDateTime / formatDate", () => {
@@ -36,5 +42,6 @@ describe("formatDateTime / formatDate", () => {
 
   it("日付だけの形", () => {
     expect(formatDate("2024-12-31T23:59:00")).toBe("2024/12/31");
+    expect(formatDate("2024-04-03")).toBe("2024/04/03");
   });
 });

@@ -41,3 +41,28 @@ export const genre = {
     { userId: 5, userName: "星", taskId: 3, taskName: "DB", numberOfResultDays: 1 },
   ],
 };
+
+// taskList に渡す、小プロジェクトごとのジャンルの一覧
+export const smallProjectTaskGenreData = [
+  {
+    smallProjectId: 1,
+    taskGenreDataArray: [
+      {
+        taskGenreId: 7,
+        taskGenreName: "設計",
+        numberOfPersons: 2,
+        startDate: "2024-04-01",
+        deadlineDate: "2024-04-05",
+        numberOfDays: 5,
+      },
+    ],
+  },
+];
+
+// fetchAttachedFiles が返す形（タスク1に添付が1件）
+export const attachedFiles = () => [
+  {
+    id: 1,
+    fileDataArray: [{ file: new File(["x"], "spec.pdf"), url: "blob:spec" }],
+  },
+];

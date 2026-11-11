@@ -17,7 +17,7 @@ const ok = (data: unknown) => ({ data, error: null });
 
 beforeEach(() => {
   resetSupabaseMock();
-  // 失敗の分岐で関数が console.error を出すので、テストの出力から消す
+  // getUserId は ID が空のとき console.error を出すので、テストの出力から消す
   jest.spyOn(console, "error").mockImplementation(() => {});
 });
 afterEach(() => {
