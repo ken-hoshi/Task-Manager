@@ -22,6 +22,7 @@ import AttachedFileList from "@/app/component/taskDetails/attachedFileList";
 import TaskGenreSummary from "@/app/component/taskDetails/taskGenreSummary";
 import TaskResultList from "@/app/component/taskDetails/taskResultList";
 import { useTaskResultForm } from "@/app/hooks/useTaskResultForm";
+import { sortTasks, TaskSortKey } from "@/app/lib/sortTasks";
 
 interface TaskGenreDataProps {
   taskGenreId: number;
@@ -328,13 +329,7 @@ const TaskList: React.FC<TaskListProps> = ({
       return;
 
     const handleSort = (
-      sortKey:
-        | "task_name"
-        | "status_id"
-        | "start_date"
-        | "deadline_date"
-        | "number_of_days"
-        | "assigned_user_id",
+      sortKey: TaskSortKey,
       clickCount: number,
       setClickCount: React.Dispatch<React.SetStateAction<SortProps[]>>
     ) => {
@@ -380,23 +375,11 @@ const TaskList: React.FC<TaskListProps> = ({
           )
         );
       } else {
-        let sortedTasks: any[] = [];
-        if (sortKey === "task_name") {
-          sortedTasks = [...taskDataDividedByTaskGenreId!.taskDataArray].sort(
-            (a, b) => {
-              const comparison = a.task_name.localeCompare(b.task_name, "ja");
-              return clickCount === 0 ? comparison : -comparison;
-            }
-          );
-        } else {
-          sortedTasks = [...taskDataDividedByTaskGenreId!.taskDataArray].sort(
-            (a, b) => {
-              const dateA = new Date(a[sortKey]).getTime();
-              const dateB = new Date(b[sortKey]).getTime();
-              return clickCount === 0 ? dateA - dateB : dateB - dateA;
-            }
-          );
-        }
+        const sortedTasks = sortTasks(
+          taskDataDividedByTaskGenreId!.taskDataArray,
+          sortKey,
+          clickCount
+        );
 
         setTasksDividedByTaskGenreId((prevTasksDividedByTaskGenreId) =>
           prevTasksDividedByTaskGenreId.map(
