@@ -270,6 +270,9 @@ begin
     raise exception 'FAIL 23: ログインしていない人が合言葉でワークスペースを引ける';
   exception when insufficient_privilege then null;
   end;
+  if public.keep_alive() <> 3 then
+    raise exception 'FAIL 33: ログインしていない人が keep_alive で状態の件数を受け取れない';
+  end if;
 end $$;
 
 reset role;
