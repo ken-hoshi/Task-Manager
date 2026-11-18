@@ -497,8 +497,20 @@ grant execute on function public.create_workspace(text) to authenticated;
 grant execute on function public.find_workspace_by_space_id(text) to authenticated;
 grant execute on function public.join_workspaces(text[]) to authenticated;
 
+-- 無料プランは7日ほど DB が使われないと自動で止まるので、Vercel Cron が毎日これを呼ぶ（app/api/keepAlive）。
+-- ログインしていない人にも呼べるが、返すのは状態の一覧の件数だけ
+create function public.keep_alive()
+returns integer
+language sql stable security definer set search_path = ''
+as $$
+  select count(*)::integer from public.task_status
+$$;
+
+revoke all on function public.keep_alive() from public;
+grant execute on function public.keep_alive() to anon, authenticated;
+
 -- ---------------------------------------------------------------
--- 権限（ログインしていない人 anon には、表も関数も渡さない）
+-- 権限（ログインしていない人 anon には、keep_alive のほかは表も関数も渡さない）
 -- ---------------------------------------------------------------
 
 revoke all on all tables in schema public from anon;
