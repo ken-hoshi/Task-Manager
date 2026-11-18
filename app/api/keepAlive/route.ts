@@ -12,5 +12,5 @@ export async function GET() {
     console.error("Keep alive:", error.message);
     return NextResponse.json({ ok: false }, { status: 500 });
   }
-  return NextResponse.json({ ok: true, statuses: data });
+  return NextResponse.json({ ok: true, statusCount: data });
 }
