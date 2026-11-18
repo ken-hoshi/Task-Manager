@@ -298,6 +298,9 @@
   margin-right: 1vh;
   resize: none;
   flex: 1;
+  /* Tailwind の preflight が変える箱の測り方と行の高さを、この画面を移すまで元に戻す */
+  box-sizing: content-box;
+  line-height: normal;
 }
 
 .task-textarea {

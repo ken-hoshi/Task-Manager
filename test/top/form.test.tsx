@@ -58,6 +58,30 @@ describe("ログインの欄", () => {
     expect(setNotificationValue).not.toHaveBeenCalled();
   });
 
+  it("送信中はボタンを押せなくし、続けて送っても1回しかログインしない", async () => {
+    let finish: (value: unknown) => void = () => {};
+    const useLogin = jest.fn(
+      () => new Promise((resolve) => (finish = resolve))
+    );
+    (login as jest.Mock).mockReturnValue({ useLogin });
+    render(<Form />);
+
+    fillForm("test@example.com", "password123");
+    const form = screen.getByRole("form", { name: "ログイン" });
+    await act(async () => {
+      fireEvent.submit(form);
+    });
+    expect(screen.getByRole("button", { name: "ログイン" })).toBeDisabled();
+    await act(async () => {
+      fireEvent.submit(form);
+    });
+    expect(useLogin).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      finish(undefined);
+    });
+  });
+
   it("ログインに失敗したら、日本語の通知を出してボタンを押せる状態に戻す", async () => {
     mockLogin(new Error("invalid"));
     render(<Form />);

@@ -13,8 +13,11 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -30,12 +33,17 @@ export interface SidebarProject {
   projectName: string;
 }
 
+// 今どの画面にいるか。タスク画面・プロジェクト画面のどちらでもない画面（アカウントなど）では null
+export type SidebarCurrent =
+  | { kind: "tasks" }
+  | { kind: "project"; id: number }
+  | null;
+
 interface AppSidebarProps {
   workspaces: SidebarWorkspace[];
   currentWorkspaceId: number | null;
   projects: SidebarProject[];
-  // タスク画面を開いているときは null。プロジェクト画面ではそのプロジェクトの id
-  currentProjectId: number | null;
+  current: SidebarCurrent;
   unreadCount: number;
   onSelectWorkspace: (workspaceId: number) => void;
   onEditWorkspace: () => void;
@@ -51,7 +59,7 @@ export function AppSidebar({
   workspaces,
   currentWorkspaceId,
   projects,
-  currentProjectId,
+  current,
   unreadCount,
   onSelectWorkspace,
   onEditWorkspace,
@@ -61,42 +69,43 @@ export function AppSidebar({
   onOpenAccount,
   onLogout,
 }: AppSidebarProps) {
-  const currentWorkspace =
-    workspaces.find((workspace) => workspace.id === currentWorkspaceId) ??
-    workspaces[0];
+  // 一覧に無いとき（読み込み前・抜けた直後）は、別のワークスペースの名前を出さない
+  const currentWorkspace = workspaces.find(
+    (workspace) => workspace.id === currentWorkspaceId
+  );
+  const isTasksCurrent = current?.kind === "tasks";
+  const currentProjectId = current?.kind === "project" ? current.id : null;
 
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sm text-sidebar-foreground">
       <div className="border-b border-sidebar-border p-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="w-full justify-between px-2 font-semibold"
-              aria-label="ワークスペースを切り替える"
-            >
+            <Button variant="ghost" className="w-full justify-between px-2 font-semibold">
               <span className="truncate">
+                <span className="sr-only">ワークスペースを切り替える: </span>
                 {currentWorkspace?.workspaceName ?? "ワークスペース"}
               </span>
-              <ChevronsUpDown className="size-4 text-muted-foreground" />
+              <ChevronsUpDown className="size-4 text-muted-foreground" aria-hidden />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuLabel>ワークスペース</DropdownMenuLabel>
-            {workspaces.map((workspace) => (
-              <DropdownMenuItem
-                key={workspace.id}
-                onSelect={() => onSelectWorkspace(workspace.id)}
-                className={cn(
-                  workspace.id === currentWorkspace?.id && "font-semibold"
-                )}
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>ワークスペース</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={currentWorkspace ? String(currentWorkspace.id) : ""}
+                onValueChange={(value) => onSelectWorkspace(Number(value))}
               >
-                {workspace.workspaceName}
-              </DropdownMenuItem>
-            ))}
+                {workspaces.map((workspace) => (
+                  <DropdownMenuRadioItem key={workspace.id} value={String(workspace.id)}>
+                    {workspace.workspaceName}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={onEditWorkspace}>
-              <Settings className="size-4" />
+              <Settings className="size-4" aria-hidden />
               ワークスペースの設定
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -108,13 +117,12 @@ export function AppSidebar({
           variant="ghost"
           className={cn(
             "w-full justify-start gap-2 px-2",
-            currentProjectId === null &&
-              "bg-sidebar-accent text-sidebar-accent-foreground"
+            isTasksCurrent && "bg-sidebar-accent text-sidebar-accent-foreground"
           )}
-          aria-current={currentProjectId === null ? "page" : undefined}
+          aria-current={isTasksCurrent ? "page" : undefined}
           onClick={onOpenTasks}
         >
-          <ListTodo className="size-4" />
+          <ListTodo className="size-4" aria-hidden />
           タスク
         </Button>
 
@@ -136,12 +144,10 @@ export function AppSidebar({
                     project.id === currentProjectId &&
                       "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
                   )}
-                  aria-current={
-                    project.id === currentProjectId ? "page" : undefined
-                  }
+                  aria-current={project.id === currentProjectId ? "page" : undefined}
                   onClick={() => onOpenProject(project.id)}
                 >
-                  <FolderKanban className="size-4 text-muted-foreground" />
+                  <FolderKanban className="size-4 text-muted-foreground" aria-hidden />
                   <span className="truncate">{project.projectName}</span>
                 </Button>
               </li>
@@ -156,15 +162,18 @@ export function AppSidebar({
           className="w-full justify-start gap-2 px-2"
           onClick={onOpenNotifications}
         >
-          <Bell className="size-4" />
+          <Bell className="size-4" aria-hidden />
           通知
           {unreadCount > 0 && (
-            <span
-              className="ml-auto rounded-full bg-primary px-1.5 text-xs text-primary-foreground"
-              aria-label={`未読 ${unreadCount} 件`}
-            >
-              {unreadCount}
-            </span>
+            <>
+              <span
+                className="ml-auto rounded-full bg-primary px-1.5 text-xs text-primary-foreground"
+                aria-hidden
+              >
+                {unreadCount}
+              </span>
+              <span className="sr-only">未読 {unreadCount} 件</span>
+            </>
           )}
         </Button>
         <Button
@@ -172,7 +181,7 @@ export function AppSidebar({
           className="w-full justify-start gap-2 px-2"
           onClick={onOpenAccount}
         >
-          <UserRound className="size-4" />
+          <UserRound className="size-4" aria-hidden />
           アカウント
         </Button>
         <Button
@@ -180,7 +189,7 @@ export function AppSidebar({
           className="w-full justify-start gap-2 px-2 text-muted-foreground"
           onClick={onLogout}
         >
-          <LogOut className="size-4" />
+          <LogOut className="size-4" aria-hidden />
           ログアウト
         </Button>
       </div>

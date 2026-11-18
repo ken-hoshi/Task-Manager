@@ -184,6 +184,8 @@
 
 .search-button-spinner {
   border: 0.3vh solid #f3f3f3;
+  /* Tailwind の preflight が変える箱の測り方を、この画面を移すまで元に戻す */
+  box-sizing: content-box;
   border-top: 0.3vh solid #94bfce;
   border-radius: 50%;
   width: 1.5vh;
@@ -313,6 +315,8 @@
 
 .join-button-spinner {
   border: 2px solid #f3f3f3;
+  /* Tailwind の preflight が変える箱の測り方を、この画面を移すまで元に戻す */
+  box-sizing: content-box;
   border-top: 2px solid #94bfce;
   border-radius: 50%;
   width: 1.5vh;
