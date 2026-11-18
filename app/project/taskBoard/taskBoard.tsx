@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import styles from "./taskBoard.module.css";
@@ -73,6 +73,15 @@ const TaskItem = ({
     }),
   });
 
+  // React 19 の ref は戻り値を受け付けないので、react-dnd の drag を包んで渡す。
+  // 描くたびに新しい関数にすると、react-dnd がつなぎ直すので useCallback で固定する
+  const dragRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      ref(el);
+    },
+    [ref]
+  );
+
   const toggleArrow = () => {
     setIsOpen(!isOpen);
   };
@@ -83,7 +92,7 @@ const TaskItem = ({
 
   return (
     <div
-      ref={ref}
+      ref={dragRef}
       className={classNames(
         styles[`task-block`],
         isDragging && styles.dragging
@@ -208,16 +217,22 @@ const TaskList = ({
     return drop;
   };
 
+  // createDropHook はフックを呼ぶので、毎回3つとも同じ順で呼んでから使う1つを選ぶ
+  const drop = {
+    1: createDropHook(0),
+    2: createDropHook(1),
+    3: createDropHook(2),
+  }[status.id];
+
+  const dropRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      drop?.(el);
+    },
+    [drop]
+  );
+
   return (
-    <div
-      ref={
-        {
-          1: createDropHook(0),
-          2: createDropHook(1),
-          3: createDropHook(2),
-        }[status.id]
-      }
-    >
+    <div ref={dropRef}>
       <div
         className={classNames(
           styles.column,

@@ -250,7 +250,9 @@ const Comment: React.FC<CommentProps> = ({
                           target.style.height = "auto";
                           target.style.height = `${target.scrollHeight}px`;
                         }}
-                        ref={(el) => (textareaRefs.current[index] = el)}
+                        ref={(el) => {
+                          textareaRefs.current[index] = el;
+                        }}
                         className={
                           projectDetails
                             ? styles[`project-details-bubble-textarea`]

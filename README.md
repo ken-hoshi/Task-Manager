@@ -26,7 +26,7 @@
 
 | レイヤー | 技術 |
 |---------|------|
-| フロントエンド | Next.js 14（App Router）、React 18、TypeScript、CSS Modules |
+| フロントエンド | Next.js 16（App Router）、React 19、TypeScript、CSS Modules |
 | DB・認証・ファイル | Supabase（PostgreSQL・Auth・Storage） |
 | AI | Gemini API（gemini-2.5-flash） |
 | デプロイ | Vercel（DB の自動停止を防ぐ Cron を含む） |
