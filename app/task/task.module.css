@@ -1,11 +1,12 @@
 .task-container {
   position: relative;
-  height: 90vh;
+  min-height: 100%;
 }
 
+/* 上のヘッダーが無くなったので、上の余白はヘッダーの分を除いた */
 .task {
   position: relative;
-  margin-top: 9vh;
+  padding-top: 3vh;
 }
 
 .under-area {

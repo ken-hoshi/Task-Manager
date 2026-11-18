@@ -13,11 +13,14 @@ type Notification = {
 interface MailNotificationListProps {
   notifications: Notification[];
   listRef: RefObject<HTMLDivElement | null>;
+  // 出す位置。サイドバーの横に出すため、呼び出す側から変えられるようにする
+  style?: React.CSSProperties;
 }
 
 const MailNotificationList: React.FC<MailNotificationListProps> = ({
   notifications,
   listRef,
+  style,
 }) => {
   useEffect(() => {
     return () => {
@@ -42,7 +45,7 @@ const MailNotificationList: React.FC<MailNotificationListProps> = ({
   }, [notifications]);
 
   return (
-    <div className={styles.container} ref={listRef}>
+    <div className={styles.container} ref={listRef} style={style}>
       <ul className={styles.list}>
         {notifications && notifications.length > 0 ? (
           notifications
