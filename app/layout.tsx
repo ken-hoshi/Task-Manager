@@ -1,9 +1,19 @@
+import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import { DisplayWorkspaceIdProvider } from "./provider/displayWorkspaceIdProvider";
 import { FlashDisplayProvider } from "./provider/flashDisplayProvider";
 import { FormProvider } from "./provider/formProvider";
 import { NotificationProvider } from "./provider/notificationProvider";
 import { PageUpdateProvider } from "./provider/pageUpdateProvider";
+
+// 書体はビルドのときに取り込み、アプリと一緒に配る。端末によって見え方が変わらないようにする（台帳 決定15）。
+// 日本語の書体はファイルが多いので、先読み（preload）はしない
+const notoSansJp = Noto_Sans_JP({
+  subsets: ["latin"],
+  variable: "--font-noto-sans-jp",
+  display: "swap",
+  preload: false,
+});
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -21,16 +31,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja">
+    <html lang="ja" className={notoSansJp.variable}>
       <head>
         <title>{metadata.title}</title>
         <meta name="description" content={metadata.description} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/img/favicon.ico" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Advent+Pro:wght@400;700&display=swap"
-          rel="stylesheet"
-        />
+        {/* アイコン。画面を Tailwind に移すたびに lucide に置き換え、全画面を移したら外す */}
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"

@@ -83,6 +83,8 @@
 .cancel-button,
 .update-button {
   padding: 0;
+  /* Tailwind の preflight が消すボタンの地の色を、この画面を移すまで元に戻す */
+  background-color: buttonface;
   height: 4.5vh;
   width: 4.5vh;
   cursor: pointer;
@@ -124,6 +126,8 @@
 .update-button-spinner,
 .delete-button-spinner {
   border-radius: 50%;
+  /* Tailwind の preflight が変える箱の測り方を、この画面を移すまで元に戻す */
+  box-sizing: content-box;
   width: 1.5vh;
   height: 1.5vh;
   animation: buttonSpin 1s linear infinite;

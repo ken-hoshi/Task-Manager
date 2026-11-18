@@ -346,6 +346,8 @@ td.task-period-edit {
 
 .check-button {
   border: 0.1vh solid rgb(19, 240, 3);
+  /* Tailwind の preflight が消すボタンの地の色を、この画面を移すまで元に戻す */
+  background-color: buttonface;
   transition: all 0.3s ease-in-out;
 }
 
@@ -366,6 +368,8 @@ td.task-period-edit {
 
 .cancel-button {
   border: 0.1vh solid rgb(245, 74, 17);
+  /* Tailwind の preflight が消すボタンの地の色を、この画面を移すまで元に戻す */
+  background-color: buttonface;
   transition: all 0.3s ease-in-out;
 }
 
