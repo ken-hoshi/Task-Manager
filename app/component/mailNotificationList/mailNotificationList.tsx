@@ -12,7 +12,7 @@ type Notification = {
 
 interface MailNotificationListProps {
   notifications: Notification[];
-  listRef: RefObject<HTMLDivElement>;
+  listRef: RefObject<HTMLDivElement | null>;
 }
 
 const MailNotificationList: React.FC<MailNotificationListProps> = ({

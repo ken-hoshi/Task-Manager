@@ -83,7 +83,10 @@ const TaskItem = ({
 
   return (
     <div
-      ref={ref}
+      // React 19 の ref は戻り値を受け付けないので、react-dnd の drag を包んで渡す
+      ref={(el) => {
+        ref(el);
+      }}
       className={classNames(
         styles[`task-block`],
         isDragging && styles.dragging
@@ -208,15 +211,18 @@ const TaskList = ({
     return drop;
   };
 
+  // createDropHook はフックを呼ぶので、毎回3つとも同じ順で呼んでから使う1つを選ぶ
+  const drop = {
+    1: createDropHook(0),
+    2: createDropHook(1),
+    3: createDropHook(2),
+  }[status.id];
+
   return (
     <div
-      ref={
-        {
-          1: createDropHook(0),
-          2: createDropHook(1),
-          3: createDropHook(2),
-        }[status.id]
-      }
+      ref={(el) => {
+        drop?.(el);
+      }}
     >
       <div
         className={classNames(
