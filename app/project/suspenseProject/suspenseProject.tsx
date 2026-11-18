@@ -362,14 +362,14 @@ const SuspenseProject: React.FC = () => {
           color={notificationValue.color}
         />
       )}
-      <>
+      {/* 今いるプロジェクトは、読み込み中でも分かるように URL から決める */}
+      <AppShell
+        userId={userId}
+        current={{ kind: "project", id: paramsProjectId }}
+      >
         {loading ? (
           <Loading />
         ) : (
-          <AppShell
-            userId={userId}
-            current={{ kind: "project", id: projectData.id }}
-          >
           <div className={styles.project}>
             {/* 以前はヘッダーにあったプロジェクト名と編集の入口。戻る矢印はサイドバーの「タスク」に任せた */}
             <div className="flex items-center gap-2 px-6 pb-2 text-base">
@@ -379,6 +379,7 @@ const SuspenseProject: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
+                aria-label="プロジェクトを編集"
                 onClick={() => setShowProjectPopup(true)}
               >
                 <Pencil className="size-4" aria-hidden />
@@ -519,9 +520,8 @@ const SuspenseProject: React.FC = () => {
               <RobotButton />
             </div>
           </div>
-          </AppShell>
         )}
-      </>
+      </AppShell>
     </>
   );
 };

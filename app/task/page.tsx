@@ -29,11 +29,6 @@ import { getWorkspace } from "../lib/api/getWorkspace";
 import { useDisplayWorkspaceIdContext } from "../provider/displayWorkspaceIdProvider";
 import { getDataUpdate } from "../hooks/getDataUpdate";
 
-interface WorkspaceProps {
-  id: number;
-  workspaceName: string;
-}
-
 interface StatusProps {
   id: number;
   status: string;
@@ -139,30 +134,24 @@ const Task: React.FC = () => {
           router.push("/createWorkspace?atSignUp=false");
         } else {
           // ワークスペースの一覧はサイドバー（AppShell）が読む。ここでは最初に開くものを決めるだけ
-          const workspaceData: WorkspaceProps[] = workspaceUserBelongsData
-            .map((workspaceData) =>
-              Array.isArray(workspaceData.workspace)
-                ? workspaceData.workspace[0]
-                : workspaceData.workspace
-            )
-            .map((workspaceData) => ({
-              id: workspaceData.id,
-              workspaceName: workspaceData.workspace_name,
-            }));
+          // workspace は、型では配列、実際の応答では1件のオブジェクトのことがある。どちらでも先頭を取る
+          const firstWorkspaceId: number = [
+            workspaceUserBelongsData[0].workspace,
+          ].flat()[0].id;
           if (!displayWorkspaceId) {
-            setDisplayWorkspaceId(workspaceData[0].id);
+            setDisplayWorkspaceId(firstWorkspaceId);
           }
 
           const projectData = await getProjectData(
             null,
-            displayWorkspaceId ? displayWorkspaceId : workspaceData[0].id
+            displayWorkspaceId ? displayWorkspaceId : firstWorkspaceId
           );
           if (!projectData) {
             throw new Error("Fetch Project Data couldn't get.");
           }
 
           const smallProjectData = await fetchSmallProjectData(
-            displayWorkspaceId ? displayWorkspaceId : workspaceData[0].id
+            displayWorkspaceId ? displayWorkspaceId : firstWorkspaceId
           );
           if (
             !smallProjectData.smallProjectData ||
@@ -202,7 +191,7 @@ const Task: React.FC = () => {
             }
 
             const tasksData = await fetchTasksData(
-              displayWorkspaceId ? displayWorkspaceId : workspaceData[0].id
+              displayWorkspaceId ? displayWorkspaceId : firstWorkspaceId
             );
             if (!tasksData) {
               throw new Error("Fetch TasksData couldn't get.");
@@ -325,11 +314,12 @@ const Task: React.FC = () => {
         />
       )}
 
+      <AppShell userId={userId} current={{ kind: "tasks" }}>
       {loading ? (
         <Loading />
       ) : (
-        <AppShell userId={userId} current={{ kind: "tasks" }}>
         <div className={styles[`task-container`]}>
+          <h1 className="sr-only">タスク</h1>
           <div className={styles.task}>
             <ProjectsArea
               projectDataArray={projectDataArray}
@@ -358,8 +348,8 @@ const Task: React.FC = () => {
             <RobotButton />
           </div>
         </div>
-        </AppShell>
       )}
+      </AppShell>
     </>
   );
 };

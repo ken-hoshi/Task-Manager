@@ -3,7 +3,7 @@ import styles from "./mailNotificationList.module.css";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import classNames from "classnames";
 
-type Notification = {
+export type Notification = {
   id: number;
   message: string;
   isRead: boolean;
@@ -11,16 +11,16 @@ type Notification = {
 };
 
 interface MailNotificationListProps {
+  // サイドバーの通知のボタンが aria-controls で指す id
+  id: string;
   notifications: Notification[];
   listRef: RefObject<HTMLDivElement | null>;
-  // 出す位置。サイドバーの横に出すため、呼び出す側から変えられるようにする
-  style?: React.CSSProperties;
 }
 
 const MailNotificationList: React.FC<MailNotificationListProps> = ({
+  id,
   notifications,
   listRef,
-  style,
 }) => {
   useEffect(() => {
     return () => {
@@ -45,7 +45,13 @@ const MailNotificationList: React.FC<MailNotificationListProps> = ({
   }, [notifications]);
 
   return (
-    <div className={styles.container} ref={listRef} style={style}>
+    <div
+      id={id}
+      role="region"
+      aria-label="通知"
+      className={styles.container}
+      ref={listRef}
+    >
       <ul className={styles.list}>
         {notifications && notifications.length > 0 ? (
           notifications

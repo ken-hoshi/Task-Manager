@@ -1,7 +1,8 @@
+/* サイドバー（幅 16rem）のすぐ右、下寄せで開く */
 .container {
   position: fixed;
-  right: 5.5vh;
-  top: 8vh;
+  left: 16.5rem;
+  bottom: 1rem;
   width: 30vh;
   max-height: 40vh;
   overflow-y: auto;

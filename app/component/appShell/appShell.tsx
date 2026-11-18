@@ -8,7 +8,9 @@ import {
   type SidebarProject,
   type SidebarWorkspace,
 } from "@/components/app-sidebar";
-import MailNotificationList from "../mailNotificationList/mailNotificationList";
+import MailNotificationList, {
+  type Notification,
+} from "../mailNotificationList/mailNotificationList";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { getWorkspace } from "@/app/lib/api/getWorkspace";
 import { getProjectData } from "@/app/lib/api/getProjectData";
@@ -18,14 +20,10 @@ import { Logout } from "@/app/hooks/logout";
 import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 
-type Notification = {
-  id: number;
-  message: string;
-  isRead: boolean;
-  timestamp: string;
-};
+const NOTIFICATION_LIST_ID = "app-shell-notifications";
 
 interface AppShellProps {
+  // ページがまだ読み込み中なら 0。0 の間は何も読まない
   userId: number;
   current: SidebarCurrent;
   children: React.ReactNode;
@@ -44,13 +42,22 @@ const AppShell: React.FC<AppShellProps> = ({ userId, current, children }) => {
   const [projects, setProjects] = useState<SidebarProject[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  // 画面が読み直しを求めた（pageUpdated が true になった）回数。false に戻るときには読み直さない
+  const [refreshCount, setRefreshCount] = useState(0);
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (pageUpdated) setRefreshCount((count) => count + 1);
+  }, [pageUpdated]);
+
+  useEffect(() => {
+    if (!userId) return;
+    let ignore = false;
     (async () => {
       const workspaceUserBelongsData = await getWorkspace(userId);
+      if (ignore) return;
       setWorkspaces(
         workspaceUserBelongsData
           .map((data) =>
@@ -63,12 +70,18 @@ const AppShell: React.FC<AppShellProps> = ({ userId, current, children }) => {
           }))
       );
     })();
-  }, [userId, pageUpdated]);
+    return () => {
+      ignore = true;
+    };
+  }, [userId]);
 
+  // ワークスペースを素早く切り替えたとき、前のワークスペースの遅れた応答で上書きしない
   useEffect(() => {
     if (!displayWorkspaceId) return;
+    let ignore = false;
     (async () => {
       const projectData = await getProjectData(null, displayWorkspaceId);
+      if (ignore) return;
       setProjects(
         (projectData ?? []).map((project) => ({
           id: project.id,
@@ -76,11 +89,15 @@ const AppShell: React.FC<AppShellProps> = ({ userId, current, children }) => {
         }))
       );
     })();
-  }, [displayWorkspaceId, pageUpdated]);
+    return () => {
+      ignore = true;
+    };
+  }, [displayWorkspaceId, refreshCount]);
 
-  // 通知は開け閉めのたびに読み直す。7日を過ぎた既読の通知は消す（以前のヘッダーの処理と同じ）
+  // 通知は開け閉めと画面の読み直しのたびに読み直す。7日を過ぎた既読の通知は消す（以前のヘッダーの処理と同じ）
   useEffect(() => {
-    if (!displayWorkspaceId) return;
+    if (!userId || !displayWorkspaceId) return;
+    let ignore = false;
     (async () => {
       const mailNotifications = await getMailNotifications(
         userId,
@@ -113,11 +130,14 @@ const AppShell: React.FC<AppShellProps> = ({ userId, current, children }) => {
           }
         })
       );
-      setNotifications(kept);
+      if (!ignore) setNotifications(kept);
     })();
-  }, [userId, displayWorkspaceId, showNotifications]);
+    return () => {
+      ignore = true;
+    };
+  }, [userId, displayWorkspaceId, showNotifications, refreshCount]);
 
-  // 通知の一覧の外を押したら閉じる。サイドバーの中は、通知のボタンが開け閉めするので除く
+  // 通知の一覧は、外を押すか Escape で閉じる。サイドバーの中は、通知のボタンが開け閉めするので除く
   useEffect(() => {
     if (!showNotifications) return;
     const handleMouseDown = (event: MouseEvent) => {
@@ -129,16 +149,26 @@ const AppShell: React.FC<AppShellProps> = ({ userId, current, children }) => {
         setShowNotifications(false);
       }
     };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setShowNotifications(false);
+    };
     document.addEventListener("mousedown", handleMouseDown);
-    return () => document.removeEventListener("mousedown", handleMouseDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [showNotifications]);
 
   const handleSelectWorkspace = (workspaceId: number) => {
+    if (workspaceId === displayWorkspaceId) return;
     setDisplayWorkspaceId(workspaceId);
-    setPageUpdated(true);
-    // 開いているプロジェクトは前のワークスペースのものなので、タスク画面に戻る
     if (current?.kind === "project") {
+      // 開いているプロジェクトは前のワークスペースのものなので、タスク画面に戻る。
+      // タスク画面は開いたときに読むので、読み直しは求めない
       router.push("/task");
+    } else {
+      setPageUpdated(true);
     }
   };
 
@@ -151,6 +181,8 @@ const AppShell: React.FC<AppShellProps> = ({ userId, current, children }) => {
           projects={projects}
           current={current}
           unreadCount={notifications.filter((n) => !n.isRead).length}
+          notificationsOpen={showNotifications}
+          notificationsId={NOTIFICATION_LIST_ID}
           onSelectWorkspace={handleSelectWorkspace}
           onEditWorkspace={() =>
             router.push(`/editWorkspace?workspaceId=${displayWorkspaceId}`)
@@ -168,9 +200,9 @@ const AppShell: React.FC<AppShellProps> = ({ userId, current, children }) => {
       </div>
       {showNotifications && (
         <MailNotificationList
+          id={NOTIFICATION_LIST_ID}
           notifications={notifications}
           listRef={listRef}
-          style={{ left: "16.5rem", bottom: "1rem", top: "auto", right: "auto" }}
         />
       )}
       <main className="relative min-w-0 flex-1 overflow-auto">{children}</main>
