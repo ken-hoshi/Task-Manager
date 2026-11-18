@@ -1,10 +1,9 @@
 import { signUp } from "@/app/hooks/signUp";
 import Register from "@/app/register/page";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { act, render, screen, fireEvent } from "@testing-library/react";
 import { sign } from "crypto";
 import { useRouter } from "next/navigation";
 import { use } from "react";
-import { act } from "react-dom/test-utils";
 
 process.env.NEXT_PUBLIC_ALLOWED_EMAIL_DOMAIN = "example.com";
 
