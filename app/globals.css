@@ -90,11 +90,17 @@
    * リンクの色・下線を、まだ Tailwind に移していない画面のために戻す。
    * 全画面を移し終えたら、このかたまりを消す（台帳 決定20）
    */
-  h1 { font-size: 2em; font-weight: bold; }
-  h2 { font-size: 1.5em; font-weight: bold; }
-  h3 { font-size: 1.17em; font-weight: bold; }
-  h4 { font-weight: bold; }
-  a { color: -webkit-link; text-decoration: underline; }
+  h1 { font-size: 2em; font-weight: bold; margin: 0.67em 0; }
+  h2 { font-size: 1.5em; font-weight: bold; margin: 0.83em 0; }
+  h3 { font-size: 1.17em; font-weight: bold; margin: 1em 0; }
+  h4 { font-weight: bold; margin: 1.33em 0; }
+  h5 { font-size: 0.83em; font-weight: bold; margin: 1.67em 0; }
+  h6 { font-size: 0.67em; font-weight: bold; margin: 2.33em 0; }
+  p { margin: 1em 0; }
+  ul { list-style: disc; margin: 1em 0; padding-left: 40px; }
+  ol { list-style: decimal; margin: 1em 0; padding-left: 40px; }
+  a { color: LinkText; text-decoration: underline; }
+  a:visited { color: VisitedText; }
 }
 
 html,
