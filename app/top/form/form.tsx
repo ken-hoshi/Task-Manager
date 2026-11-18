@@ -2,17 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import styles from "./form.module.css";
-import classNames from "classnames";
 import { useState } from "react";
+import { ListTodo, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { login } from "../../hooks/login";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 
-interface FormProps {
-  className?: string;
-}
-
-const Form: React.FC<FormProps> = ({ className }) => {
+const Form: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { useLogin } = login();
   const [formData, setFormData] = useState({
@@ -31,15 +29,11 @@ const Form: React.FC<FormProps> = ({ className }) => {
     const loginError = await useLogin(email, password);
     if (loginError) {
       setNotificationValue({
-        message: "Password or Email address is wrong.",
+        message: "メールアドレスかパスワードが違います。",
         color: 1,
       });
       setLoading(false);
     }
-  };
-
-  const handleFocus = (event: React.FocusEvent<HTMLInputElement>) => {
-    event.target.select();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,58 +41,78 @@ const Form: React.FC<FormProps> = ({ className }) => {
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
+  // 左にイラスト、右にログインの欄。イラストは入口だけに使う（台帳 決定12。本人が2通りを見比べて選んだ）
   return (
-    <div className={classNames(styles[`form-area`], className)}>
-      <div className={styles[`form-board`]}>
-        <div className={styles[`background-image-container`]}>
+    <main className="flex min-h-screen items-center justify-center bg-background p-6 text-base text-foreground">
+      <div className="grid w-full max-w-4xl overflow-hidden rounded-xl border bg-card shadow-sm md:grid-cols-2">
+        <div className="relative hidden md:block">
           <Image
-            className={styles[`background-image3`]}
             src="/img/background-image3.jpeg"
-            alt="background-image3"
+            alt=""
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            priority={true}
+            sizes="(max-width: 768px) 0px, 448px"
+            className="object-cover"
+            priority
           />
         </div>
-        <div className={styles[`login-area`]}>
-          <form role="form" onSubmit={handleLogin}>
-            <h4>Welcome!</h4>
-            <p className={styles.message}>
-              This site may only be used by employees of the designated company.
-            </p>
+        <div className="flex flex-col gap-6 p-8 sm:p-10">
+          <div className="flex items-center gap-2 text-base font-semibold">
+            <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <ListTodo className="size-4" />
+            </span>
+            Task Manager
+          </div>
 
-            <input
-              className={styles.input}
-              type="email"
-              placeholder="Email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              onFocus={handleFocus}
-              autoComplete="on"
-              required
-            />
-            <p className={styles.instruction}>Enter your Email Address</p>
-            <input
-              className={styles.input}
-              type="password"
-              placeholder="Password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              onFocus={handleFocus}
-              autoComplete="off"
-              required
-            />
-            <p className={styles.instruction}>Enter Password</p>
-            <button role="button" type="submit" disabled={loading}>
-              {loading ? <div className={styles.spinner}></div> : "Login"}
-            </button>
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-semibold tracking-tight">ログイン</h1>
+            <p className="text-sm text-muted-foreground">
+              指定された会社の社員だけが利用できます。
+            </p>
+          </div>
+
+          <form aria-label="ログイン" onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="login-email">メールアドレス</Label>
+              <Input
+                id="login-email"
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                autoComplete="email"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="login-password">パスワード</Label>
+              <Input
+                id="login-password"
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                autoComplete="current-password"
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading && <Loader2 className="size-4 animate-spin" />}
+              ログイン
+            </Button>
           </form>
-          <Link href="/register">Sign Up</Link>
+
+          <p className="text-center text-sm text-muted-foreground">
+            アカウントをお持ちでない方は{" "}
+            <Link
+              href="/register"
+              className="font-medium text-primary no-underline underline-offset-4 hover:underline"
+            >
+              新規登録
+            </Link>
+          </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 

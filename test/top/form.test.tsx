@@ -2,138 +2,75 @@ import Form from "@/app/top/form/form";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { login } from "../../app/hooks/login";
 
-let loginSuccessFlag: boolean = false;
+const setNotificationValue = jest.fn();
 
 jest.mock("../../app/hooks/login", () => ({
-  login: jest.fn(() => ({
-    useLogin: jest.fn(async (email, password) => {
-      if (email === "test@example.com" && password === "password123") {
-        loginSuccessFlag = true;
-        return; // ログイン成功
-      }
-      return "error"; // ログイン失敗
-    }),
-  })),
+  login: jest.fn(),
+}));
+jest.mock("../../app/provider/notificationProvider", () => ({
+  useNotificationContext: () => ({ setNotificationValue }),
 }));
 
-describe("Form コンポーネント", () => {
-  beforeEach(() => {
-    loginSuccessFlag = false;
+const mockLogin = (result: unknown) => {
+  const useLogin = jest.fn(async () => result);
+  (login as jest.Mock).mockReturnValue({ useLogin });
+  return useLogin;
+};
+
+const fillForm = (email: string, password: string) => {
+  fireEvent.change(screen.getByLabelText("メールアドレス"), {
+    target: { value: email },
   });
+  fireEvent.change(screen.getByLabelText("パスワード"), {
+    target: { value: password },
+  });
+};
 
-  // 共通のフォーム入力処理をヘルパー関数として定義
-  const fillForm = (email: string, password: string) => {
-    const emailInput = screen.getByPlaceholderText("Email");
-    fireEvent.change(emailInput, { target: { value: email } });
-    expect(emailInput).toHaveValue(email);
+beforeEach(() => {
+  setNotificationValue.mockReset();
+});
 
-    const passwordInput = screen.getByPlaceholderText("Password");
-    fireEvent.change(passwordInput, { target: { value: password } });
-    expect(passwordInput).toHaveValue(password);
-  };
-
-  it("① Form コンポーネントが正しくレンダリングされる", () => {
+describe("ログインの欄", () => {
+  it("ラベル付きのメールアドレスとパスワードの欄、ログインのボタン、新規登録へのリンクを出す", () => {
+    mockLogin(undefined);
     render(<Form />);
 
-    // Welcome メッセージが表示されることを確認
-    expect(screen.getByText("Welcome!")).toBeInTheDocument();
-
-    // サイトの説明文が表示されることを確認
-    expect(
-      screen.getByText(
-        "This site may only be used by employees of the designated company."
-      )
-    ).toBeInTheDocument();
-
-    // 背景画像が正しく表示されることを確認
-    const image = screen.getByAltText("background-image3");
-    expect(image).toBeInTheDocument();
-    expect(image).toHaveAttribute(
-      "src",
-      expect.stringContaining("background-image3.jpeg")
+    expect(screen.getByRole("heading", { name: "ログイン" })).toBeInTheDocument();
+    expect(screen.getByLabelText("メールアドレス")).toHaveAttribute("type", "email");
+    expect(screen.getByLabelText("パスワード")).toHaveAttribute("type", "password");
+    expect(screen.getByRole("button", { name: "ログイン" })).not.toBeDisabled();
+    expect(screen.getByRole("link", { name: "新規登録" })).toHaveAttribute(
+      "href",
+      "/register"
     );
-
-    // フォーム要素が存在することを確認
-    expect(screen.getByRole("form")).toBeInTheDocument();
-
-    // Email フィールドが存在することを確認
-    const emailInput = screen.getByPlaceholderText("Email");
-    expect(emailInput).toBeInTheDocument();
-    expect(emailInput).toHaveAttribute("type", "email");
-
-    // Password フィールドが存在することを確認
-    const passwordInput = screen.getByPlaceholderText("Password");
-    expect(passwordInput).toBeInTheDocument();
-    expect(passwordInput).toHaveAttribute("type", "password");
-
-    // ログインボタンが初期状態で有効であることを確認
-    const loginButton = screen.getByRole("button", { name: "Login" }); // { name: "Login" } により、ボタンの表示テキストが "Login" であることを指定
-    expect(loginButton).toBeInTheDocument();
-    expect(loginButton).not.toBeDisabled(); // ボタンが初期状態で無効でないことを確認
-
-    // Sign Up リンクが存在することを確認
-    const signUpLink = screen.getByText("Sign Up");
-    expect(signUpLink).toBeInTheDocument();
-    expect(signUpLink).toHaveAttribute("href", "/register");
   });
 
-  it("② 渡された className が正しく適用される", () => {
-    const customClass = "custom-class";
-    render(<Form className={customClass} />);
-
-    // 渡された className が適用されていることを確認
-    const formArea = screen.getByRole("form").closest(".form-area");
-    expect(formArea).toHaveClass(customClass);
-  });
-
-  it("③ ユーザーがフォームに入力できる", () => {
-    render(<Form />);
-
-    // フォームに入力
-    fillForm("test@example.com", "password123");
-  });
-
-  it("④ フォームに入力がないとログインできない", async () => {
-    render(<Form />);
-
-    fillForm("", "");
-    await act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Login" }));
-    });
-
-    expect(loginSuccessFlag).toBe(false);
-  });
-
-  it("⑤ 正しい資格情報でログインが成功する", async () => {
-    const useLogin = jest.fn(async (email, password) => {
-      if (email === "test@example.com" && password === "password123") {
-        loginSuccessFlag = true;
-        return;
-      }
-      return "error";
-    });
-    (login as jest.Mock).mockReturnValue({ useLogin });
+  it("入力した値でログインし、成功したら通知を出さない", async () => {
+    const useLogin = mockLogin(undefined);
     render(<Form />);
 
     fillForm("test@example.com", "password123");
-    await act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Login" }));
+    await act(async () => {
+      fireEvent.submit(screen.getByRole("form", { name: "ログイン" }));
     });
 
     expect(useLogin).toHaveBeenCalledWith("test@example.com", "password123");
-    expect(loginSuccessFlag).toBe(true);
+    expect(setNotificationValue).not.toHaveBeenCalled();
   });
 
-  it("⑥ 間違った資格情報でログインが失敗する", async () => {
+  it("ログインに失敗したら、日本語の通知を出してボタンを押せる状態に戻す", async () => {
+    mockLogin(new Error("invalid"));
     render(<Form />);
 
     fillForm("test@example.com", "wrong-password");
-
-    const loginButton = screen.getByRole("button", { name: "Login" });
     await act(async () => {
-      fireEvent.click(loginButton);
+      fireEvent.submit(screen.getByRole("form", { name: "ログイン" }));
     });
 
-    expect(loginSuccessFlag).toBe(false);
+    expect(setNotificationValue).toHaveBeenCalledWith({
+      message: "メールアドレスかパスワードが違います。",
+      color: 1,
+    });
+    expect(screen.getByRole("button", { name: "ログイン" })).not.toBeDisabled();
   });
 });

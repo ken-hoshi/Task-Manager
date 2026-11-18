@@ -1,3 +1,102 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Tailwind のクラスに渡す色・角丸・書体。値は下の :root で決める */
+@theme inline {
+  --font-sans: var(--font-noto-sans-jp), ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-status-todo: var(--status-todo);
+  --color-status-doing: var(--status-doing);
+  --color-status-done: var(--status-done);
+  --color-overdue: var(--overdue);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+/* 色はここだけで決める。地は白と灰色、差し色の青は --primary の1つだけ（台帳 決定5・16） */
+:root {
+  --radius: 0.5rem;
+  --primary: oklch(0.55 0.19 258);
+  --primary-foreground: oklch(0.985 0 0);
+
+  --background: oklch(0.985 0 0);
+  --foreground: oklch(0.2 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0 0);
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: oklch(0.25 0 0);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.52 0 0);
+  --accent: oklch(0.95 0 0);
+  --accent-foreground: oklch(0.25 0 0);
+  --destructive: oklch(0.58 0.22 27);
+  --border: oklch(0.91 0 0);
+  --input: oklch(0.91 0 0);
+  --ring: var(--primary);
+
+  /* 状態を示す色。未着手・進行中・完了と、期限切れ */
+  --status-todo: oklch(0.6 0 0);
+  --status-doing: var(--primary);
+  --status-done: oklch(0.6 0.15 150);
+  --overdue: oklch(0.58 0.22 27);
+
+  --sidebar: oklch(0.97 0 0);
+  --sidebar-foreground: oklch(0.25 0 0);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.93 0 0);
+  --sidebar-accent-foreground: oklch(0.2 0 0);
+  --sidebar-border: oklch(0.91 0 0);
+  --sidebar-ring: var(--primary);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  /*
+   * 移行中だけ使う、ブラウザの既定の見た目。preflight が消す見出しの大きさ・太さと、
+   * リンクの色・下線を、まだ Tailwind に移していない画面のために戻す。
+   * 全画面を移し終えたら、このかたまりを消す（台帳 決定20）
+   */
+  h1 { font-size: 2em; font-weight: bold; }
+  h2 { font-size: 1.5em; font-weight: bold; }
+  h3 { font-size: 1.17em; font-weight: bold; }
+  h4 { font-weight: bold; }
+  a { color: -webkit-link; text-decoration: underline; }
+}
+
 html,
 body {
   text-rendering: optimizeLegibility;
@@ -5,9 +104,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/*
+ * まだ移していない画面の下地。文字の大きさ（vh）と背景色は、その画面が前提にしている。
+ * 画面を移すたびにその画面の側で上書きし、全画面を移し終えたら消す
+ */
 body {
   margin: 0;
-  font-family: "Segoe UI", "Roboto", sans-serif;
+  font-family: var(--font-sans);
   font-size: 2vh;
   background-color: #d0e0e3;
 }
