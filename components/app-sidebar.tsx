@@ -134,7 +134,7 @@ export function AppSidebar({
             プロジェクトはまだありません
           </p>
         ) : (
-          <ul className="space-y-0.5">
+          <ul className="m-0 list-none space-y-0.5 p-0">
             {projects.map((project) => (
               <li key={project.id}>
                 <Button
