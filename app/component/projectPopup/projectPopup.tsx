@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Loader2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,10 +11,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { DateRangeField } from "@/components/date-range-field";
 import { FileDropzone } from "@/components/file-dropzone";
 import { FormField, RequiredNote } from "@/components/form-field";
 import { MultiSelect } from "@/components/multi-select";
+import { keepDialogOpenWhilePopupOpen } from "@/lib/dialog";
 import { cn } from "@/lib/utils";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { getUsers } from "@/app/lib/api/getUser";
@@ -97,6 +99,9 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
   >([]);
   const [tabNumber, setTabNumber] = useState<number[]>([1]);
   const formId = "project-popup-form";
+  // 外すボタンは押すと消えるので、外したあとはフォーカスを足すボタンへ移す
+  const addSmallProjectButtonRef = useRef<HTMLButtonElement>(null);
+  const addTaskGenreButtonRef = useRef<HTMLButtonElement>(null);
 
   const [getLoading, setGetLoading] = useState(true);
   const [postLoading, setPostLoading] = useState(false);
@@ -1306,6 +1311,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         className="flex max-h-[90vh] flex-col gap-0 p-0 sm:max-w-3xl"
         // 外を押しても閉じない（入力を誤って捨てないため。以前と同じ）。Escape と右上の × では閉じる
         onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={keepDialogOpenWhilePopupOpen}
       >
         <DialogHeader className="border-b px-6 py-4">
           <DialogTitle>{projectId ? "プロジェクトを編集" : "プロジェクトを追加"}</DialogTitle>
@@ -1338,7 +1344,11 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
               <h3 id="small-project-heading" className="m-0 text-sm font-medium">
                 小プロジェクト
               </h3>
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div
+                role="group"
+                aria-labelledby="small-project-heading"
+                className="flex flex-wrap items-center gap-1.5"
+              >
                 {smallProjectArray.map((_, index) => {
                   const active = index === displaySmallProjectNameValue;
                   const label = tabLabel(index);
@@ -1352,7 +1362,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                     >
                       <button
                         type="button"
-                        aria-pressed={active}
+                        aria-current={active ? "true" : undefined}
                         onClick={() => setDisplaySmallProjectNameValue(index)}
                         className="max-w-40 truncate rounded-lg px-2.5 py-1 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                       >
@@ -1365,7 +1375,11 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                           size="icon-xs"
                           className="mr-0.5"
                           aria-label={`「${label}」を外す`}
-                          onClick={() => removeSmallProjectNameTab(index)}
+                          onClick={() => {
+                            removeSmallProjectNameTab(index);
+                            // 10個のときは足すボタンが外したあとに描かれるので、描き終えてから移す
+                            setTimeout(() => addSmallProjectButtonRef.current?.focus());
+                          }}
                         >
                           <X className="size-3.5" aria-hidden />
                         </Button>
@@ -1375,6 +1389,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                 })}
                 {smallProjectArray.length < 10 && (
                   <Button
+                    ref={addSmallProjectButtonRef}
                     type="button"
                     variant="outline"
                     size="sm"
@@ -1386,7 +1401,11 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                 )}
               </div>
 
-              <div className="grid gap-4 rounded-lg border p-4 sm:grid-cols-2">
+              <div
+                role="group"
+                aria-label={`${tabLabel(displaySmallProjectNameValue)}の内容`}
+                className="grid gap-4 rounded-lg border p-4 sm:grid-cols-2"
+              >
                 <FormField label="小プロジェクト名" htmlFor="small-project-name">
                   <Input
                     id="small-project-name"
@@ -1409,7 +1428,13 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                 <div className="space-y-2 sm:col-span-2">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-medium">ジャンル</span>
-                    <Button type="button" variant="outline" size="sm" onClick={() => addTaskGenreForm()}>
+                    <Button
+                      ref={addTaskGenreButtonRef}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addTaskGenreForm()}
+                    >
                       <Plus className="size-4" aria-hidden />
                       ジャンルを足す
                     </Button>
@@ -1453,7 +1478,10 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                               variant="ghost"
                               size="icon-sm"
                               aria-label={`「${taskGenreData.taskGenreName.trim() || genreLabel}」を外す`}
-                              onClick={() => removeTaskGenreForm(index)}
+                              onClick={() => {
+                                removeTaskGenreForm(index);
+                                addTaskGenreButtonRef.current?.focus();
+                              }}
                             >
                               <X className="size-4" aria-hidden />
                             </Button>
@@ -1469,12 +1497,10 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                 </div>
 
                 <FormField label="詳細" htmlFor="small-project-details" className="sm:col-span-2">
-                  <textarea
+                  <Textarea
                     id="small-project-details"
                     value={current.details}
                     onChange={(e) => handleDetailsChange(e.target.value)}
-                    rows={3}
-                    className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                   />
                 </FormField>
 

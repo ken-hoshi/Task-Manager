@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,6 +21,7 @@ import {
 import { DateRangeField } from "@/components/date-range-field";
 import { FileDropzone } from "@/components/file-dropzone";
 import { FormField, RequiredNote } from "@/components/form-field";
+import { keepDialogOpenWhilePopupOpen } from "@/lib/dialog";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
@@ -791,6 +793,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         className="flex max-h-[90vh] flex-col gap-0 p-0 sm:max-w-2xl"
         // 外を押しても閉じない（入力を誤って捨てないため。以前と同じ）。Escape と右上の × では閉じる
         onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={keepDialogOpenWhilePopupOpen}
       >
         <DialogHeader className="border-b px-6 py-4">
           <DialogTitle>{taskId ? "タスクを編集" : "タスクを追加"}</DialogTitle>
@@ -887,13 +890,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             </FormField>
 
             <FormField label="詳細" htmlFor="task-details" className="sm:col-span-2">
-              <textarea
-                id="task-details"
-                value={details}
-                onChange={(e) => setDetails(e.target.value)}
-                rows={3}
-                className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              />
+              <Textarea id="task-details" value={details} onChange={(e) => setDetails(e.target.value)} />
             </FormField>
 
             <div className="sm:col-span-2">
