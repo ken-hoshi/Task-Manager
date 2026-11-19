@@ -9,7 +9,7 @@ import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import classNames from "classnames";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import DeleteAccountConfirmModal from "../deleteAccountConfirmModal/deleteAccountConfirmModal";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import PasswordEditForm from "../passwordEditForm/passwordEditForm";
 import Profile from "../profile/profile";
 import UserDataEditForm from "../userDataEditForm/userDataEditForm";
@@ -210,10 +210,14 @@ const SuspenseAccount: React.FC = () => {
               </div>
             </div>
             {isModalOpen && (
-              <DeleteAccountConfirmModal
-                isOpen={isModalOpen}
+              <ConfirmDialog
+                title="アカウントを削除しますか？"
+                description="ログインできなくなり、元に戻せません。"
+                confirmLabel="削除する"
+                pendingLabel="削除中"
+                destructive
                 onConfirm={handleAccountDelete}
-                closeModal={closeModal}
+                onCancel={closeModal}
               />
             )}
           </div>

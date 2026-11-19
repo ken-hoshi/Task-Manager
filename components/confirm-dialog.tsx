@@ -1,0 +1,79 @@
+"use client";
+
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+interface ConfirmDialogProps {
+  title: string;
+  description?: string;
+  // 実行のボタンの文言（例：削除する）
+  confirmLabel: string;
+  // 実行中のボタンの文言（例：削除中）
+  pendingLabel?: string;
+  // 削除のような取り返しのつかない操作なら true。実行のボタンを赤にする
+  destructive?: boolean;
+  onConfirm: () => void | Promise<void>;
+  onCancel: () => void;
+}
+
+// 「本当に〜しますか」と確かめるダイアログ。出している間だけ描く（呼び出す側が条件付きで描く）。
+// 実行中はボタンを押せなくし、二重に実行しないようにする
+export function ConfirmDialog({
+  title,
+  description,
+  confirmLabel,
+  pendingLabel,
+  destructive = false,
+  onConfirm,
+  onCancel,
+}: ConfirmDialogProps) {
+  const [pending, setPending] = useState(false);
+
+  const handleConfirm = async () => {
+    if (pending) return;
+    setPending(true);
+    try {
+      await onConfirm();
+    } finally {
+      setPending(false);
+    }
+  };
+
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !pending) onCancel();
+      }}
+    >
+      <DialogContent showCloseButton={false} className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={onCancel} disabled={pending}>
+            キャンセル
+          </Button>
+          <Button
+            variant={destructive ? "destructive" : "default"}
+            onClick={handleConfirm}
+            disabled={pending}
+          >
+            {pending && <Loader2 className="size-4 animate-spin" aria-hidden />}
+            {pending ? pendingLabel ?? confirmLabel : confirmLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

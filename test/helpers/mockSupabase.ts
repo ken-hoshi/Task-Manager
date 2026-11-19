@@ -19,6 +19,7 @@ export const setResponses = (table: string, ...results: Result[]) => {
 
 export const resetSupabaseMock = () => {
   supabaseCalls.length = 0;
+  storageCalls.length = 0;
   for (const table of Object.keys(responses)) delete responses[table];
 };
 
@@ -67,4 +68,24 @@ const from = (table: string) => {
   return builder;
 };
 
-export const mockClient = { from };
+// ストレージ（添付ファイル）の差し替え。呼ばれた順に記録し、upload は渡したパスを返す
+export const storageCalls: { bucket: string; op: string; args: unknown[] }[] = [];
+
+const storage = {
+  from: (bucket: string) => ({
+    upload: async (...args: unknown[]) => {
+      storageCalls.push({ bucket, op: "upload", args });
+      return { data: { path: args[0] }, error: null };
+    },
+    remove: async (...args: unknown[]) => {
+      storageCalls.push({ bucket, op: "remove", args });
+      return { data: [], error: null };
+    },
+    download: async (...args: unknown[]) => {
+      storageCalls.push({ bucket, op: "download", args });
+      return { data: new Blob(["x"]), error: null };
+    },
+  }),
+};
+
+export const mockClient = { from, storage };
