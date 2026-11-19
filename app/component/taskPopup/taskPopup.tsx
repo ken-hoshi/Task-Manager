@@ -1,14 +1,30 @@
-import React, { useEffect, useRef, useState } from "react";
-import styles from "./taskPopup.module.css";
+import React, { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { DateRangeField } from "@/components/date-range-field";
+import { FileDropzone } from "@/components/file-dropzone";
+import { cn } from "@/lib/utils";
 import { clientSupabase } from "@/app/lib/supabase/client";
-import Select, { SingleValue } from "react-select";
-import { selectBoxStyles } from "./selectBoxStyles";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import { useFlashDisplayContext } from "@/app/provider/flashDisplayProvider";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import classNames from "classnames";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
 import { fetchAttachedFiles } from "@/app/lib/api/fetchAttachedFiles";
 import { getProjectData } from "@/app/lib/api/getProjectData";
@@ -54,6 +70,9 @@ interface Option {
   label: string;
 }
 
+// 選ぶ欄が渡す値（以前の react-select の SingleValue と同じ形）
+type SingleValue<T> = T | null;
+
 const TaskPopup: React.FC<TaskPopupProps> = ({
   workspaceId,
   onClose,
@@ -87,7 +106,6 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   );
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [beforeChangeFiles, setBeforeChangeFiles] = useState<File[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [getLoading, setGetLoading] = useState(true);
   const [postLoading, setPostLoading] = useState(false);
@@ -98,9 +116,10 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 入力欄で Enter を押して送信してしまうのを防ぐ。ボタンや選ぶ欄は Enter で操作できるよう止めない
       if (
         e.key === "Enter" &&
-        (e.target as HTMLElement).tagName !== "TEXTAREA"
+        (e.target as HTMLElement).tagName === "INPUT"
       ) {
         e.stopPropagation();
         e.preventDefault();
@@ -229,7 +248,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           console.error("Fetch Task Details", error);
           onClose();
           setNotificationValue({
-            message: "Couldn't get the Task Data.",
+            message: "タスクのデータを読めませんでした。",
             color: 1,
           });
         }
@@ -343,7 +362,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           console.error("Fetch Task Details", error);
           onClose();
           setNotificationValue({
-            message: "Couldn't get the Task Data.",
+            message: "タスクのデータを読めませんでした。",
             color: 1,
           });
         }
@@ -396,7 +415,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           console.error("Fetch Task Details", error);
           onClose();
           setNotificationValue({
-            message: "Couldn't get the Task Data.",
+            message: "タスクのデータを読めませんでした。",
             color: 1,
           });
         }
@@ -452,7 +471,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           console.error("Fetch Task Details", error);
           onClose();
           setNotificationValue({
-            message: "Couldn't get the Task Data.",
+            message: "タスクのデータを読めませんでした。",
             color: 1,
           });
         }
@@ -470,9 +489,6 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   };
 
   const projectOptions = projects
-    .filter(
-      (project) => !selectedProject || selectedProject.value !== project.id
-    )
     .map((project) => ({
       value: project.id,
       label: project.project_name,
@@ -487,10 +503,6 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   };
 
   const smallProjectOptions = smallProjects
-    .filter(
-      (smallProject) =>
-        !selectedSmallProject || selectedSmallProject.value !== smallProject.id
-    )
     .map((smallProject) => ({
       value: smallProject.id,
       label: smallProject.small_project_name,
@@ -501,7 +513,6 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   };
 
   const userOptions = smallProjectMember
-    .filter((user) => !selectedUser || selectedUser.value !== user.id)
     .map((user) => ({
       value: user.id,
       label: user.name,
@@ -532,10 +543,6 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   };
 
   const taskGenreOptions = taskGenreDataArray
-    .filter(
-      (taskGenre) =>
-        !selectedTaskGenre || selectedTaskGenre.value !== taskGenre.id
-    )
     .map((taskGenre) => ({
       value: taskGenre.id,
       label: taskGenre.taskGenreName,
@@ -554,27 +561,9 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
-  };
-
   const deleteAttachedFile = (index: number) => {
     const remainFiles = selectedFiles.filter((file, i) => i !== index);
     setSelectedFiles(remainFiles);
-  };
-
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const files = Array.from(event.dataTransfer.files);
-    setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
   };
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
@@ -707,7 +696,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
         addItem({ target: 1, id: taskId });
         setNotificationValue({
-          message: "Task was updated !",
+          message: "タスクを更新しました。",
           color: 0,
         });
         setPostLoading(false);
@@ -772,7 +761,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
 
         addItem({ target: 1, id: taskId });
         setNotificationValue({
-          message: "Task was added !",
+          message: "タスクを追加しました。",
           color: 0,
         });
         setPostLoading(false);
@@ -782,7 +771,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
     } catch (error) {
       console.error(taskId ? "Error Update Task " : "Error Add Task", error);
       setNotificationValue({
-        message: taskId ? "Couldn't update task." : "Couldn't add task.",
+        message: taskId ? "タスクを更新できませんでした。" : "タスクを追加できませんでした。",
         color: 1,
       });
       setPostLoading(false);
@@ -790,220 +779,211 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
     }
   };
 
+  const formId = "task-popup-form";
+
   return (
-    <div className={styles.popup}>
-      <div className={styles[`popup-inner`]}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !postLoading) onClose();
+      }}
+    >
+      <DialogContent
+        className="flex max-h-[90vh] flex-col gap-0 p-0 sm:max-w-2xl"
+        // 外を押しても閉じない（入力を誤って捨てないため。以前と同じ）。Escape と右上の × では閉じる
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        <DialogHeader className="border-b px-6 py-4">
+          <DialogTitle>{taskId ? "タスクを編集" : "タスクを追加"}</DialogTitle>
+          <DialogDescription>
+            <span aria-hidden>
+              <span className="text-destructive">*</span> の付いた欄は必須です。
+            </span>
+            <span className="sr-only">（必須）の欄は入力が必要です。</span>
+          </DialogDescription>
+        </DialogHeader>
+
         {getLoading ? (
-          <div className={styles["spinner-container"]}>
-            <div className={styles.spinner}></div>
-            <div className={styles.loading}>Loading...</div>
+          <div role="status" className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
+            <Loader2 className="size-5 animate-spin" aria-hidden />
+            読み込み中
           </div>
         ) : (
-          <div className={styles[`popup-inner-area`]}>
-            <div className={styles[`title-area`]}>
-              <h1>{taskId ? "Edit Task" : "Add Task"}</h1>
-              <div className={styles["required-form"]}>※ → Required Form</div>
+          <form
+            id={formId}
+            onSubmit={handleSubmit}
+            className="grid flex-1 gap-4 overflow-y-auto px-6 py-5 sm:grid-cols-2"
+          >
+            <Field label="タスク名" htmlFor="task-name" required className="sm:col-span-2">
+              <Input
+                id="task-name"
+                value={taskName}
+                onChange={(e) => setTaskName(e.target.value)}
+                required
+              />
+            </Field>
+
+            <Field label="プロジェクト" htmlFor="task-project" required>
+              <OptionSelect
+                id="task-project"
+                options={projectOptions}
+                value={selectedProject}
+                onChange={handleProjectChange}
+                placeholder="プロジェクトを選ぶ"
+                required
+              />
+            </Field>
+            <Field label="小プロジェクト" htmlFor="task-small-project" required>
+              <OptionSelect
+                id="task-small-project"
+                options={smallProjectOptions}
+                value={selectedSmallProject}
+                onChange={handleSmallProjectChange}
+                placeholder="小プロジェクトを選ぶ"
+                required
+              />
+            </Field>
+
+            <Field label="担当者" htmlFor="task-user" required>
+              <OptionSelect
+                id="task-user"
+                options={userOptions}
+                value={selectedUser}
+                onChange={handleUserChange}
+                placeholder="担当者を選ぶ"
+                required
+              />
+            </Field>
+            <Field label="ジャンル" htmlFor="task-genre">
+              <OptionSelect
+                id="task-genre"
+                options={taskGenreOptions}
+                value={selectedTaskGenre}
+                onChange={handleTaskGenreChange}
+                placeholder={taskGenreOptions.length > 0 ? "ジャンルを選ぶ" : "ジャンルはありません"}
+                disabled={taskGenreOptions.length === 0}
+              />
+            </Field>
+
+            <Field label="期間" htmlFor="task-period" required>
+              <DateRangeField
+                id="task-period"
+                start={selectedStartDate}
+                end={selectedDeadlineDate}
+                onChange={handleDateRangeChange}
+                required
+              />
+            </Field>
+            <Field label="日数" htmlFor="task-days" required>
+              <Input
+                id="task-days"
+                type="number"
+                name="numberOfDays"
+                step="0.1"
+                min="0"
+                value={numberOfDays !== undefined ? numberOfDays : ""}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  setNumberOfDays(inputValue ? Number(inputValue) : undefined);
+                }}
+                required
+              />
+            </Field>
+
+            <Field label="詳細" htmlFor="task-details" className="sm:col-span-2">
+              <textarea
+                id="task-details"
+                value={details}
+                onChange={(e) => setDetails(e.target.value)}
+                rows={3}
+                className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              />
+            </Field>
+
+            <div className="sm:col-span-2">
+              <FileDropzone
+                files={selectedFiles}
+                onAdd={(files) => setSelectedFiles((prevFiles) => [...prevFiles, ...files])}
+                onRemove={deleteAttachedFile}
+                note="1ファイル 3MB まで"
+              />
             </div>
-
-            <form onSubmit={handleSubmit}>
-              <div>
-                <input
-                  type="text"
-                  value={taskName}
-                  onChange={(e) => setTaskName(e.target.value)}
-                  placeholder="Task Name"
-                  required
-                  className={styles[`task-name`]}
-                />
-                <p className={styles.instruction}>※Enter Task Name</p>
-              </div>
-
-              <div className={styles["form-container"]}>
-                <div>
-                  <Select
-                    options={projectOptions}
-                    value={selectedProject}
-                    onChange={handleProjectChange}
-                    placeholder="-- Project --"
-                    required
-                    styles={selectBoxStyles}
-                  />
-                  <p className={styles.instruction}>※Select Project</p>
-                </div>
-
-                <div>
-                  <Select
-                    options={smallProjectOptions}
-                    value={selectedSmallProject}
-                    onChange={handleSmallProjectChange}
-                    placeholder="-- Small Project --"
-                    required
-                    styles={selectBoxStyles}
-                  />
-                  <p className={styles.instruction}>Select Small Project</p>
-                </div>
-              </div>
-
-              <div className={styles["form-container"]}>
-                <div>
-                  <Select
-                    options={userOptions}
-                    value={selectedUser}
-                    onChange={handleUserChange}
-                    placeholder="-- User --"
-                    required
-                    styles={selectBoxStyles}
-                  />
-                  <p className={styles.instruction}>※Select Assigned User</p>
-                </div>
-
-                <div>
-                  <Select
-                    options={taskGenreOptions}
-                    value={selectedTaskGenre}
-                    onChange={handleTaskGenreChange}
-                    placeholder="-- Task Genre --"
-                    styles={selectBoxStyles}
-                  />
-                  <p className={styles.instruction}>Select Task Genre</p>
-                </div>
-              </div>
-              <div className={styles["form-container"]}>
-                <div>
-                  <DatePicker
-                    selected={selectedStartDate}
-                    onChange={handleDateRangeChange}
-                    startDate={selectedStartDate}
-                    endDate={selectedDeadlineDate}
-                    selectsRange
-                    dateFormat="yyyy/MM/dd"
-                    placeholderText="Period"
-                    className={styles[`date-picker`]}
-                    calendarClassName={styles[`custom-calendar`]}
-                    showIcon
-                    required
-                  />
-                  <p className={styles.instruction}>
-                    ※Select Start Date & Deadline Date
-                  </p>
-                </div>
-                <div>
-                  <input
-                    type="number"
-                    name="numberOfDays"
-                    step="0.1"
-                    min="0"
-                    placeholder="Number of Days"
-                    className={styles[`number-of-days-form`]}
-                    value={numberOfDays !== undefined ? numberOfDays : ""}
-                    onChange={(e) => {
-                      const inputValue = e.target.value;
-                      setNumberOfDays(
-                        inputValue ? Number(inputValue) : undefined
-                      );
-                    }}
-                    required
-                  />
-                  <p className={styles.instruction}>※Enter Number of Days</p>
-                </div>
-              </div>
-
-              <div>
-                <textarea
-                  value={details}
-                  onChange={(e) => setDetails(e.target.value)}
-                  placeholder="Details"
-                ></textarea>
-                <p className={styles.instruction}>Enter Task Details</p>
-              </div>
-
-              <div
-                className={styles[`attached-file-area`]}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-              >
-                {selectedFiles.length === 0 ? (
-                  <div className={styles["none-attached-file-area"]}>
-                    <p>Drag & Drop Files</p>
-                    <div className={styles["clip-icon-container"]}>
-                      <span
-                        className={classNames(
-                          "material-symbols-outlined",
-                          styles[`clip-icon`]
-                        )}
-                      >
-                        attach_file
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles["display-attached-file-area"]}>
-                    {selectedFiles.map((file: any, index) => (
-                      <div
-                        className={styles["display-attached-file-container"]}
-                        key={index}
-                      >
-                        <div className={styles["file-info"]}>
-                          <span
-                            className={classNames(
-                              "material-symbols-outlined",
-                              styles[`attached-file-icon`]
-                            )}
-                          >
-                            upload_file
-                          </span>
-                          <span
-                            className={classNames(
-                              "material-symbols-outlined",
-                              styles[`cancel-icon`]
-                            )}
-                            onClick={() => deleteAttachedFile(index)}
-                          >
-                            cancel
-                          </span>
-                        </div>
-                        <p>{file.name}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className={styles[`button-container`]}>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    Select Files
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    style={{ display: "none" }}
-                    onChange={handleFileChange}
-                  />
-                </div>
-              </div>
-              <p className={styles.attention}>Maximum file size is 3MB</p>
-
-              <div className={styles[`button-area`]}>
-                <button className={styles.cancel} onClick={() => onClose()}>
-                  Cancel
-                </button>
-                <button className={styles.add} type="submit">
-                  {postLoading ? (
-                    <div className={styles[`button-spinner`]}></div>
-                  ) : taskId ? (
-                    "Update"
-                  ) : (
-                    "Add"
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
+          </form>
         )}
-      </div>
-    </div>
+
+        <DialogFooter className="mx-0 mb-0 px-6">
+          <Button type="button" variant="outline" onClick={() => onClose()} disabled={postLoading}>
+            キャンセル
+          </Button>
+          <Button type="submit" form={formId} disabled={getLoading || postLoading}>
+            {postLoading && <Loader2 className="size-4 animate-spin" aria-hidden />}
+            {taskId ? "更新する" : "追加する"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// 欄のラベルと中身。必須なら * を付ける
+const Field: React.FC<{
+  label: string;
+  htmlFor: string;
+  required?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}> = ({ label, htmlFor, required, className, children }) => (
+  <div className={cn("space-y-1.5", className)}>
+    <Label htmlFor={htmlFor}>
+      {label}
+      {required && (
+        <span className="text-destructive" aria-hidden>
+          *
+        </span>
+      )}
+      {required && <span className="sr-only">（必須）</span>}
+    </Label>
+    {children}
+  </div>
+);
+
+// 1つだけ選ぶ欄。選んだ値は { value, label } で受け渡す（以前の react-select と同じ形）
+const OptionSelect: React.FC<{
+  id: string;
+  options: Option[];
+  value: Option | null | undefined;
+  onChange: (option: Option | null) => void;
+  placeholder: string;
+  required?: boolean;
+  disabled?: boolean;
+}> = ({ id, options, value, onChange, placeholder, required, disabled }) => {
+  // 選んでいる値が選択肢に無いとき（例：作成で開いた直後の担当者は自分だが、選択肢は小プロジェクトを選ぶまで空）も、
+  // 欄に名前が出るように選択肢に足す
+  const items =
+    value && !options.some((option) => option.value === value.value)
+      ? [value, ...options]
+      : options;
+
+  return (
+    <Select
+      value={value ? String(value.value) : ""}
+      onValueChange={(next) =>
+        onChange(items.find((option) => String(option.value) === next) ?? null)
+      }
+      required={required}
+      disabled={disabled}
+    >
+      <SelectTrigger id={id} className="w-full">
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {items.map((option) => (
+          <SelectItem key={option.value} value={String(option.value)}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 };
 

@@ -9,7 +9,7 @@ import Image from "next/image";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
-import DeleteConfirmModal from "@/app/component/deleteConfirmModal/deleteConfirmModal";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
 import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 
@@ -279,9 +279,14 @@ const Wiki: React.FC<WikiProps> = ({
   return (
     <>
       {deleteModalOpen && (
-        <DeleteConfirmModal
+        <ConfirmDialog
+          title="この Wiki のページを削除しますか？"
+          description="元に戻せません。"
+          confirmLabel="削除する"
+          pendingLabel="削除中"
+          destructive
           onConfirm={handleDeleteWikiPage}
-          closeModal={closeModal}
+          onCancel={closeModal}
         />
       )}
       <div className={styles[`wiki-page-area`]}>

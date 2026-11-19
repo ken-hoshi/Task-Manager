@@ -3,7 +3,7 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { clientSupabase } from "@/app/lib/supabase/client";
-import DeleteConfirmModal from "../deleteConfirmModal/deleteConfirmModal";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
@@ -205,7 +205,19 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
         <Trash2 className="size-4" aria-hidden />
       </Button>
       {isModalOpen && (
-        <DeleteConfirmModal onConfirm={handleDelete} closeModal={closeModal} />
+        <ConfirmDialog
+          title={targetName ? `「${targetName}」を削除しますか？` : `${kind}を削除しますか？`}
+          description={
+            kind === "プロジェクト"
+              ? "小プロジェクト・タスク・添付ファイルもすべて消えます。元に戻せません。"
+              : "添付ファイルも消えます。元に戻せません。"
+          }
+          confirmLabel="削除する"
+          pendingLabel="削除中"
+          destructive
+          onConfirm={handleDelete}
+          onCancel={closeModal}
+        />
       )}
     </>
   );
