@@ -1,40 +1,33 @@
-import classNames from "classnames";
-import { AttachedFileData, CssModule } from "./types";
+import { Download } from "lucide-react";
+import { AttachedFileData } from "./types";
 
 interface AttachedFileListProps {
   fileDataArray: AttachedFileData[] | undefined;
-  styles: CssModule;
 }
 
-// 詳細の行の「Attached File」欄。ファイル名でダウンロードできるリンクの一覧
+// 詳細の「添付ファイル」欄。ファイル名を押すとダウンロードできる
 const AttachedFileList: React.FC<AttachedFileListProps> = ({
   fileDataArray,
-  styles,
 }) => {
   if (!fileDataArray || fileDataArray.length === 0) {
-    return <>No Attached File</>;
+    return <p className="m-0 text-muted-foreground">添付ファイルはありません</p>;
   }
 
   return (
-    <>
+    <ul className="m-0 list-none space-y-1 p-0">
       {fileDataArray.map((fileData, index) => (
-        <div className={styles["display-attachedFile-container"]} key={index}>
-          <div className={styles["file-info"]}>
-            <a href={fileData.url || "#"} download={fileData.file.name}>
-              <span
-                className={classNames(
-                  "material-symbols-outlined",
-                  styles.downloadIcon
-                )}
-              >
-                download
-              </span>
-            </a>
-          </div>
-          <p>{fileData.file.name}</p>
-        </div>
+        <li key={index}>
+          <a
+            href={fileData.url || "#"}
+            download={fileData.file.name}
+            className="inline-flex items-center gap-1.5 text-primary no-underline hover:underline"
+          >
+            <Download className="size-4" aria-hidden />
+            {fileData.file.name}
+          </a>
+        </li>
       ))}
-    </>
+    </ul>
   );
 };
 

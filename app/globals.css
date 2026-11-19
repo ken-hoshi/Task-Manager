@@ -27,6 +27,7 @@
   --color-status-doing: var(--status-doing);
   --color-status-done: var(--status-done);
   --color-overdue: var(--overdue);
+  --color-deadline-near: var(--deadline-near);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -64,7 +65,8 @@
   --input: oklch(0.91 0 0);
   --ring: var(--primary);
 
-  /* 状態を示す色。未着手・進行中・完了と、期限切れ */
+  /* 状態を示す色。未着手・進行中・完了と、期限切れ・期限が近い（2日以内） */
+  --deadline-near: oklch(0.62 0.16 55);
   --status-todo: oklch(0.6 0 0);
   --status-doing: var(--primary);
   --status-done: oklch(0.6 0.15 150);

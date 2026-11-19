@@ -1,16 +1,19 @@
 import React, { useState } from "react";
-import styles from "./addButton.module.css";
-import classNames from "classnames";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import ProjectPopup from "../projectPopup/projectPopup";
 import TaskPopup from "../taskPopup/taskPopup";
 
 interface AddButtonProps {
+  // 0: プロジェクトを追加、1: タスクを追加
   target: number;
   userId: number;
   workspaceId?: number;
   projectId?: number;
   smallProjectId?: number;
-  taskGenreId?:number;
+  taskGenreId?: number;
+  // 文字を出すときの見出し。省くとアイコンだけのボタンになる
+  label?: string;
 }
 
 const AddButton: React.FC<AddButtonProps> = ({
@@ -20,6 +23,7 @@ const AddButton: React.FC<AddButtonProps> = ({
   projectId,
   smallProjectId,
   taskGenreId,
+  label,
 }) => {
   const [showProjectPopup, setShowProjectPopup] = useState(false);
   const [showTaskPopup, setShowTaskPopup] = useState(false);
@@ -32,15 +36,19 @@ const AddButton: React.FC<AddButtonProps> = ({
     setShowTaskPopup(!showTaskPopup);
   };
 
+  const name = target === 0 ? "プロジェクトを追加" : "タスクを追加";
+
   return (
-    <div>
-      <span
-        className={classNames("material-symbols-outlined", styles.add)}
-        onClick={{ 0: toggleProjectPopup, 1: toggleTaskPopup }[target]}
+    <>
+      <Button
+        variant={label ? "outline" : "ghost"}
+        size={label ? "sm" : "icon-sm"}
+        aria-label={label ? undefined : name}
+        onClick={target === 0 ? toggleProjectPopup : toggleTaskPopup}
       >
-        {" "}
-        add{" "}
-      </span>
+        <Plus className="size-4" aria-hidden />
+        {label}
+      </Button>
       {showProjectPopup && (
         <ProjectPopup
           onClose={toggleProjectPopup}
@@ -56,10 +64,10 @@ const AddButton: React.FC<AddButtonProps> = ({
           projectId={projectId || null}
           smallProjectId={smallProjectId || null}
           taskId={null}
-          taskGenreId={taskGenreId||null}
+          taskGenreId={taskGenreId || null}
         />
       )}
-    </div>
+    </>
   );
 };
 

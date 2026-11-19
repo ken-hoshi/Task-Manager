@@ -1011,7 +1011,6 @@ const TaskList: React.FC<TaskListProps> = ({
                                           <dd>
                                             <TaskGenreSummary
                                               taskGenre={taskGenreMatchedTaskId?.taskGenre}
-                                              styles={styles}
                                             />
                                           </dd>
                                         </div>
@@ -1024,7 +1023,6 @@ const TaskList: React.FC<TaskListProps> = ({
                                               taskGenre={taskGenreMatchedTaskId?.taskGenre}
                                               userId={userId}
                                               onReset={resultForm.handleResetResult}
-                                              styles={styles}
                                             />
                                             {userId ===
                                               task.assigned_user_id && (
@@ -1179,7 +1177,6 @@ const TaskList: React.FC<TaskListProps> = ({
                                           >
                                             <AttachedFileList
                                               fileDataArray={attachedFileMatchedTaskId?.fileDataArray}
-                                              styles={styles}
                                             />
                                           </dd>
                                         </div>
