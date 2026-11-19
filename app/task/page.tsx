@@ -14,7 +14,14 @@ import { fetchTasksData } from "../lib/api/fetchTasksData";
 import { getStatus } from "../lib/api/getStatus";
 import Loading from "../component/loading/loading";
 import TaskTable from "./taskTable/taskTable";
-import ProjectsArea from "./projectsArea/projectsArea";
+import ProjectList, {
+  type AttachedFiles,
+  type Project,
+  type SmallProject,
+  type SmallProjectMembers,
+  type SmallProjectStatus,
+  type SmallProjectTaskGenres,
+} from "./projectList/projectList";
 import RobotButton from "../component/robotButton/robotButton";
 import { useSessionTimeout } from "../hooks/sessionTimeout";
 import { postMailNotifications } from "../lib/postMailNotifications";
@@ -33,60 +40,24 @@ interface StatusProps {
   status: string;
 }
 
-interface SmallProjectMembersProps {
-  smallProjectId: number;
-  membersDataArray: {
-    id: number;
-    name: string;
-  }[];
-}
-
-interface SmallProjectStatusProps {
-  smallProjectId: number;
-  projectId: number;
-  notStarted: number;
-  processing: number;
-  completed: number;
-}
-
-interface SmallProjectTaskGenreProps {
-  smallProjectId: number;
-  taskGenreDataArray: {
-    taskGenreId: number;
-    taskGenreName: string;
-    numberOfPersons: number;
-    startDate: string;
-    deadlineDate: string;
-    numberOfDays: number;
-  }[];
-}
-
-interface AttachedFileProps {
-  id: number;
-  fileDataArray: {
-    file: File;
-    url: string;
-  }[];
-}
-
 const Task: React.FC = () => {
   const [userId, setUserId] = useState(0);
   const [loading, setLoading] = useState(true);
   const [statuses, setStatuses] = useState<StatusProps[]>([]);
 
-  const [projectDataArray, setProjectDataArray] = useState<any[]>([]);
-  const [smallProjectDataArray, setSmallProjectDataArray] = useState<any[]>([]);
+  const [projectDataArray, setProjectDataArray] = useState<Project[]>([]);
+  const [smallProjectDataArray, setSmallProjectDataArray] = useState<SmallProject[]>([]);
 
   const [smallProjectMemberDataArray, setSmallProjectMemberDataArray] =
-    useState<SmallProjectMembersProps[]>([]);
+    useState<SmallProjectMembers[]>([]);
   const [smallProjectStatusDataArray, setSmallProjectStatusDataArray] =
-    useState<SmallProjectStatusProps[]>([]);
+    useState<SmallProjectStatus[]>([]);
 
   const [smallProjectTaskGenreArray, setSmallProjectTaskGenreArray] = useState<
-    SmallProjectTaskGenreProps[]
+    SmallProjectTaskGenres[]
   >([]);
   const [attachedFileDataArray, setAttachedFileDataArray] = useState<
-    AttachedFileProps[]
+    AttachedFiles[]
   >([]);
 
   const [myTasks, setMyTasks] = useState<any[]>([]);
@@ -319,18 +290,16 @@ const Task: React.FC = () => {
       ) : (
         <div className={styles[`task-container`]}>
           <h1 className="sr-only">タスク</h1>
-          <div className={styles.task}>
-            <ProjectsArea
-              projectDataArray={projectDataArray}
-              smallProjectDataArray={smallProjectDataArray}
-              smallProjectMemberDataArray={smallProjectMemberDataArray}
-              smallProjectStatusDataArray={smallProjectStatusDataArray}
-              smallProjectTaskGenreArray={smallProjectTaskGenreArray}
-              attachedFileDataArray={attachedFileDataArray}
-              userId={userId}
-            />
-
-            <div className="mx-auto max-w-6xl space-y-6 px-6 pt-6 pb-24">
+          <div className="mx-auto max-w-6xl space-y-6 px-6 pt-6 pb-24">
+              <ProjectList
+                projectDataArray={projectDataArray}
+                smallProjectDataArray={smallProjectDataArray}
+                smallProjectMemberDataArray={smallProjectMemberDataArray}
+                smallProjectStatusDataArray={smallProjectStatusDataArray}
+                smallProjectTaskGenreArray={smallProjectTaskGenreArray}
+                attachedFileDataArray={attachedFileDataArray}
+                userId={userId}
+              />
               <TaskTable
                 variant="mine"
                 title="自分のタスク"
@@ -347,7 +316,6 @@ const Task: React.FC = () => {
                 userId={userId}
                 statuses={statuses}
               />
-            </div>
           </div>
           <div className={styles[`robot-button-container`]}>
             <RobotButton />
