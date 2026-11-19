@@ -169,6 +169,17 @@ describe("TaskPopup（作成）", () => {
     expect(opsOf("tasks").some(([op]) => op === "insert")).toBe(false);
   });
 
+  it("カレンダーを開いているときの Escape は、カレンダーを閉じるだけでポップアップは残す", async () => {
+    await renderPopup();
+    const period = screen.getByRole("textbox", { name: /期間/ });
+    fireEvent.click(period);
+
+    fireEvent.keyDown(period, { key: "Escape" });
+
+    expect(screen.queryByRole("dialog", { name: "日付を選ぶ" })).not.toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it("選んでいる値も、選択肢に出る", async () => {
     await renderPopup();
 
