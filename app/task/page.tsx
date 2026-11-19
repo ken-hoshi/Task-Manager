@@ -14,7 +14,7 @@ import { fetchTasksData } from "../lib/api/fetchTasksData";
 import { getStatus } from "../lib/api/getStatus";
 import Loading from "../component/loading/loading";
 import TaskTable from "./taskTable/taskTable";
-import ProjectsArea from "./projectsArea/projectsArea";
+import ProjectList from "./projectList/projectList";
 import RobotButton from "../component/robotButton/robotButton";
 import { useSessionTimeout } from "../hooks/sessionTimeout";
 import { postMailNotifications } from "../lib/postMailNotifications";
@@ -319,18 +319,16 @@ const Task: React.FC = () => {
       ) : (
         <div className={styles[`task-container`]}>
           <h1 className="sr-only">タスク</h1>
-          <div className={styles.task}>
-            <ProjectsArea
-              projectDataArray={projectDataArray}
-              smallProjectDataArray={smallProjectDataArray}
-              smallProjectMemberDataArray={smallProjectMemberDataArray}
-              smallProjectStatusDataArray={smallProjectStatusDataArray}
-              smallProjectTaskGenreArray={smallProjectTaskGenreArray}
-              attachedFileDataArray={attachedFileDataArray}
-              userId={userId}
-            />
-
-            <div className="mx-auto max-w-6xl space-y-6 px-6 pt-6 pb-24">
+          <div className="mx-auto max-w-6xl space-y-6 px-6 pt-6 pb-24">
+              <ProjectList
+                projectDataArray={projectDataArray}
+                smallProjectDataArray={smallProjectDataArray}
+                smallProjectMemberDataArray={smallProjectMemberDataArray}
+                smallProjectStatusDataArray={smallProjectStatusDataArray}
+                smallProjectTaskGenreArray={smallProjectTaskGenreArray}
+                attachedFileDataArray={attachedFileDataArray}
+                userId={userId}
+              />
               <TaskTable
                 variant="mine"
                 title="自分のタスク"
@@ -347,7 +345,6 @@ const Task: React.FC = () => {
                 userId={userId}
                 statuses={statuses}
               />
-            </div>
           </div>
           <div className={styles[`robot-button-container`]}>
             <RobotButton />

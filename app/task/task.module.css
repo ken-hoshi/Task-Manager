@@ -3,12 +3,6 @@
   min-height: 100%;
 }
 
-/* 上のヘッダーが無くなったので、上の余白はヘッダーの分を除いた */
-.task {
-  position: relative;
-  padding-top: 3vh;
-}
-
 .robot-button-container {
   position: absolute;
   bottom: 2vh;
