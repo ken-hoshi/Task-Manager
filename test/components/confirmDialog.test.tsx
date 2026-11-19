@@ -27,6 +27,7 @@ describe("ConfirmDialog", () => {
     render(
       <ConfirmDialog
         title="削除しますか？"
+        description="元に戻せません。"
         confirmLabel="削除する"
         pendingLabel="削除中"
         destructive
@@ -53,11 +54,59 @@ describe("ConfirmDialog", () => {
   it("Escape で閉じると onCancel を呼ぶ", () => {
     const onCancel = jest.fn();
     render(
-      <ConfirmDialog title="削除しますか？" confirmLabel="削除する" onConfirm={jest.fn()} onCancel={onCancel} />
+      <ConfirmDialog
+        title="削除しますか？"
+        description="元に戻せません。"
+        confirmLabel="削除する"
+        onConfirm={jest.fn()}
+        onCancel={onCancel}
+      />
     );
 
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
 
     expect(onCancel).toHaveBeenCalled();
+  });
+
+  it("外を押しても閉じない", async () => {
+    const onCancel = jest.fn();
+    render(
+      <ConfirmDialog
+        title="削除しますか？"
+        description="元に戻せません。"
+        confirmLabel="削除する"
+        onConfirm={jest.fn()}
+        onCancel={onCancel}
+      />
+    );
+
+    // Radix は外を押したことを document の pointerdown で知る。監視は描いた次の拍から始まるので、1拍待つ
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    fireEvent.pointerDown(document.body);
+
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("実行している間は、Escape でも閉じない", async () => {
+    const onCancel = jest.fn();
+    render(
+      <ConfirmDialog
+        title="削除しますか？"
+        description="元に戻せません。"
+        confirmLabel="削除する"
+        onConfirm={() => new Promise<void>(() => {})}
+        onCancel={onCancel}
+      />
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "削除する" }));
+    });
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+    expect(onCancel).not.toHaveBeenCalled();
   });
 });

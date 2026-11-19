@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { FileText, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,6 @@ export function FileDropzone({
   label = "添付ファイル",
   note,
 }: FileDropzoneProps) {
-  const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
 
@@ -52,13 +51,14 @@ export function FileDropzone({
         <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
           ファイルを選ぶ
         </Button>
+        {/* 操作は「ファイルを選ぶ」のボタンだけにする。見えない入力欄でタブ移動が止まらないよう外す */}
         <input
-          id={inputId}
           ref={inputRef}
           type="file"
           multiple
           className="sr-only"
-          aria-label={`${label}を選ぶ`}
+          tabIndex={-1}
+          aria-hidden
           onChange={(e) => {
             if (e.target.files && e.target.files.length > 0) onAdd(Array.from(e.target.files));
             // 同じファイルをもう一度選べるようにする

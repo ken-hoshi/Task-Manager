@@ -796,12 +796,15 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         <DialogHeader className="border-b px-6 py-4">
           <DialogTitle>{taskId ? "タスクを編集" : "タスクを追加"}</DialogTitle>
           <DialogDescription>
-            <span className="text-destructive">*</span> は必須です。
+            <span aria-hidden>
+              <span className="text-destructive">*</span> の付いた欄は必須です。
+            </span>
+            <span className="sr-only">（必須）の欄は入力が必要です。</span>
           </DialogDescription>
         </DialogHeader>
 
         {getLoading ? (
-          <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
+          <div role="status" className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" aria-hidden />
             読み込み中
           </div>
@@ -836,8 +839,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                 options={smallProjectOptions}
                 value={selectedSmallProject}
                 onChange={handleSmallProjectChange}
-                placeholder={selectedProject ? "小プロジェクトを選ぶ" : "先にプロジェクトを選ぶ"}
-                disabled={!selectedProject}
+                placeholder="小プロジェクトを選ぶ"
                 required
               />
             </Field>

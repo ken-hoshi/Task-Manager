@@ -14,13 +14,15 @@ import {
 
 interface ConfirmDialogProps {
   title: string;
-  description?: string;
+  // 何が起きるかの説明（例：元に戻せません。）。ダイアログの説明として読み上げる
+  description: string;
   // 実行のボタンの文言（例：削除する）
   confirmLabel: string;
   // 実行中のボタンの文言（例：削除中）
   pendingLabel?: string;
   // 削除のような取り返しのつかない操作なら true。実行のボタンを赤にする
   destructive?: boolean;
+  // 失敗したときの通知は呼び出す側で行う（ここでは失敗を受け止めない）
   onConfirm: () => void | Promise<void>;
   onCancel: () => void;
 }
@@ -55,10 +57,15 @@ export function ConfirmDialog({
         if (!open && !pending) onCancel();
       }}
     >
-      <DialogContent showCloseButton={false} className="sm:max-w-sm">
+      <DialogContent
+        showCloseButton={false}
+        className="sm:max-w-sm"
+        // 以前の確認と同じく、外を押しても閉じない
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel} disabled={pending}>

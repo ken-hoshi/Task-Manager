@@ -6,7 +6,7 @@ import { getProjectData } from "@/app/lib/api/getProjectData";
 import { getSmallProjectData } from "@/app/lib/api/getSmallProjectData";
 import { getSmallProjectMember } from "@/app/lib/api/getSmallProjectMember";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
-import { insertsOf, opsOf, resetSupabaseMock, setResponses } from "../helpers/mockSupabase";
+import { insertsOf, opsOf, resetSupabaseMock, setResponses, storageCalls } from "../helpers/mockSupabase";
 
 const setPageUpdated = jest.fn();
 const setNotificationValue = jest.fn();
@@ -70,7 +70,8 @@ const renderPopup = async (taskGenreId: number | null = null) => {
       />
     );
   });
-  await screen.findByRole("combobox", { name: /ジャンル/ });
+  // ジャンルの欄は、一覧を読み終えるまで選べない状態で描かれる。読み終えるまで待つ
+  await waitFor(() => expect(screen.getByRole("combobox", { name: /ジャンル/ })).toBeEnabled());
 };
 
 // Radix の選ぶ欄は、キーボードの Enter で開く。
@@ -109,14 +110,20 @@ describe("TaskPopup（作成）", () => {
     expect(screen.getByRole("spinbutton", { name: /日数/ })).toHaveValue(5);
   });
 
-  it("送ると、入れた値でタスクを作り、通知を送って閉じる", async () => {
+  it("「追加する」で、入れた値と添付でタスクを作り、通知を送って閉じる", async () => {
     await renderPopup();
 
     fireEvent.change(screen.getByRole("textbox", { name: /タスク名/ }), { target: { value: "API の設計" } });
     choose(/担当者/, "星");
     choose(/ジャンル/, "設計");
+    // 見えない入力欄に、ファイルを選んだときと同じ change を送る
+    const file = new File(["x"], "仕様.pdf", { type: "application/pdf" });
+    fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [file] } });
+    expect(screen.getByRole("button", { name: "「仕様.pdf」を外す" })).toBeInTheDocument();
+
+    // 送信のボタンは form の外にあり、form 属性で form を指している
     await act(async () => {
-      fireEvent.submit(screen.getByRole("dialog").querySelector("form")!);
+      fireEvent.click(screen.getByRole("button", { name: "追加する" }));
     });
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
@@ -127,18 +134,46 @@ describe("TaskPopup（作成）", () => {
       task_genre_id: 7,
       number_of_days: 5,
     });
+    expect(storageCalls).toEqual([
+      expect.objectContaining({ bucket: "task_attachments", op: "upload" }),
+    ]);
+    expect(insertsOf("task_attachments")[0]).toEqual([
+      expect.objectContaining({ task_id: 99, file_name: "仕様.pdf" }),
+    ]);
     expect(postMailNotifications).toHaveBeenCalledWith(3, 5, 99, null, null, null, 0, []);
     expect(setNotificationValue).toHaveBeenCalledWith({ message: "タスクを追加しました。", color: 0 });
     expect(addItem).toHaveBeenCalledWith({ target: 1, id: 99 });
   });
 
-  it("「キャンセル」は送らずに閉じる", async () => {
+  // 入力がそろった状態で押す。送信のボタンを兼ねていたら、ここで tasks に送ってしまう
+  it("「キャンセル」は、入力がそろっていても送らずに閉じる", async () => {
     await renderPopup();
     fireEvent.change(screen.getByRole("textbox", { name: /タスク名/ }), { target: { value: "途中" } });
+    choose(/担当者/, "星");
+    choose(/ジャンル/, "設計");
 
-    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    });
 
     expect(onClose).toHaveBeenCalled();
     expect(opsOf("tasks").some(([op]) => op === "insert")).toBe(false);
+  });
+
+  it("Escape で、送らずに閉じる", async () => {
+    await renderPopup();
+
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+    expect(onClose).toHaveBeenCalled();
+    expect(opsOf("tasks").some(([op]) => op === "insert")).toBe(false);
+  });
+
+  it("選んでいる値も、選択肢に出る", async () => {
+    await renderPopup();
+
+    fireEvent.keyDown(screen.getByRole("combobox", { name: /^小プロジェクト/ }), { key: "Enter" });
+
+    expect(screen.getByRole("option", { name: "一覧", selected: true })).toBeInTheDocument();
   });
 });
