@@ -1,8 +1,10 @@
 "use client";
 
 import styles from "./suspenseProject.module.css";
-import BackgroundImage1 from "@/app/component/backgroundImage1/backgroundImage1";
-import Header from "@/app/component/header/header";
+import { Pencil } from "lucide-react";
+import AppShell from "@/app/component/appShell/appShell";
+import ProjectPopup from "@/app/component/projectPopup/projectPopup";
+import { Button } from "@/components/ui/button";
 import Loading from "@/app/component/loading/loading";
 import NotificationBanner from "@/app/component/notificationBanner/notificationBanner";
 import { getStatus } from "@/app/lib/api/getStatus";
@@ -121,6 +123,7 @@ const SuspenseProject: React.FC = () => {
     smallProjectId: undefined,
   });
   const [userId, setUserId] = useState(0);
+  const [showProjectPopup, setShowProjectPopup] = useState(false);
   const [tabJudgeList, setTabJudgeList] = useState({
     list: true,
     calender: false,
@@ -359,18 +362,37 @@ const SuspenseProject: React.FC = () => {
           color={notificationValue.color}
         />
       )}
-      <>
+      {/* 今いるプロジェクトは、読み込み中でも分かるように URL から決める */}
+      <AppShell
+        userId={userId}
+        current={{ kind: "project", id: paramsProjectId }}
+      >
         {loading ? (
           <Loading />
         ) : (
           <div className={styles.project}>
-            <BackgroundImage1 />
-            <Header
-              workspaceDataArray={null}
-              projectId={projectData.id}
-              projectName={projectData.project_name}
-              userId={userId}
-            />
+            {/* 以前はヘッダーにあったプロジェクト名と編集の入口。戻る矢印はサイドバーの「タスク」に任せた */}
+            <div className="flex items-center gap-2 px-6 pb-2 text-base">
+              <h1 className="m-0 truncate text-xl font-semibold">
+                {projectData.project_name}
+              </h1>
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label="プロジェクトを編集"
+                onClick={() => setShowProjectPopup(true)}
+              >
+                <Pencil className="size-4" aria-hidden />
+                編集
+              </Button>
+              {showProjectPopup && (
+                <ProjectPopup
+                  onClose={() => setShowProjectPopup(false)}
+                  projectId={projectData.id}
+                  userId={userId}
+                />
+              )}
+            </div>
             <div className={styles[`project-container`]}>
               <ProjectDetails
                 userId={userId}
@@ -499,7 +521,7 @@ const SuspenseProject: React.FC = () => {
             </div>
           </div>
         )}
-      </>
+      </AppShell>
     </>
   );
 };

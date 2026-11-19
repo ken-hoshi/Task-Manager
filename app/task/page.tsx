@@ -2,7 +2,7 @@
 
 import styles from "./task.module.css";
 import { useEffect, useMemo, useState } from "react";
-import Header from "@/app/component/header/header";
+import AppShell from "@/app/component/appShell/appShell";
 import React from "react";
 import { usePageUpdateContext } from "../provider/pageUpdateProvider";
 import { getUserId } from "../lib/api/getUserId";
@@ -15,7 +15,6 @@ import { getStatus } from "../lib/api/getStatus";
 import Loading from "../component/loading/loading";
 import MyTasksArea from "./myTasksArea/myTasksArea";
 import ProjectsArea from "./projectsArea/projectsArea";
-import BackgroundImage1 from "../component/backgroundImage1/backgroundImage1";
 import RobotButton from "../component/robotButton/robotButton";
 import { useSessionTimeout } from "../hooks/sessionTimeout";
 import NotYetCompletedTasksArea from "./tasksNotYetCompletedArea/notYetCompletedTasksArea";
@@ -29,11 +28,6 @@ import { Logout } from "../hooks/logout";
 import { getWorkspace } from "../lib/api/getWorkspace";
 import { useDisplayWorkspaceIdContext } from "../provider/displayWorkspaceIdProvider";
 import { getDataUpdate } from "../hooks/getDataUpdate";
-
-interface WorkspaceProps {
-  id: number;
-  workspaceName: string;
-}
 
 interface StatusProps {
   id: number;
@@ -78,9 +72,6 @@ interface AttachedFileProps {
 
 const Task: React.FC = () => {
   const [userId, setUserId] = useState(0);
-  const [workspaceDataArray, setWorkspaceDataArray] = useState<
-    WorkspaceProps[]
-  >([]);
   const [loading, setLoading] = useState(true);
   const [statuses, setStatuses] = useState<StatusProps[]>([]);
 
@@ -142,31 +133,25 @@ const Task: React.FC = () => {
         if (workspaceUserBelongsData.length === 0) {
           router.push("/createWorkspace?atSignUp=false");
         } else {
-          const workspaceData = workspaceUserBelongsData
-            .map((workspaceData) =>
-              Array.isArray(workspaceData.workspace)
-                ? workspaceData.workspace[0]
-                : workspaceData.workspace
-            )
-            .map((workspaceData) => ({
-              id: workspaceData.id,
-              workspaceName: workspaceData.workspace_name,
-            }));
-          setWorkspaceDataArray(workspaceData);
+          // ワークスペースの一覧はサイドバー（AppShell）が読む。ここでは最初に開くものを決めるだけ
+          // workspace は、型では配列、実際の応答では1件のオブジェクトのことがある。どちらでも先頭を取る
+          const firstWorkspaceId: number = [
+            workspaceUserBelongsData[0].workspace,
+          ].flat()[0].id;
           if (!displayWorkspaceId) {
-            setDisplayWorkspaceId(workspaceData[0].id);
+            setDisplayWorkspaceId(firstWorkspaceId);
           }
 
           const projectData = await getProjectData(
             null,
-            displayWorkspaceId ? displayWorkspaceId : workspaceData[0].id
+            displayWorkspaceId ? displayWorkspaceId : firstWorkspaceId
           );
           if (!projectData) {
             throw new Error("Fetch Project Data couldn't get.");
           }
 
           const smallProjectData = await fetchSmallProjectData(
-            displayWorkspaceId ? displayWorkspaceId : workspaceData[0].id
+            displayWorkspaceId ? displayWorkspaceId : firstWorkspaceId
           );
           if (
             !smallProjectData.smallProjectData ||
@@ -206,7 +191,7 @@ const Task: React.FC = () => {
             }
 
             const tasksData = await fetchTasksData(
-              displayWorkspaceId ? displayWorkspaceId : workspaceData[0].id
+              displayWorkspaceId ? displayWorkspaceId : firstWorkspaceId
             );
             if (!tasksData) {
               throw new Error("Fetch TasksData couldn't get.");
@@ -329,17 +314,12 @@ const Task: React.FC = () => {
         />
       )}
 
+      <AppShell userId={userId} current={{ kind: "tasks" }}>
       {loading ? (
         <Loading />
       ) : (
         <div className={styles[`task-container`]}>
-          <BackgroundImage1 />
-          <Header
-            workspaceDataArray={workspaceDataArray}
-            projectId={null}
-            projectName={null}
-            userId={userId}
-          />
+          <h1 className="sr-only">タスク</h1>
           <div className={styles.task}>
             <ProjectsArea
               projectDataArray={projectDataArray}
@@ -369,6 +349,7 @@ const Task: React.FC = () => {
           </div>
         </div>
       )}
+      </AppShell>
     </>
   );
 };

@@ -1,15 +1,18 @@
 .task-container {
   position: relative;
-  height: 90vh;
+  min-height: 100%;
 }
 
+/* 上のヘッダーが無くなったので、上の余白はヘッダーの分を除いた */
 .task {
   position: relative;
-  margin-top: 9vh;
+  padding-top: 3vh;
 }
 
+/* 表の幅は vw で決めているので、サイドバーの分だけ入り切らないときは折り返して縦に並べる。表は次の PR で作り直す */
 .under-area {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   font-size: 2vh;
 }

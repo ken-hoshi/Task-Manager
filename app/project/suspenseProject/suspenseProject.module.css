@@ -1,7 +1,8 @@
+/* 上のヘッダーが無くなったので、上の余白はヘッダーの分を除いた */
 .project {
-  padding: 0;
-  margin: 7vh 0 0 0;
-  height: 100%;
+  position: relative;
+  padding: 3vh 0 0 0;
+  min-height: 100%;
 }
 
 .project-container {

@@ -45,6 +45,9 @@ interface AppSidebarProps {
   projects: SidebarProject[];
   current: SidebarCurrent;
   unreadCount: number;
+  // 通知の一覧が開いているか と、その一覧の id。読み上げに開閉を伝える
+  notificationsOpen?: boolean;
+  notificationsId?: string;
   onSelectWorkspace: (workspaceId: number) => void;
   onEditWorkspace: () => void;
   onOpenTasks: () => void;
@@ -61,6 +64,8 @@ export function AppSidebar({
   projects,
   current,
   unreadCount,
+  notificationsOpen = false,
+  notificationsId,
   onSelectWorkspace,
   onEditWorkspace,
   onOpenTasks,
@@ -134,7 +139,7 @@ export function AppSidebar({
             プロジェクトはまだありません
           </p>
         ) : (
-          <ul className="space-y-0.5">
+          <ul className="m-0 list-none space-y-0.5 p-0">
             {projects.map((project) => (
               <li key={project.id}>
                 <Button
@@ -160,6 +165,8 @@ export function AppSidebar({
         <Button
           variant="ghost"
           className="w-full justify-start gap-2 px-2"
+          aria-expanded={notificationsOpen}
+          aria-controls={notificationsOpen ? notificationsId : undefined}
           onClick={onOpenNotifications}
         >
           <Bell className="size-4" aria-hidden />
