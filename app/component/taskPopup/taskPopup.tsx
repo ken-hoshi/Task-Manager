@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -20,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { DateRangeField } from "@/components/date-range-field";
 import { FileDropzone } from "@/components/file-dropzone";
-import { cn } from "@/lib/utils";
+import { FormField, RequiredNote } from "@/components/form-field";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
@@ -796,10 +795,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         <DialogHeader className="border-b px-6 py-4">
           <DialogTitle>{taskId ? "タスクを編集" : "タスクを追加"}</DialogTitle>
           <DialogDescription>
-            <span aria-hidden>
-              <span className="text-destructive">*</span> の付いた欄は必須です。
-            </span>
-            <span className="sr-only">（必須）の欄は入力が必要です。</span>
+            <RequiredNote />
           </DialogDescription>
         </DialogHeader>
 
@@ -814,16 +810,16 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             onSubmit={handleSubmit}
             className="grid flex-1 gap-4 overflow-y-auto px-6 py-5 sm:grid-cols-2"
           >
-            <Field label="タスク名" htmlFor="task-name" required className="sm:col-span-2">
+            <FormField label="タスク名" htmlFor="task-name" required className="sm:col-span-2">
               <Input
                 id="task-name"
                 value={taskName}
                 onChange={(e) => setTaskName(e.target.value)}
                 required
               />
-            </Field>
+            </FormField>
 
-            <Field label="プロジェクト" htmlFor="task-project" required>
+            <FormField label="プロジェクト" htmlFor="task-project" required>
               <OptionSelect
                 id="task-project"
                 options={projectOptions}
@@ -832,8 +828,8 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                 placeholder="プロジェクトを選ぶ"
                 required
               />
-            </Field>
-            <Field label="小プロジェクト" htmlFor="task-small-project" required>
+            </FormField>
+            <FormField label="小プロジェクト" htmlFor="task-small-project" required>
               <OptionSelect
                 id="task-small-project"
                 options={smallProjectOptions}
@@ -842,9 +838,9 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                 placeholder="小プロジェクトを選ぶ"
                 required
               />
-            </Field>
+            </FormField>
 
-            <Field label="担当者" htmlFor="task-user" required>
+            <FormField label="担当者" htmlFor="task-user" required>
               <OptionSelect
                 id="task-user"
                 options={userOptions}
@@ -853,8 +849,8 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                 placeholder="担当者を選ぶ"
                 required
               />
-            </Field>
-            <Field label="ジャンル" htmlFor="task-genre">
+            </FormField>
+            <FormField label="ジャンル" htmlFor="task-genre">
               <OptionSelect
                 id="task-genre"
                 options={taskGenreOptions}
@@ -863,9 +859,9 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                 placeholder={taskGenreOptions.length > 0 ? "ジャンルを選ぶ" : "ジャンルはありません"}
                 disabled={taskGenreOptions.length === 0}
               />
-            </Field>
+            </FormField>
 
-            <Field label="期間" htmlFor="task-period" required>
+            <FormField label="期間" htmlFor="task-period" required>
               <DateRangeField
                 id="task-period"
                 start={selectedStartDate}
@@ -873,8 +869,8 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                 onChange={handleDateRangeChange}
                 required
               />
-            </Field>
-            <Field label="日数" htmlFor="task-days" required>
+            </FormField>
+            <FormField label="日数" htmlFor="task-days" required>
               <Input
                 id="task-days"
                 type="number"
@@ -888,9 +884,9 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                 }}
                 required
               />
-            </Field>
+            </FormField>
 
-            <Field label="詳細" htmlFor="task-details" className="sm:col-span-2">
+            <FormField label="詳細" htmlFor="task-details" className="sm:col-span-2">
               <textarea
                 id="task-details"
                 value={details}
@@ -898,7 +894,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
                 rows={3}
                 className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               />
-            </Field>
+            </FormField>
 
             <div className="sm:col-span-2">
               <FileDropzone
@@ -924,28 +920,6 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
     </Dialog>
   );
 };
-
-// 欄のラベルと中身。必須なら * を付ける
-const Field: React.FC<{
-  label: string;
-  htmlFor: string;
-  required?: boolean;
-  className?: string;
-  children: React.ReactNode;
-}> = ({ label, htmlFor, required, className, children }) => (
-  <div className={cn("space-y-1.5", className)}>
-    <Label htmlFor={htmlFor}>
-      {label}
-      {required && (
-        <span className="text-destructive" aria-hidden>
-          *
-        </span>
-      )}
-      {required && <span className="sr-only">（必須）</span>}
-    </Label>
-    {children}
-  </div>
-);
 
 // 1つだけ選ぶ欄。選んだ値は { value, label } で受け渡す（以前の react-select と同じ形）
 const OptionSelect: React.FC<{

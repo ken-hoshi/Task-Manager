@@ -1,14 +1,26 @@
-import React, { useEffect, useRef, useState } from "react";
-import styles from "./projectPopup.module.css";
+import React, { useEffect, useState } from "react";
+import { Loader2, Plus, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { DateRangeField } from "@/components/date-range-field";
+import { FileDropzone } from "@/components/file-dropzone";
+import { FormField, RequiredNote } from "@/components/form-field";
+import { MultiSelect } from "@/components/multi-select";
+import { cn } from "@/lib/utils";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { getUsers } from "@/app/lib/api/getUser";
-import Select, { MultiValue } from "react-select";
-import { selectBoxStyles } from "./selectBoxStyles";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import { useFlashDisplayContext } from "@/app/provider/flashDisplayProvider";
-import classNames from "classnames";
-import DatePicker from "react-datepicker";
 import { fetchAttachedFiles } from "@/app/lib/api/fetchAttachedFiles";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
 import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
@@ -84,7 +96,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
     TaskGenreDataProps[]
   >([]);
   const [tabNumber, setTabNumber] = useState<number[]>([1]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const formId = "project-popup-form";
 
   const [getLoading, setGetLoading] = useState(true);
   const [postLoading, setPostLoading] = useState(false);
@@ -96,13 +108,13 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 入力欄で Enter を押して送信してしまうのを防ぐ。
+      // ボタンと、メンバーの欄（react-select の入力欄。role="combobox"）は Enter で操作できるよう止めない
+      const target = e.target as HTMLElement;
       if (
         e.key === "Enter" &&
-        (e.target as HTMLElement).tagName !== "TEXTAREA" &&
-        !(
-          (e.target as HTMLElement).tagName === "INPUT" &&
-          (e.target as HTMLInputElement).classList.contains("tab-input")
-        )
+        target.tagName === "INPUT" &&
+        target.getAttribute("role") !== "combobox"
       ) {
         e.stopPropagation();
         e.preventDefault();
@@ -287,7 +299,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         console.error("Fetch Project Details", error);
         onClose();
         setNotificationValue({
-          message: "Couldn't get the Project Data.",
+          message: "プロジェクトのデータを読めませんでした。",
           color: 1,
         });
       }
@@ -310,11 +322,11 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
     );
   };
 
-  const handleUserChange = (selectedOptions: MultiValue<UserOption>) => {
+  const handleUserChange = (selectedOptions: UserOption[]) => {
     setSmallProjectArray((prevSmallProjectArray) =>
       prevSmallProjectArray.map((smallProject, index) =>
         index === displaySmallProjectNameValue
-          ? { ...smallProject, selectedUsers: selectedOptions as UserOption[] }
+          ? { ...smallProject, selectedUsers: selectedOptions }
           : smallProject
       )
     );
@@ -342,8 +354,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
     );
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
+  const addFiles = (files: File[]) => {
     setSmallProjectArray((prevSmallProjectArray) =>
       prevSmallProjectArray.map((smallProject, index) =>
         index === displaySmallProjectNameValue
@@ -366,28 +377,6 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           ? {
               ...smallProject,
               selectedFiles: remainFiles,
-            }
-          : smallProject
-      )
-    );
-  };
-
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const files = Array.from(event.dataTransfer.files);
-    setSmallProjectArray((prevSmallProjectArray) =>
-      prevSmallProjectArray.map((smallProject, index) =>
-        index === displaySmallProjectNameValue
-          ? {
-              ...smallProject,
-              selectedFiles: [...smallProject.selectedFiles, ...files],
             }
           : smallProject
       )
@@ -431,7 +420,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
     );
   };
 
-  const setTaskGenreData = (value: any, taskIndex: number, name: string) => {
+  const setTaskGenreData = (value: string, taskIndex: number, name: string) => {
     setSmallProjectArray((prevSmallProjectArray) =>
       prevSmallProjectArray.map((smallProject, index) =>
         index === displaySmallProjectNameValue
@@ -1107,7 +1096,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         }
         addItem({ target: 0, id: projectId });
         setNotificationValue({
-          message: "Project was updated !",
+          message: "プロジェクトを更新しました。",
           color: 0,
         });
         setPostLoading(false);
@@ -1281,7 +1270,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
 
         addItem({ target: 0, id: projectId });
         setNotificationValue({
-          message: "Project was added !",
+          message: "プロジェクトを追加しました。",
           color: 0,
         });
         setPostLoading(false);
@@ -1292,8 +1281,8 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
       console.error(projectId ? "Edit Project" : "Add Project", error);
       setNotificationValue({
         message: projectId
-          ? "Project was not edited."
-          : "Project was not added.",
+          ? "プロジェクトを更新できませんでした。"
+          : "プロジェクトを追加できませんでした。",
         color: 1,
       });
       setPostLoading(false);
@@ -1301,310 +1290,218 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
     }
   };
 
+  const current = smallProjectArray[displaySmallProjectNameValue];
+  // タブの名前。名前が入っていればその名前、無ければ番号
+  const tabLabel = (index: number) =>
+    smallProjectArray[index].smallProjectName.trim() || `小プロジェクト ${tabNumber[index]}`;
+
   return (
-    <div className={styles.popup}>
-      <div className={styles[`popup-inner`]}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !postLoading) onClose();
+      }}
+    >
+      <DialogContent
+        className="flex max-h-[90vh] flex-col gap-0 p-0 sm:max-w-3xl"
+        // 外を押しても閉じない（入力を誤って捨てないため。以前と同じ）。Escape と右上の × では閉じる
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        <DialogHeader className="border-b px-6 py-4">
+          <DialogTitle>{projectId ? "プロジェクトを編集" : "プロジェクトを追加"}</DialogTitle>
+          <DialogDescription>
+            <RequiredNote />
+          </DialogDescription>
+        </DialogHeader>
+
         {getLoading ? (
-          <div className={styles["spinner-container"]}>
-            <div className={styles.spinner}></div>
-            <div className={styles.loading}>Loading...</div>
+          <div role="status" className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
+            <Loader2 className="size-5 animate-spin" aria-hidden />
+            読み込み中
           </div>
         ) : (
-          <div className={styles[`popup-inner-area`]}>
-            <div className={styles[`title-area`]}>
-              <h1>{projectId ? "Edit Project" : "Add Project"}</h1>
-              <div className={styles["required-form"]}>※ → Required Form</div>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className={styles[`form-group`]}>
-                <input
-                  type="text"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  placeholder="Project Name"
-                  required
-                />
-                <p className={styles.instruction}>※Enter Project Name</p>
-              </div>
+          <form
+            id={formId}
+            onSubmit={handleSubmit}
+            className="flex-1 space-y-5 overflow-y-auto px-6 py-5"
+          >
+            <FormField label="プロジェクト名" htmlFor="project-name" required>
+              <Input
+                id="project-name"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                required
+              />
+            </FormField>
 
-              <div className={styles[`tab-area`]}>
-                {smallProjectArray.map((smallProject, index) => (
-                  <div key={index}>
-                    {smallProjectArray.length > 1 ? (
-                      <div className={styles[`tab-minus-container`]}>
-                        <span
-                          className={classNames(
-                            "material-symbols-outlined",
-                            styles[`tab-minus`]
-                          )}
+            <section aria-labelledby="small-project-heading" className="space-y-3">
+              <h3 id="small-project-heading" className="m-0 text-sm font-medium">
+                小プロジェクト
+              </h3>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {smallProjectArray.map((_, index) => {
+                  const active = index === displaySmallProjectNameValue;
+                  const label = tabLabel(index);
+                  return (
+                    <div
+                      key={index}
+                      className={cn(
+                        "flex items-center rounded-lg border",
+                        active && "border-primary bg-primary/5 text-primary"
+                      )}
+                    >
+                      <button
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => setDisplaySmallProjectNameValue(index)}
+                        className="max-w-40 truncate rounded-lg px-2.5 py-1 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                      >
+                        {label}
+                      </button>
+                      {smallProjectArray.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          className="mr-0.5"
+                          aria-label={`「${label}」を外す`}
                           onClick={() => removeSmallProjectNameTab(index)}
                         >
-                          remove
-                        </span>
-                      </div>
-                    ) : (
-                      <div className={styles[`minus-button-space`]}></div>
-                    )}
-
-                    <div
-                      className={classNames(
-                        styles[`tab-button`],
-                        index === displaySmallProjectNameValue && styles.active
+                          <X className="size-3.5" aria-hidden />
+                        </Button>
                       )}
-                      onClick={() => setDisplaySmallProjectNameValue(index)}
-                      key={index}
-                    >
-                      {"No." + tabNumber[index]}
                     </div>
-                  </div>
-                ))}
-
+                  );
+                })}
                 {smallProjectArray.length < 10 && (
-                  <span
-                    className={classNames(
-                      "material-symbols-outlined",
-                      styles[`tab-plus`]
-                    )}
-                    onClick={() =>
-                      addSmallProjectNameTab(smallProjectArray.length + 1)
-                    }
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addSmallProjectNameTab(smallProjectArray.length + 1)}
                   >
-                    add
-                  </span>
+                    <Plus className="size-4" aria-hidden />
+                    小プロジェクトを足す
+                  </Button>
                 )}
               </div>
 
-              <div className={styles[`small-project-area`]}>
-                <div className={styles[`form-group`]}>
-                  <input
-                    type="text"
-                    value={
-                      smallProjectArray[displaySmallProjectNameValue]
-                        .smallProjectName
-                    }
+              <div className="grid gap-4 rounded-lg border p-4 sm:grid-cols-2">
+                <FormField label="小プロジェクト名" htmlFor="small-project-name">
+                  <Input
+                    id="small-project-name"
+                    value={current.smallProjectName}
                     onChange={(e) => handleSmallProjectChange(e.target.value)}
-                    placeholder="Small Project Name"
                   />
-                  <p className={styles.instruction}>Enter Small Project Name</p>
-                </div>
-                <div className={styles[`form-group`]}>
-                  <Select
-                    isMulti
+                </FormField>
+                <FormField label="メンバー" htmlFor="small-project-members" required>
+                  <MultiSelect
+                    id="small-project-members"
                     options={userOptions}
-                    value={
-                      smallProjectArray[displaySmallProjectNameValue]
-                        .selectedUsers
-                    }
+                    value={current.selectedUsers}
                     onChange={handleUserChange}
-                    placeholder="-- Members --"
+                    placeholder="メンバーを選ぶ"
+                    noOptionsMessage="選べるメンバーはいません"
                     required
-                    styles={selectBoxStyles}
                   />
-                  <p className={styles.instruction}>※Select Project Members</p>
-                </div>
+                </FormField>
 
-                <div className={styles[`flex-container`]}>
-                  <div className={styles[`form-group`]}>
-                    <div className={styles[`production-costs-area`]}>
-                      <span
-                        className={classNames(
-                          "material-symbols-outlined",
-                          styles.plus
-                        )}
-                        onClick={() => addTaskGenreForm()}
-                      >
-                        add
-                      </span>
-
-                      <div className={styles[`form-area`]}>
-                        {smallProjectArray[displaySmallProjectNameValue]
-                          .taskGenreDataArray &&
-                        smallProjectArray[displaySmallProjectNameValue]
-                          .taskGenreDataArray.length > 0 ? (
-                          smallProjectArray[
-                            displaySmallProjectNameValue
-                          ].taskGenreDataArray.map((taskGenreData, index) => {
-                            const taskGenreNamePlaceholder =
-                              "Task Genre Name" + (index + 1);
-                            return (
-                              <div
-                                className={styles[`task-genre-area`]}
-                                key={index}
-                              >
-                                <div className={styles[`task-genre-form-area`]}>
-                                  <div
-                                    className={
-                                      styles[`task-genre-input-container`]
-                                    }
-                                  >
-                                    <input
-                                      type="text"
-                                      name="taskGenreName"
-                                      value={taskGenreData.taskGenreName}
-                                      onChange={(e) =>
-                                        setTaskGenreData(
-                                          e.target.value,
-                                          index,
-                                          e.target.name
-                                        )
-                                      }
-                                      placeholder={taskGenreNamePlaceholder}
-                                      required
-                                    />
-                                  </div>
-                                  <DatePicker
-                                    selected={taskGenreData.selectedStartDate}
-                                    onChange={(dates) =>
-                                      handleDateRangeChange(dates, index)
-                                    }
-                                    startDate={taskGenreData.selectedStartDate}
-                                    endDate={taskGenreData.selectedDeadlineDate}
-                                    selectsRange
-                                    dateFormat="yyyy/MM/dd"
-                                    placeholderText="Period"
-                                    className={styles[`date-picker`]}
-                                    calendarClassName={
-                                      styles[`custom-calendar`]
-                                    }
-                                    showIcon
-                                    required
-                                  />
-                                </div>
-                                <div className={styles["minus-button-area"]}>
-                                  <span
-                                    className={classNames(
-                                      "material-symbols-outlined",
-                                      styles.minus
-                                    )}
-                                    onClick={() => removeTaskGenreForm(index)}
-                                  >
-                                    remove
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })
-                        ) : (
-                          <div className={styles[`non-task-genre`]}>
-                            No Task Genre
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <p className={styles.instruction}>
-                      Enter Estimated Task Genre
-                    </p>
+                <div className="space-y-2 sm:col-span-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium">ジャンル</span>
+                    <Button type="button" variant="outline" size="sm" onClick={() => addTaskGenreForm()}>
+                      <Plus className="size-4" aria-hidden />
+                      ジャンルを足す
+                    </Button>
                   </div>
-                  <div className={styles[`textarea-container`]}>
-                    <div className={styles[`form-group`]}>
-                      <textarea
-                        value={
-                          smallProjectArray[displaySmallProjectNameValue]
-                            .details
-                        }
-                        onChange={(e) => handleDetailsChange(e.target.value)}
-                        placeholder="Details"
-                      ></textarea>
-                      <p className={styles.instruction}>
-                        Enter Project Details
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  className={styles[`attached-file-area`]}
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                >
-                  {smallProjectArray[displaySmallProjectNameValue].selectedFiles
-                    .length === 0 ? (
-                    <div
-                      className={styles["none-attached-file-area-container"]}
-                    >
-                      <div className={styles["none-attached-file-area"]}>
-                        <p>Drag & Drop Files</p>
-                        <div className={styles["clip-container"]}>
-                          <span
-                            className={classNames(
-                              "material-symbols-outlined",
-                              styles.clip
-                            )}
+                  {current.taskGenreDataArray.length > 0 ? (
+                    <ul className="m-0 list-none space-y-2 p-0">
+                      {current.taskGenreDataArray.map((taskGenreData, index) => {
+                        const genreLabel = `ジャンル ${index + 1}`;
+                        return (
+                          <li
+                            key={index}
+                            className="grid items-center gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
                           >
-                            attach_file
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                            <div>
+                              <Label htmlFor={`genre-name-${index}`} className="sr-only">
+                                {genreLabel}の名前（必須）
+                              </Label>
+                              <Input
+                                id={`genre-name-${index}`}
+                                name="taskGenreName"
+                                value={taskGenreData.taskGenreName}
+                                onChange={(e) => setTaskGenreData(e.target.value, index, e.target.name)}
+                                placeholder={`${genreLabel}の名前`}
+                                required
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`genre-period-${index}`} className="sr-only">
+                                {genreLabel}の期間（必須）
+                              </Label>
+                              <DateRangeField
+                                id={`genre-period-${index}`}
+                                start={taskGenreData.selectedStartDate}
+                                end={taskGenreData.selectedDeadlineDate}
+                                onChange={(dates) => handleDateRangeChange(dates, index)}
+                                required
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`「${taskGenreData.taskGenreName.trim() || genreLabel}」を外す`}
+                              onClick={() => removeTaskGenreForm(index)}
+                            >
+                              <X className="size-4" aria-hidden />
+                            </Button>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   ) : (
-                    <div className={styles["display-attached-file-area"]}>
-                      {smallProjectArray[
-                        displaySmallProjectNameValue
-                      ].selectedFiles.map((file: any, index) => (
-                        <div
-                          className={styles["display-attached-file-container"]}
-                          key={index}
-                        >
-                          <div className={styles["file-info"]}>
-                            <span
-                              className={classNames(
-                                "material-symbols-outlined",
-                                styles[`attached-file-icon`]
-                              )}
-                            >
-                              upload_file
-                            </span>
-                            <span
-                              className={classNames(
-                                "material-symbols-outlined",
-                                styles[`cancel-icon`]
-                              )}
-                              onClick={() => deleteAttachedFile(index)}
-                            >
-                              cancel
-                            </span>
-                          </div>
-                          <p>{file.name}</p>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="m-0 rounded-lg border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
+                      ジャンルはありません
+                    </p>
                   )}
-                  <div className={styles[`button-container`]}>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      Select Files
-                    </button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      style={{ display: "none" }}
-                      onChange={handleFileChange}
-                    />
-                  </div>
                 </div>
-                <p className={styles.attention}>Maximum file size is 3MB</p>
+
+                <FormField label="詳細" htmlFor="small-project-details" className="sm:col-span-2">
+                  <textarea
+                    id="small-project-details"
+                    value={current.details}
+                    onChange={(e) => handleDetailsChange(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  />
+                </FormField>
+
+                <div className="sm:col-span-2">
+                  <FileDropzone
+                    files={current.selectedFiles}
+                    onAdd={addFiles}
+                    onRemove={deleteAttachedFile}
+                    note="1ファイル 3MB まで"
+                  />
+                </div>
               </div>
-              <div className={styles[`button-area`]}>
-                <button className={styles.cancel} onClick={onClose}>
-                  Cancel
-                </button>
-                <button className={styles.add} type="submit">
-                  {postLoading ? (
-                    <div className={styles[`button-spinner`]}></div>
-                  ) : projectId ? (
-                    "Update"
-                  ) : (
-                    "Add"
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
+            </section>
+          </form>
         )}
-      </div>
-    </div>
+
+        <DialogFooter className="mx-0 mb-0 px-6">
+          <Button type="button" variant="outline" onClick={() => onClose()} disabled={postLoading}>
+            キャンセル
+          </Button>
+          <Button type="submit" form={formId} disabled={getLoading || postLoading}>
+            {postLoading && <Loader2 className="size-4 animate-spin" aria-hidden />}
+            {projectId ? "更新する" : "追加する"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
