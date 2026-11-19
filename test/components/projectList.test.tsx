@@ -1,28 +1,28 @@
-// タスク画面の「プロジェクト」の表（ProjectList）。画面に出る文字・ボタンの名前と、DB に送る値で確かめる。
+// タスク画面の「プロジェクト」の表（ProjectList）。画面に出る文字・ボタンとリンクの名前と、DB に送る値で確かめる。
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import ProjectList from "@/app/task/projectList/projectList";
-import { opsOf, resetSupabaseMock } from "../helpers/mockSupabase";
+import { opsOf, resetSupabaseMock, setResponses } from "../helpers/mockSupabase";
 
-const push = jest.fn();
 const setPageUpdated = jest.fn();
+const setNotificationValue = jest.fn();
+// 画面ごとに変えられるよう、context の値は変数で持つ
+let pageUpdated = false;
+let newItem = { id: 0, target: 0 };
 
-jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push }),
-}));
 jest.mock("../../app/lib/supabase/client", () => ({
   clientSupabase: require("../helpers/mockSupabase").mockClient,
 }));
 jest.mock("@/app/provider/notificationProvider", () => ({
-  useNotificationContext: () => ({ setNotificationValue: jest.fn() }),
+  useNotificationContext: () => ({ setNotificationValue }),
 }));
 jest.mock("@/app/provider/pageUpdateProvider", () => ({
-  usePageUpdateContext: () => ({ pageUpdated: false, setPageUpdated }),
+  usePageUpdateContext: () => ({ pageUpdated, setPageUpdated }),
 }));
 jest.mock("@/app/provider/displayWorkspaceIdProvider", () => ({
   useDisplayWorkspaceIdContext: () => ({ displayWorkspaceId: 9 }),
 }));
 jest.mock("@/app/provider/flashDisplayProvider", () => ({
-  useFlashDisplayContext: () => ({ newItem: { id: 0, target: 0 } }),
+  useFlashDisplayContext: () => ({ newItem }),
 }));
 // ポップアップは表の確認に関係しないので空にする
 jest.mock("@/app/component/taskPopup/taskPopup", () => () => null);
@@ -31,6 +31,8 @@ jest.mock("@/app/component/projectPopup/projectPopup", () => () => null);
 beforeEach(() => {
   jest.clearAllMocks();
   resetSupabaseMock();
+  pageUpdated = false;
+  newItem = { id: 0, target: 0 };
 });
 
 const baseProps = {
@@ -75,44 +77,66 @@ const baseProps = {
   userId: 5,
 };
 
-const renderList = async (overrides = {}) => {
+type Props = React.ComponentProps<typeof ProjectList>;
+
+const renderList = async (overrides: Partial<Props> = {}) => {
+  let result!: ReturnType<typeof render>;
   await act(async () => {
-    render(<ProjectList {...baseProps} {...overrides} />);
+    result = render(<ProjectList {...baseProps} {...overrides} />);
   });
+  return result;
 };
 
 const projectItem = (name: string) => {
-  const item = screen.getByRole("button", { name }).closest("li");
+  const item = screen.getByRole("link", { name }).closest("li");
   if (!item) throw new Error(`「${name}」の行が見つからない`);
   return item as HTMLElement;
 };
+
+const openSearchProject = () =>
+  fireEvent.click(screen.getByRole("button", { name: "「検索画面」の小プロジェクトを開く" }));
 
 describe("ProjectList", () => {
   it("完了していないプロジェクトを出し、小プロジェクトを合わせたステータスの件数を日本語で出す", async () => {
     await renderList();
 
-    expect(screen.getByRole("button", { name: "検索画面" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "社内ツール" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "終わった案件" })).not.toBeInTheDocument();
-    const counts = within(projectItem("検索画面")).getAllByRole("listitem");
-    expect(counts.map((li) => li.textContent)).toEqual(["未着手2", "進行中1", "完了3"]);
+    expect(screen.getByRole("link", { name: "検索画面" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "社内ツール" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "終わった案件" })).not.toBeInTheDocument();
+    const counts = within(projectItem("検索画面")).getByRole("list", { name: "タスクの件数（合計）" });
+    expect(within(counts).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "未着手2",
+      "進行中1",
+      "完了3",
+    ]);
   });
 
-  it("プロジェクト名・小プロジェクト名を押すと、そのプロジェクトの画面に移る", async () => {
+  it("プロジェクト名・小プロジェクト名は、そのプロジェクトの画面へのリンクになる", async () => {
     await renderList();
 
-    fireEvent.click(screen.getByRole("button", { name: "検索画面" }));
-    expect(push).toHaveBeenCalledWith("/project?workspaceId=9&projectId=1");
+    expect(screen.getByRole("link", { name: "検索画面" })).toHaveAttribute(
+      "href",
+      "/project?workspaceId=9&projectId=1"
+    );
+    openSearchProject();
+    expect(screen.getByRole("link", { name: "一覧" })).toHaveAttribute(
+      "href",
+      "/project?workspaceId=9&projectId=1&smallProjectId=11"
+    );
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: "「検索画面」の小プロジェクトを開く" }));
-    fireEvent.click(screen.getByRole("button", { name: "一覧" }));
-    expect(push).toHaveBeenCalledWith("/project?workspaceId=9&projectId=1&smallProjectId=11");
+  it("行ごとの編集・削除のボタンと、追加のボタンに名前が付く", async () => {
+    await renderList();
+
+    expect(screen.getByRole("button", { name: "「検索画面」を編集" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "「検索画面」を削除" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "プロジェクトを追加" })).toBeInTheDocument();
   });
 
   it("小プロジェクトを開くと、メンバー・ジャンル・詳細・添付が出る", async () => {
     await renderList();
 
-    fireEvent.click(screen.getByRole("button", { name: "「検索画面」の小プロジェクトを開く" }));
+    openSearchProject();
     const toggle = screen.getByRole("button", { name: "「一覧」の詳細を開く" });
     fireEvent.click(toggle);
 
@@ -133,15 +157,55 @@ describe("ProjectList", () => {
     expect(screen.queryByRole("button", { name: /を完了にする$/ })).not.toBeInTheDocument();
   });
 
+  it("名前の無い小プロジェクトがほかと並ぶときは「（名前なし）」と出し、ボタンの名前にも使う", async () => {
+    await renderList({
+      smallProjectDataArray: [
+        ...baseProps.smallProjectDataArray,
+        { id: 13, project_id: 1, small_project_name: null, isFinished: false, details: null },
+      ],
+    });
+
+    openSearchProject();
+    expect(screen.getByRole("link", { name: "（名前なし）" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "「（名前なし）」の詳細を開く" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "「（名前なし）」を完了にする" })).toBeInTheDocument();
+  });
+
   it("プロジェクトを閉じると、その中の小プロジェクトの詳細も閉じる", async () => {
     await renderList();
-    const projectToggle = screen.getByRole("button", { name: "「検索画面」の小プロジェクトを開く" });
 
-    fireEvent.click(projectToggle);
+    openSearchProject();
     fireEvent.click(screen.getByRole("button", { name: "「一覧」の詳細を開く" }));
-    fireEvent.click(projectToggle);
-    fireEvent.click(projectToggle);
+    fireEvent.click(screen.getByRole("button", { name: "「検索画面」の小プロジェクトを閉じる" }));
+    openSearchProject();
 
+    expect(screen.getByRole("button", { name: "「一覧」の詳細を開く" })).toHaveAttribute(
+      "aria-expanded",
+      "false"
+    );
+  });
+
+  it("画面が読み直すと、プロジェクトは開いたまま、小プロジェクトの詳細は閉じる", async () => {
+    const { rerender } = await renderList();
+    openSearchProject();
+    fireEvent.click(screen.getByRole("button", { name: "「一覧」の詳細を開く" }));
+
+    // 読み直しが始まり（pageUpdated が true）、同じ中身の新しい配列が届く
+    pageUpdated = true;
+    await act(async () => {
+      rerender(
+        <ProjectList
+          {...baseProps}
+          projectDataArray={[...baseProps.projectDataArray]}
+          smallProjectDataArray={[...baseProps.smallProjectDataArray]}
+        />
+      );
+    });
+
+    expect(screen.getByRole("button", { name: "「検索画面」の小プロジェクトを閉じる" })).toHaveAttribute(
+      "aria-expanded",
+      "true"
+    );
     expect(screen.getByRole("button", { name: "「一覧」の詳細を開く" })).toHaveAttribute(
       "aria-expanded",
       "false"
@@ -150,18 +214,38 @@ describe("ProjectList", () => {
 
   it("「完了にする」で小プロジェクトの isFinished を反転し、押されているかを伝える", async () => {
     await renderList();
-    fireEvent.click(screen.getByRole("button", { name: "「検索画面」の小プロジェクトを開く" }));
+    openSearchProject();
 
-    const finished = screen.getByRole("button", { name: "「詳細」を完了にする" });
-    expect(finished).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(screen.getByRole("button", { name: "「一覧」を完了にする" }));
+    expect(screen.getByRole("button", { name: "「詳細」を完了にする" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "「一覧」を完了にする" }));
+    });
 
-    await act(async () => {});
     expect(opsOf("small_projects")).toEqual([
       ["update", [{ isFinished: true }]],
       ["eq", ["id", 11]],
     ]);
     expect(setPageUpdated).toHaveBeenCalledWith(true);
+  });
+
+  it("「完了にする」の更新に失敗したら、日本語の通知を出す", async () => {
+    setResponses("small_projects", { data: null, error: { message: "boom" } });
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    await renderList();
+    openSearchProject();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "「一覧」を完了にする" }));
+    });
+
+    expect(setNotificationValue).toHaveBeenCalledWith({
+      message: "小プロジェクトを更新できませんでした。",
+      color: 1,
+    });
+    jest.restoreAllMocks();
   });
 
   it("「完了したプロジェクトを表示」で、小プロジェクトがすべて終わったプロジェクトだけを出す", async () => {
@@ -171,12 +255,20 @@ describe("ProjectList", () => {
     fireEvent.click(toggle);
 
     expect(toggle).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "終わった案件" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "検索画面" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "終わった案件" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "検索画面" })).not.toBeInTheDocument();
     expect(setPageUpdated).toHaveBeenCalledWith(true);
   });
 
-  it("プロジェクトが0件なら空の表示を出す。小プロジェクトが0件のプロジェクトでも落ちない", async () => {
+  it("追加した直後のプロジェクトの行だけを点滅させる", async () => {
+    newItem = { id: 2, target: 0 };
+    await renderList();
+
+    expect(projectItem("社内ツール")).toHaveClass("motion-safe:animate-pulse");
+    expect(projectItem("検索画面")).not.toHaveClass("motion-safe:animate-pulse");
+  });
+
+  it("小プロジェクトが0件のプロジェクトでも落ちない", async () => {
     await renderList({
       projectDataArray: [{ id: 4, project_name: "空のプロジェクト" }],
       smallProjectDataArray: [],

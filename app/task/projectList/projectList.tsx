@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useMemo, useState } from "react";
+import Link from "next/link";
 import { ArrowUpRight, CircleCheck, ChevronRight, FolderKanban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
@@ -19,12 +19,13 @@ import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
 
-interface Project {
+// タスク画面（app/task/page.tsx）が読んで渡すデータの形
+export interface Project {
   id: number;
   project_name: string;
 }
 
-interface SmallProject {
+export interface SmallProject {
   id: number;
   project_id: number;
   small_project_name: string | null;
@@ -32,12 +33,12 @@ interface SmallProject {
   details: string | null;
 }
 
-interface SmallProjectMembers {
+export interface SmallProjectMembers {
   smallProjectId: number;
   membersDataArray: { id: number; name: string }[];
 }
 
-interface SmallProjectStatus {
+export interface SmallProjectStatus {
   smallProjectId: number;
   projectId: number;
   notStarted: number;
@@ -45,7 +46,7 @@ interface SmallProjectStatus {
   completed: number;
 }
 
-interface SmallProjectTaskGenres {
+export interface SmallProjectTaskGenres {
   smallProjectId: number;
   taskGenreDataArray: {
     taskGenreId: number;
@@ -57,7 +58,7 @@ interface SmallProjectTaskGenres {
   }[];
 }
 
-interface AttachedFiles {
+export interface AttachedFiles {
   id: number;
   fileDataArray: AttachedFileData[];
 }
@@ -78,9 +79,18 @@ interface StatusCountsValue {
   completed: number;
 }
 
+// 名前の無い小プロジェクトを、ボタンの名前や読み上げで指すときの言い方
+const UNNAMED = "（名前なし）";
+
 // ステータスごとの件数。色の点・日本語の名前・数を並べる
-const StatusCounts: React.FC<{ counts: StatusCountsValue }> = ({ counts }) => (
-  <ul className="m-0 flex list-none items-center gap-3 p-0 text-xs text-muted-foreground">
+const StatusCounts: React.FC<{ counts: StatusCountsValue; label: string }> = ({
+  counts,
+  label,
+}) => (
+  <ul
+    aria-label={label}
+    className="m-0 flex list-none items-center gap-3 p-0 text-xs text-muted-foreground"
+  >
     {(
       [
         [1, counts.notStarted],
@@ -97,12 +107,30 @@ const StatusCounts: React.FC<{ counts: StatusCountsValue }> = ({ counts }) => (
   </ul>
 );
 
-// 詳細の欄の見出しと中身
+// 詳細の欄の見出しと中身（ページの h1・表の h2 の下なので h3）
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <section className="space-y-1.5">
-    <h4 className="m-0 text-xs font-medium text-muted-foreground">{title}</h4>
+    <h3 className="m-0 text-xs font-medium text-muted-foreground">{title}</h3>
     <div className="text-sm">{children}</div>
   </section>
+);
+
+// 押すとプロジェクト画面へ移る名前。移ると分かるよう、矢印を添えたリンクにする
+const NameLink: React.FC<{ href: string; name: string; strong: boolean }> = ({
+  href,
+  name,
+  strong,
+}) => (
+  <Link
+    href={href}
+    className={cn(
+      "group inline-flex min-w-0 items-center gap-1 rounded text-foreground no-underline hover:text-primary",
+      strong ? "font-semibold" : "font-medium"
+    )}
+  >
+    <span className="truncate underline-offset-4 group-hover:underline">{name}</span>
+    <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground group-hover:text-primary" aria-hidden />
+  </Link>
 );
 
 // タスク画面の「プロジェクト」の表。プロジェクトを開くと小プロジェクトが、小プロジェクトを開くと詳細が出る
@@ -115,8 +143,7 @@ const ProjectList: React.FC<ProjectListProps> = ({
   attachedFileDataArray,
   userId,
 }) => {
-  const router = useRouter();
-  const { setPageUpdated } = usePageUpdateContext();
+  const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { newItem } = useFlashDisplayContext();
   const { setNotificationValue } = useNotificationContext();
   const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
@@ -124,6 +151,22 @@ const ProjectList: React.FC<ProjectListProps> = ({
   const [showFinished, setShowFinished] = useState(false);
   const [openProjectIds, setOpenProjectIds] = useState<Set<number>>(new Set());
   const [openSmallProjectIds, setOpenSmallProjectIds] = useState<Set<number>>(new Set());
+
+  // 以前と同じく、画面が読み直しを始めた時点で小プロジェクトの開閉を閉じる。
+  // プロジェクトの開閉は残すが、一覧から消えたプロジェクトの分は捨てる。
+  // effect ではなく描画の中で合わせ、古い開閉のまま1回描くことを避ける（React の「props が変わったら state を合わせる」形）
+  const [prevPageUpdated, setPrevPageUpdated] = useState(pageUpdated);
+  const [prevProjects, setPrevProjects] = useState(projectDataArray);
+  if (pageUpdated !== prevPageUpdated) {
+    setPrevPageUpdated(pageUpdated);
+    if (pageUpdated) setOpenSmallProjectIds(new Set());
+  }
+  if (projectDataArray !== prevProjects) {
+    setPrevProjects(projectDataArray);
+    const ids = new Set(projectDataArray.map((project) => project.id));
+    const kept = [...openProjectIds].filter((id) => ids.has(id));
+    if (kept.length !== openProjectIds.size) setOpenProjectIds(new Set(kept));
+  }
 
   // 小プロジェクトがすべて終わったプロジェクト。「完了したプロジェクトを表示」でこれだけを出す
   const finishedProjectIds = useMemo(() => {
@@ -141,16 +184,6 @@ const ProjectList: React.FC<ProjectListProps> = ({
   const visibleProjects = projectDataArray.filter((project) =>
     showFinished ? finishedProjectIds.has(project.id) : !finishedProjectIds.has(project.id)
   );
-
-  // 以前と同じく、プロジェクトの開閉は読み直しのあとも残し、小プロジェクトの開閉は読み直すたびに閉じる
-  useEffect(() => {
-    setOpenSmallProjectIds(new Set());
-    const ids = new Set(projectDataArray.map((project) => project.id));
-    setOpenProjectIds((prev) => {
-      const kept = [...prev].filter((id) => ids.has(id));
-      return kept.length === prev.size ? prev : new Set(kept);
-    });
-  }, [projectDataArray, smallProjectDataArray]);
 
   const smallProjectsOf = (projectId: number) =>
     smallProjectDataArray.filter((smallProject) => smallProject.project_id === projectId);
@@ -200,13 +233,10 @@ const ProjectList: React.FC<ProjectListProps> = ({
     });
   };
 
-  const openProjectPage = (projectId: number, smallProjectId: number | null) => {
-    router.push(
-      smallProjectId
-        ? `/project?workspaceId=${displayWorkspaceId}&projectId=${projectId}&smallProjectId=${smallProjectId}`
-        : `/project?workspaceId=${displayWorkspaceId}&projectId=${projectId}`
-    );
-  };
+  const projectPageUrl = (projectId: number, smallProjectId: number | null) =>
+    smallProjectId
+      ? `/project?workspaceId=${displayWorkspaceId}&projectId=${projectId}&smallProjectId=${smallProjectId}`
+      : `/project?workspaceId=${displayWorkspaceId}&projectId=${projectId}`;
 
   // shortcut: 更新を待たずに画面を読み直す（前からの動き）。読み直しが更新より先に済むと、表示が古いまま残る
   const handleToggleFinished = (smallProject: SmallProject) => {
@@ -257,10 +287,7 @@ const ProjectList: React.FC<ProjectListProps> = ({
           {genres.length > 0 ? (
             <div className="space-y-4">
               {genres.map((genre) => (
-                <TaskGenreSummary
-                  key={genre.taskGenreId}
-                  taskGenre={{ ...genre, taskId: 0, assignedUserTaskResultData: [] }}
-                />
+                <TaskGenreSummary key={genre.taskGenreId} taskGenre={genre} />
               ))}
             </div>
           ) : (
@@ -281,21 +308,6 @@ const ProjectList: React.FC<ProjectListProps> = ({
     );
   };
 
-  // 押すとプロジェクト画面へ移る名前。移ると分かるよう、矢印を添えたリンクの見た目にする
-  const renderNameLink = (name: string, onClick: () => void, strong: boolean) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "group inline-flex min-w-0 items-center gap-1 rounded text-left hover:text-primary",
-        strong ? "font-semibold" : "font-medium"
-      )}
-    >
-      <span className="truncate underline-offset-4 group-hover:underline">{name}</span>
-      <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground group-hover:text-primary" aria-hidden />
-    </button>
-  );
-
   return (
     <section
       aria-labelledby="project-list-title"
@@ -305,8 +317,15 @@ const ProjectList: React.FC<ProjectListProps> = ({
         <div className="min-w-0">
           <h2 id="project-list-title" className="m-0 flex items-center gap-2 text-base font-semibold">
             プロジェクト
-            <span className="rounded-full bg-muted px-2 text-xs font-medium text-muted-foreground">
+            <span
+              className="rounded-full bg-muted px-2 text-xs font-medium text-muted-foreground"
+              aria-hidden
+            >
               {visibleProjects.length}
+            </span>
+            <span className="sr-only">
+              （{showFinished ? "完了したもの " : ""}
+              {visibleProjects.length}件）
             </span>
           </h2>
           <p className="m-0 mt-0.5 text-xs text-muted-foreground">
@@ -351,7 +370,9 @@ const ProjectList: React.FC<ProjectListProps> = ({
               <li
                 key={project.id}
                 className={cn(
-                  newItem.id == project.id && newItem.target == 0 && "bg-primary/10 motion-safe:animate-pulse"
+                  newItem.id == project.id &&
+                    newItem.target == 0 &&
+                    "bg-primary/10 motion-safe:animate-pulse"
                 )}
               >
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2.5 pr-5">
@@ -360,7 +381,7 @@ const ProjectList: React.FC<ProjectListProps> = ({
                       variant="ghost"
                       size="icon-sm"
                       aria-expanded={isOpen}
-                      aria-controls={panelId}
+                      aria-controls={isOpen ? panelId : undefined}
                       aria-label={`「${project.project_name}」の${onlyUnnamed ? "詳細" : "小プロジェクト"}を${isOpen ? "閉じる" : "開く"}`}
                       onClick={() => toggleProject(project.id)}
                     >
@@ -369,9 +390,9 @@ const ProjectList: React.FC<ProjectListProps> = ({
                         aria-hidden
                       />
                     </Button>
-                    {renderNameLink(project.project_name, () => openProjectPage(project.id, null), true)}
+                    <NameLink href={projectPageUrl(project.id, null)} name={project.project_name} strong />
                   </div>
-                  <StatusCounts counts={totalStatusOf(project.id)} />
+                  <StatusCounts counts={totalStatusOf(project.id)} label="タスクの件数（合計）" />
                   <div className="flex gap-0.5">
                     <EditButton projectId={project.id} taskId={null} userId={userId} targetName={project.project_name} />
                     <DeleteButton projectId={project.id} taskId={null} userId={userId} targetName={project.project_name} />
@@ -389,7 +410,7 @@ const ProjectList: React.FC<ProjectListProps> = ({
                         {smallProjects.map((smallProject) => {
                           const isSmallOpen = openSmallProjectIds.has(smallProject.id);
                           const detailsId = `small-project-details-${smallProject.id}`;
-                          const name = smallProject.small_project_name ?? "";
+                          const name = smallProject.small_project_name || UNNAMED;
                           return (
                             <li key={smallProject.id}>
                               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 py-2 pr-5 pl-9">
@@ -398,7 +419,7 @@ const ProjectList: React.FC<ProjectListProps> = ({
                                     variant="ghost"
                                     size="icon-sm"
                                     aria-expanded={isSmallOpen}
-                                    aria-controls={detailsId}
+                                    aria-controls={isSmallOpen ? detailsId : undefined}
                                     aria-label={`「${name}」の詳細を${isSmallOpen ? "閉じる" : "開く"}`}
                                     onClick={() => toggleSmallProject(smallProject.id)}
                                   >
@@ -410,9 +431,13 @@ const ProjectList: React.FC<ProjectListProps> = ({
                                       aria-hidden
                                     />
                                   </Button>
-                                  {renderNameLink(name, () => openProjectPage(project.id, smallProject.id), false)}
+                                  <NameLink
+                                    href={projectPageUrl(project.id, smallProject.id)}
+                                    name={name}
+                                    strong={false}
+                                  />
                                 </div>
-                                <StatusCounts counts={statusOf(smallProject.id)} />
+                                <StatusCounts counts={statusOf(smallProject.id)} label="タスクの件数" />
                                 <Button
                                   variant={smallProject.isFinished ? "secondary" : "outline"}
                                   size="sm"
@@ -422,7 +447,7 @@ const ProjectList: React.FC<ProjectListProps> = ({
                                   onClick={() => handleToggleFinished(smallProject)}
                                 >
                                   <CircleCheck className="size-4" aria-hidden />
-                                  {smallProject.isFinished ? "完了" : "完了にする"}
+                                  {smallProject.isFinished ? "完了済み" : "完了にする"}
                                 </Button>
                               </div>
                               {isSmallOpen && (

@@ -2,7 +2,8 @@ import { formatDate } from "@/app/lib/formatDateTime";
 import { TaskGenreDetail } from "./types";
 
 interface TaskGenreSummaryProps {
-  taskGenre: TaskGenreDetail | undefined;
+  // 実績の欄が使う taskId と assignedUserTaskResultData は要らない（プロジェクトの表からも渡す）
+  taskGenre: Omit<TaskGenreDetail, "taskId" | "assignedUserTaskResultData"> | undefined;
 }
 
 // 詳細の「ジャンル」欄。ジャンルの期間・日数・人数・人日。
