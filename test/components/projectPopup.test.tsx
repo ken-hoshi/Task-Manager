@@ -241,31 +241,36 @@ describe("ProjectPopup（作成）", () => {
   });
 });
 
+// 編集で開くときの DB の返事。projects は1回目が読み込み（.single()）、2回目以降が更新
+const setEditResponses = () => {
+  setResponses("workspace_task_genre", ok([]));
+  setResponses(
+    "projects",
+    ok({
+      id: 4,
+      project_name: "検索画面",
+      small_projects: [
+        {
+          id: 11,
+          small_project_name: "一覧",
+          details: "メモ",
+          created_at: "2024-04-01",
+          small_project_users: [{ user_id: 5, users: { name: "星" } }],
+        },
+      ],
+    })
+  );
+  setResponses(
+    "task_genre",
+    ok([
+      { id: 7, task_genre_name: "設計", start_date: "2024-04-01", deadline_date: "2024-04-05", small_project_id: 11 },
+    ])
+  );
+};
+
 describe("ProjectPopup（編集）", () => {
   it("今の名前・メンバー・ジャンル・詳細が入っている", async () => {
-    setResponses("workspace_task_genre", ok([]));
-    setResponses(
-      "projects",
-      ok({
-        id: 4,
-        project_name: "検索画面",
-        small_projects: [
-          {
-            id: 11,
-            small_project_name: "一覧",
-            details: "メモ",
-            created_at: "2024-04-01",
-            small_project_users: [{ user_id: 5, users: { name: "星" } }],
-          },
-        ],
-      })
-    );
-    setResponses(
-      "task_genre",
-      ok([
-        { id: 7, task_genre_name: "設計", start_date: "2024-04-01", deadline_date: "2024-04-05", small_project_id: 11 },
-      ])
-    );
+    setEditResponses();
 
     await renderPopup(4);
 
@@ -277,5 +282,22 @@ describe("ProjectPopup（編集）", () => {
     expect(screen.getByRole("textbox", { name: /ジャンル 1の期間/ })).toHaveValue("2024/04/01 - 2024/04/05");
     expect(screen.getByRole("textbox", { name: /^詳細/ })).toHaveValue("メモ");
     expect(screen.getByRole("button", { name: "更新する" })).toBeInTheDocument();
+  });
+
+  it("「更新する」で、直した名前でプロジェクトと小プロジェクトを更新して閉じる", async () => {
+    setEditResponses();
+    await renderPopup(4);
+    fireEvent.change(screen.getByRole("textbox", { name: /^プロジェクト名/ }), { target: { value: "検索画面2" } });
+    fireEvent.change(screen.getByRole("textbox", { name: /^小プロジェクト名/ }), { target: { value: "一覧2" } });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "更新する" }));
+    });
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    const updatesOf = (table: string) => opsOf(table).filter(([op]) => op === "update").map(([, args]) => args[0]);
+    expect(updatesOf("projects")).toContainEqual({ project_name: "検索画面2" });
+    expect(updatesOf("small_projects")).toContainEqual({ small_project_name: "一覧2", details: "メモ" });
+    expect(setNotificationValue).toHaveBeenCalledWith({ message: "プロジェクトを更新しました。", color: 0 });
   });
 });
