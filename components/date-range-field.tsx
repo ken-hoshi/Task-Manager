@@ -1,6 +1,7 @@
 "use client";
 
-import DatePicker from "react-datepicker";
+import DatePicker, { registerLocale } from "react-datepicker";
+import { ja } from "date-fns/locale/ja";
 import "react-datepicker/dist/react-datepicker.css";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +13,18 @@ interface DateRangeFieldProps {
   required?: boolean;
   placeholder?: string;
   className?: string;
+}
+
+// カレンダーの月・曜日を日本語で出す
+registerLocale("ja", ja);
+
+// カレンダーの入れ物。既定の入れ物は読み上げの名前が英語（Choose Date）で固定なので差し替える
+function CalendarContainer({ className, children }: { className?: string; children?: React.ReactNode }) {
+  return (
+    <div className={className} role="dialog" aria-label="日付を選ぶ" aria-modal="true">
+      {children}
+    </div>
+  );
 }
 
 // 期間（開始日と終了日）を選ぶ欄。react-datepicker を入力欄と同じ見た目にした入れ物
@@ -33,6 +46,12 @@ export function DateRangeField({
       endDate={end}
       selectsRange
       dateFormat="yyyy/MM/dd"
+      locale="ja"
+      dateFormatCalendar="yyyy'年'M'月'"
+      calendarContainer={CalendarContainer}
+      chooseDayAriaLabelPrefix="選ぶ:"
+      previousMonthAriaLabel="前の月"
+      nextMonthAriaLabel="次の月"
       placeholderText={placeholder}
       required={required}
       autoComplete="off"
