@@ -13,11 +13,10 @@ import NotificationBanner from "../component/notificationBanner/notificationBann
 import { fetchTasksData } from "../lib/api/fetchTasksData";
 import { getStatus } from "../lib/api/getStatus";
 import Loading from "../component/loading/loading";
-import MyTasksArea from "./myTasksArea/myTasksArea";
+import TaskTable from "./taskTable/taskTable";
 import ProjectsArea from "./projectsArea/projectsArea";
 import RobotButton from "../component/robotButton/robotButton";
 import { useSessionTimeout } from "../hooks/sessionTimeout";
-import NotYetCompletedTasksArea from "./tasksNotYetCompletedArea/notYetCompletedTasksArea";
 import { postMailNotifications } from "../lib/postMailNotifications";
 import { getSmallProjectTaskGenre } from "../lib/api/getSmallProjectTaskGenre";
 import { fetchAttachedFiles } from "../lib/api/fetchAttachedFiles";
@@ -331,14 +330,20 @@ const Task: React.FC = () => {
               userId={userId}
             />
 
-            <div className={styles[`under-area`]}>
-              <MyTasksArea
-                myTasks={myTasks}
+            <div className="mx-auto max-w-6xl space-y-6 px-6 pt-6 pb-24">
+              <TaskTable
+                variant="mine"
+                title="自分のタスク"
+                description="自分が担当しているタスクです。"
+                tasks={myTasks}
                 userId={userId}
                 statuses={statuses}
               />
-              <NotYetCompletedTasksArea
-                notYetCompletedTasks={notYetCompletedTasks}
+              <TaskTable
+                variant="team"
+                title="チームの未完了のタスク"
+                description="締切の近い順に、チーム全員の未完了のタスクを出します。"
+                tasks={notYetCompletedTasks}
                 userId={userId}
                 statuses={statuses}
               />
