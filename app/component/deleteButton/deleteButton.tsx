@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import DeleteConfirmModal from "../deleteConfirmModal/deleteConfirmModal";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
@@ -14,6 +15,8 @@ interface ProjectDeleteButtonProps {
   userId: number;
   // 読み上げで何を削除するかを伝える名前（例：タスク名）
   targetName?: string;
+  // 置く場所に合わせた見た目（例：色の付いた帯の上で下地を付ける）
+  className?: string;
 }
 
 const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
@@ -21,6 +24,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
   taskId,
   userId,
   targetName,
+  className,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { setPageUpdated } = usePageUpdateContext();
@@ -194,7 +198,7 @@ const DeleteButton: React.FC<ProjectDeleteButtonProps> = ({
       <Button
         variant="ghost"
         size="icon-sm"
-        className="text-muted-foreground hover:text-destructive"
+        className={cn("text-muted-foreground hover:text-destructive", className)}
         aria-label={targetName ? `「${targetName}」を削除` : `${kind}を削除`}
         onClick={openModal}
       >

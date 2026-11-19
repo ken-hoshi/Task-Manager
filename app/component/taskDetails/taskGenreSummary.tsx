@@ -5,7 +5,8 @@ interface TaskGenreSummaryProps {
   taskGenre: TaskGenreDetail | undefined;
 }
 
-// 詳細の「ジャンル」欄。ジャンルの期間・日数・人数・人日
+// 詳細の「ジャンル」欄。ジャンルの期間・日数・人数・人日。
+// 表（table）にしないのは、まだ作り直していないプロジェクト画面の一覧の CSS が、中の table 全体に効いてしまうため
 const TaskGenreSummary: React.FC<TaskGenreSummaryProps> = ({ taskGenre }) => {
   if (!taskGenre || !taskGenre.taskGenreId) {
     return <p className="m-0 text-muted-foreground">ジャンルはありません</p>;
@@ -26,21 +27,14 @@ const TaskGenreSummary: React.FC<TaskGenreSummaryProps> = ({ taskGenre }) => {
   return (
     <div className="space-y-2">
       <p className="m-0 font-medium">{taskGenre.taskGenreName}</p>
-      <table className="w-full text-sm">
-        <tbody>
-          {rows.map(([label, value]) => (
-            <tr key={label} className="border-b last:border-0">
-              <th
-                scope="row"
-                className="w-16 py-1.5 pr-3 text-left font-normal text-muted-foreground"
-              >
-                {label}
-              </th>
-              <td className="py-1.5 tabular-nums">{value}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <dl className="m-0 grid grid-cols-[4rem_1fr] text-sm">
+        {rows.map(([label, value]) => (
+          <div key={label} className="col-span-2 grid grid-cols-subgrid border-b py-1.5 last:border-0">
+            <dt className="text-muted-foreground">{label}</dt>
+            <dd className="m-0 tabular-nums">{value}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 };

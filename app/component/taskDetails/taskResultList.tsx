@@ -31,7 +31,7 @@ const TaskResultList: React.FC<TaskResultListProps> = ({
 
   return (
     <div className="space-y-2">
-      <ul className="m-0 list-none divide-y p-0">
+      <ul className="m-0 max-h-40 list-none divide-y overflow-y-auto p-0">
         {results.map((result, index) => (
           <li key={index} className="flex items-center gap-3 py-1.5">
             <span className="w-20 shrink-0 truncate">{result.userName}</span>

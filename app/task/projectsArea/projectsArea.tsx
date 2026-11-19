@@ -501,16 +501,21 @@ const ProjectsArea: React.FC<ProjectsAreaProps> = ({
                     </td>
 
                     <td className={styles[`col-actions`]}>
-                      <EditButton
-                        projectId={project.id}
-                        taskId={null}
-                        userId={userId}
-                      />
-                      <DeleteButton
-                        projectId={project.id}
-                        taskId={null}
-                        userId={userId}
-                      />
+                      {/* この表はまだ作り直していないので、以前と同じく縦に並べる */}
+                      <div className="flex flex-col items-center">
+                        <EditButton
+                          projectId={project.id}
+                          taskId={null}
+                          userId={userId}
+                          targetName={project.project_name}
+                        />
+                        <DeleteButton
+                          projectId={project.id}
+                          taskId={null}
+                          userId={userId}
+                          targetName={project.project_name}
+                        />
+                      </div>
                     </td>
                   </tr>
 

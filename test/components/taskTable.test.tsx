@@ -3,16 +3,17 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import TaskTable from "@/app/task/taskTable/taskTable";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
-import { opsOf, resetSupabaseMock } from "../helpers/mockSupabase";
-import { genre, statuses, task } from "./taskFixtures";
+import { opsOf, resetSupabaseMock, setResponses } from "../helpers/mockSupabase";
+import { statuses, task } from "./taskFixtures";
 
 const setPageUpdated = jest.fn();
+const setNotificationValue = jest.fn();
 
 jest.mock("../../app/lib/supabase/client", () => ({
   clientSupabase: require("../helpers/mockSupabase").mockClient,
 }));
 jest.mock("@/app/provider/notificationProvider", () => ({
-  useNotificationContext: () => ({ setNotificationValue: jest.fn() }),
+  useNotificationContext: () => ({ setNotificationValue }),
 }));
 jest.mock("@/app/provider/pageUpdateProvider", () => ({
   usePageUpdateContext: () => ({ pageUpdated: false, setPageUpdated }),
@@ -77,7 +78,7 @@ describe.each(["mine", "team"] as const)("TaskTable（%s）", (variant) => {
     await renderTable(variant);
 
     const row = rowOf("画面");
-    expect(within(row).getByRole("button", { name: "ステータス: 進行中（変更する）" })).toBeInTheDocument();
+    expect(within(row).getByRole("button", { name: "「画面」のステータス: 進行中（変更する）" })).toBeInTheDocument();
     expect(within(row).getByText("星")).toBeInTheDocument();
     expect(within(row).getByText("2024/04/03")).toBeInTheDocument();
     expect(within(row).getByText("（期限切れ）")).toBeInTheDocument();
@@ -104,7 +105,7 @@ describe.each(["mine", "team"] as const)("TaskTable（%s）", (variant) => {
   it("ステータスを選ぶと、そのタスクの status_id を変えて画面に読み直しを求める", async () => {
     await renderTable(variant);
 
-    fireEvent.keyDown(screen.getByRole("button", { name: "ステータス: 進行中（変更する）" }), {
+    fireEvent.keyDown(screen.getByRole("button", { name: "「画面」のステータス: 進行中（変更する）" }), {
       key: "Enter",
     });
     expect(screen.getByRole("menuitemradio", { name: "進行中" })).toHaveAttribute(
@@ -130,14 +131,14 @@ describe.each(["mine", "team"] as const)("TaskTable（%s）", (variant) => {
 describe("TaskTable の違い", () => {
   it("チームの表でステータスを変えると担当者に通知を送り、自分の表では送らない（前からの動き）", async () => {
     await renderTable("team");
-    fireEvent.keyDown(screen.getByRole("button", { name: /^ステータス: / }), { key: "Enter" });
+    fireEvent.keyDown(screen.getByRole("button", { name: /のステータス: / }), { key: "Enter" });
     fireEvent.click(screen.getByRole("menuitemradio", { name: "完了" }));
     await waitFor(() => expect(postMailNotifications).toHaveBeenCalledWith(1, 5, 1, null, null, null, 1, []));
   });
 
   it("自分の表でステータスを変えても通知は送らない", async () => {
     await renderTable("mine");
-    fireEvent.keyDown(screen.getByRole("button", { name: /^ステータス: / }), { key: "Enter" });
+    fireEvent.keyDown(screen.getByRole("button", { name: /のステータス: / }), { key: "Enter" });
     fireEvent.click(screen.getByRole("menuitemradio", { name: "完了" }));
     await waitFor(() => expect(opsOf("tasks")).toContainEqual(["update", [{ status_id: 3 }]]));
     expect(postMailNotifications).not.toHaveBeenCalled();
@@ -187,8 +188,8 @@ describe("自分のタスクの並べ替えと絞り込み", () => {
     fireEvent.click(screen.getByRole("button", { name: "締切" }));
 
     expect(taskNames()).toEqual(["A", "C", "B"]);
-    expect(within(rowOf("A")).getByRole("button", { name: /^ステータス: 完了/ })).toBeInTheDocument();
-    expect(within(rowOf("B")).getByRole("button", { name: /^ステータス: 進行中/ })).toBeInTheDocument();
+    expect(within(rowOf("A")).getByRole("button", { name: /のステータス: 完了/ })).toBeInTheDocument();
+    expect(within(rowOf("B")).getByRole("button", { name: /のステータス: 進行中/ })).toBeInTheDocument();
   });
 
   it("「未完了だけ表示」で完了のタスクを隠し、もう一度押すと戻して画面に読み直しを求める", async () => {
@@ -198,12 +199,75 @@ describe("自分のタスクの並べ替えと絞り込み", () => {
     fireEvent.click(filter);
     expect(filter).toHaveAttribute("aria-pressed", "true");
     expect(taskNames()).toEqual(["B", "C"]);
+    expect(setPageUpdated).not.toHaveBeenCalled();
 
     fireEvent.click(filter);
     expect(taskNames()).toEqual(["B", "A", "C"]);
     expect(setPageUpdated).toHaveBeenCalledWith(true);
   });
+
+  it("別の列を押すと、その列の昇順から始まる", async () => {
+    await renderTable("mine", tasks);
+    const name = screen.getByRole("button", { name: "タスク名" });
+    const deadline = screen.getByRole("button", { name: "締切" });
+
+    fireEvent.click(name);
+    fireEvent.click(name);
+    fireEvent.click(deadline);
+
+    expect(taskNames()).toEqual(["A", "C", "B"]);
+    expect(deadline.closest("th")).toHaveAttribute("aria-sort", "ascending");
+    expect(name.closest("th")).toHaveAttribute("aria-sort", "none");
+  });
+
+  it("開いた詳細は、画面が読み直しても開いたまま。並べ替えると閉じる", async () => {
+    const props = {
+      variant: "mine" as const,
+      title: "自分のタスク",
+      description: "説明",
+      userId: 5,
+      statuses,
+    };
+    let rerender!: ReturnType<typeof render>["rerender"];
+    await act(async () => {
+      ({ rerender } = render(<TaskTable {...props} tasks={tasks} />));
+    });
+    fireEvent.click(screen.getByRole("button", { name: "B" }));
+
+    await act(async () => {
+      rerender(<TaskTable {...props} tasks={tasks.map((t) => ({ ...t }))} />);
+    });
+    expect(screen.getByRole("button", { name: "B" })).toHaveAttribute("aria-expanded", "true");
+
+    fireEvent.click(screen.getByRole("button", { name: "タスク名" }));
+    expect(screen.getByRole("button", { name: "B" })).toHaveAttribute("aria-expanded", "false");
+  });
 });
 
-// 使っていない import の警告を出さないため
-void genre;
+describe("ステータスの変更の分岐", () => {
+  it("今のステータスを選び直しても、DB に送らない", async () => {
+    await renderTable("mine");
+
+    fireEvent.keyDown(screen.getByRole("button", { name: /のステータス: / }), { key: "Enter" });
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "進行中" }));
+
+    expect(opsOf("tasks").some(([op]) => op === "update")).toBe(false);
+  });
+
+  it("DB の更新に失敗したら日本語の通知を出し、それでも画面に読み直しを求める", async () => {
+    setResponses("tasks", { data: null, error: { message: "boom" } });
+    await renderTable("mine");
+
+    fireEvent.keyDown(screen.getByRole("button", { name: /のステータス: / }), { key: "Enter" });
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "完了" }));
+
+    await waitFor(() =>
+      expect(setNotificationValue).toHaveBeenCalledWith({
+        message: "ステータスを変更できませんでした。",
+        color: 1,
+      })
+    );
+    expect(setPageUpdated).toHaveBeenCalledWith(true);
+  });
+});
+

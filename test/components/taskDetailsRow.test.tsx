@@ -61,9 +61,9 @@ const arrow = () => screen.getByText(/^arrow_(right|drop_down)/);
 const taskRow = () => closest(arrow(), "tr", "タスクの行");
 const detailsRow = () => closest(screen.getByText("Task Genre"), "tr", "詳細の行");
 
-// ジャンルの表で、見出しが label の行の値
+// ジャンルの欄で、見出し（dt）が label の値（dd）
 const valueOf = (container: HTMLElement, label: string) =>
-  within(container).getByRole("rowheader", { name: label }).nextElementSibling?.textContent;
+  within(container).getByText(label, { selector: "dt" }).nextElementSibling?.textContent;
 
 const renderAndOpen = async () => {
   renderTaskList();

@@ -967,7 +967,8 @@ const TaskList: React.FC<TaskListProps> = ({
                                 <div
                                   className={styles[`actions-button-container`]}
                                 >
-                                  <div>
+                                  {/* この表はまだ作り直していないので、以前と同じく縦に並べる */}
+                                  <div className="flex flex-col items-center">
                                     <EditButton
                                       workspaceId={
                                         displayWorkspaceId || undefined
@@ -975,11 +976,13 @@ const TaskList: React.FC<TaskListProps> = ({
                                       taskId={task.id}
                                       projectId={null}
                                       userId={userId}
+                                      targetName={task.task_name}
                                     />
                                     <DeleteButton
                                       taskId={task.id}
                                       projectId={null}
                                       userId={userId}
+                                      targetName={task.task_name}
                                     />
                                   </div>
                                 </div>

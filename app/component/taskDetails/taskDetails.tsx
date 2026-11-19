@@ -1,3 +1,4 @@
+import { useId } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Loader2 } from "lucide-react";
@@ -12,18 +13,21 @@ import TaskGenreSummary from "./taskGenreSummary";
 import TaskResultList from "./taskResultList";
 import { AttachedFileData, TaskGenreDetail } from "./types";
 
-interface TaskDetailsProps {
-  task: {
-    id: number;
-    assigned_user_id: number;
-    start_date: string;
-    deadline_date: string;
-    details: string | null;
-    small_projects: {
-      small_project_name: string;
-      projects: { project_name: string };
-    };
+// 詳細に出すタスクの項目（fetchTasksData が返す行の一部）
+export interface DetailTask {
+  id: number;
+  assigned_user_id: number;
+  start_date: string;
+  deadline_date: string;
+  details: string | null;
+  small_projects: {
+    small_project_name: string;
+    projects: { project_name: string };
   };
+}
+
+interface TaskDetailsProps {
+  task: DetailTask;
   taskGenre: TaskGenreDetail | undefined;
   attachedFiles: AttachedFileData[] | undefined;
   userId: number;
@@ -48,102 +52,107 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   attachedFiles,
   userId,
   resultForm,
-}) => (
-  <div className="space-y-5 bg-muted/40 px-6 py-5">
-    <div className="grid gap-5 md:grid-cols-2">
-      <Section title="プロジェクト">
-        <p className="m-0">{task.small_projects.projects.project_name}</p>
-        <p className="m-0 text-muted-foreground">
-          {task.small_projects.small_project_name}
-        </p>
-      </Section>
-      <Section title="期間">
-        <p className="m-0 tabular-nums">
-          <span>{formatDate(task.start_date)}</span>
-          {" 〜 "}
-          <span>{formatDate(task.deadline_date)}</span>
-        </p>
-      </Section>
+}) => {
+  // 同じタスクを2つの表で同時に開いても、ラベルの付く先が重ならないようにする
+  const fieldId = useId();
 
-      <Section title="ジャンル">
-        <TaskGenreSummary taskGenre={taskGenre} />
-      </Section>
-      <Section title="実績">
-        <div className="space-y-3">
-          <TaskResultList
-            taskGenre={taskGenre}
-            userId={userId}
-            onReset={resultForm.handleResetResult}
-          />
-          {userId === task.assigned_user_id && (
-            <form
-              aria-label="実績を記録"
-              onSubmit={(e) => resultForm.handleSubmit(e, task.id)}
-              className="flex flex-wrap items-end gap-2"
-            >
-              <div className="space-y-1">
-                <Label htmlFor={`result-period-${task.id}`}>作業した期間</Label>
-                <DatePicker
-                  id={`result-period-${task.id}`}
-                  selected={resultForm.selectedResultStartDate}
-                  onChange={resultForm.handleResultDateRangeChange}
-                  startDate={resultForm.selectedResultStartDate}
-                  endDate={resultForm.selectedResultDeadlineDate}
-                  selectsRange
-                  dateFormat="yyyy/MM/dd"
-                  className="h-8 w-56 rounded-md border bg-background px-2.5 text-sm"
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor={`result-days-${task.id}`}>日数</Label>
-                <Input
-                  id={`result-days-${task.id}`}
-                  type="number"
-                  name="numberOfResultDays"
-                  step="0.1"
-                  min="0"
-                  className="w-24"
-                  value={
-                    resultForm.numberOfResultDays !== undefined
-                      ? resultForm.numberOfResultDays
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const inputValue = e.target.value;
-                    resultForm.setNumberOfResultDays(
-                      inputValue ? Number(inputValue) : undefined
-                    );
-                  }}
-                  required
-                />
-              </div>
-              <Button type="submit" disabled={resultForm.postLoading}>
-                {resultForm.postLoading && (
-                  <Loader2 className="size-4 animate-spin" aria-hidden />
-                )}
-                記録
-              </Button>
-            </form>
+  return (
+    <div className="space-y-5 bg-muted/40 px-6 py-5">
+      <div className="grid gap-5 md:grid-cols-2">
+        <Section title="プロジェクト">
+          <p className="m-0">{task.small_projects.projects.project_name}</p>
+          <p className="m-0 text-muted-foreground">
+            {task.small_projects.small_project_name}
+          </p>
+        </Section>
+        <Section title="期間">
+          <p className="m-0 tabular-nums">
+            <span>{formatDate(task.start_date)}</span>
+            {" 〜 "}
+            <span>{formatDate(task.deadline_date)}</span>
+          </p>
+        </Section>
+
+        <Section title="ジャンル">
+          <TaskGenreSummary taskGenre={taskGenre} />
+        </Section>
+        <Section title="実績">
+          <div className="space-y-3">
+            <TaskResultList
+              taskGenre={taskGenre}
+              userId={userId}
+              onReset={resultForm.handleResetResult}
+            />
+            {userId === task.assigned_user_id && (
+              <form
+                aria-label="実績を記録"
+                onSubmit={(e) => resultForm.handleSubmit(e, task.id)}
+                className="flex flex-wrap items-end gap-2"
+              >
+                <div className="space-y-1">
+                  <Label htmlFor={`${fieldId}-period`}>作業した期間</Label>
+                  <DatePicker
+                    id={`${fieldId}-period`}
+                    selected={resultForm.selectedResultStartDate}
+                    onChange={resultForm.handleResultDateRangeChange}
+                    startDate={resultForm.selectedResultStartDate}
+                    endDate={resultForm.selectedResultDeadlineDate}
+                    selectsRange
+                    dateFormat="yyyy/MM/dd"
+                    className="h-8 w-56 rounded-md border bg-background px-2.5 text-sm"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor={`${fieldId}-days`}>日数</Label>
+                  <Input
+                    id={`${fieldId}-days`}
+                    type="number"
+                    name="numberOfResultDays"
+                    step="0.1"
+                    min="0"
+                    className="w-24"
+                    value={
+                      resultForm.numberOfResultDays !== undefined
+                        ? resultForm.numberOfResultDays
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      resultForm.setNumberOfResultDays(
+                        inputValue ? Number(inputValue) : undefined
+                      );
+                    }}
+                    required
+                  />
+                </div>
+                <Button type="submit" disabled={resultForm.postLoading}>
+                  {resultForm.postLoading && (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  )}
+                  記録
+                </Button>
+              </form>
+            )}
+          </div>
+        </Section>
+
+        <Section title="詳細">
+          {task.details ? (
+            <p className="m-0 whitespace-pre-wrap">{task.details}</p>
+          ) : (
+            <p className="m-0 text-muted-foreground">詳細はありません</p>
           )}
-        </div>
-      </Section>
+        </Section>
+        <Section title="添付ファイル">
+          <AttachedFileList fileDataArray={attachedFiles} />
+        </Section>
+      </div>
 
-      <Section title="詳細">
-        {task.details ? (
-          <p className="m-0 whitespace-pre-wrap">{task.details}</p>
-        ) : (
-          <p className="m-0 text-muted-foreground">詳細はありません</p>
-        )}
-      </Section>
-      <Section title="添付ファイル">
-        <AttachedFileList fileDataArray={attachedFiles} />
-      </Section>
+      {/* コメントの見た目は、コメント・AI チャット・通知の PR で作り直す */}
+      <Comment userId={userId} taskId={task.id} />
     </div>
-
-    {/* コメントの見た目は、コメント・AI チャット・通知の PR で作り直す */}
-    <Comment userId={userId} taskId={task.id} />
-  </div>
-);
+  );
+};
 
 export default TaskDetails;

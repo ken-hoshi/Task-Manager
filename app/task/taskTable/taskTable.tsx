@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 import AddButton from "@/app/component/addButton/addButton";
 import EditButton from "@/app/component/editButton/editButton";
 import DeleteButton from "@/app/component/deleteButton/deleteButton";
-import TaskDetails from "@/app/component/taskDetails/taskDetails";
+import TaskDetails, { type DetailTask } from "@/app/component/taskDetails/taskDetails";
 import { AttachedFileData, TaskGenreDetail } from "@/app/component/taskDetails/types";
 import { useTaskResultForm } from "@/app/hooks/useTaskResultForm";
 import { clientSupabase } from "@/app/lib/supabase/client";
@@ -52,6 +52,16 @@ interface AttachedFileProps {
   fileDataArray: AttachedFileData[];
 }
 
+// 表の1行に使うタスクの項目（fetchTasksData が返す行の一部）
+export interface TaskRow extends DetailTask {
+  task_name: string;
+  status_id: number;
+  number_of_days: number;
+  task_status?: { status: string } | null;
+  users: { name: string };
+  small_projects: DetailTask["small_projects"] & { isFinished: boolean };
+}
+
 // "mine"：自分のタスク。並べ替え・未完了だけの絞り込み・追加・編集・削除ができる。
 // "team"：チームの未完了のタスク。ステータスを変えると担当者に通知を送る。
 // shortcut: 通知を送るのが "team" だけなのは前からの動き（README の既知の問題）。直すのは別の PR
@@ -61,7 +71,7 @@ interface TaskTableProps {
   variant: TaskTableVariant;
   title: string;
   description: string;
-  tasks: any[];
+  tasks: TaskRow[];
   userId: number;
   statuses: StatusProps[];
 }
@@ -91,7 +101,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   statuses,
 }) => {
   const { setNotificationValue } = useNotificationContext();
-  const { pageUpdated, setPageUpdated } = usePageUpdateContext();
+  const { setPageUpdated } = usePageUpdateContext();
   const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
   const { newItem } = useFlashDisplayContext();
   const resultForm = useTaskResultForm();
@@ -114,7 +124,17 @@ const TaskTable: React.FC<TaskTableProps> = ({
     return sortTasks(filtered, sort.key, sort.step === 1 ? 0 : 1);
   }, [tasks, onlyNotCompleted, sort]);
 
-  // ジャンルと添付は、出しうるタスク（終わった小プロジェクトのもの以外）の分をまとめて読む
+  // 一覧から消えたタスク（完了にした・削除した）の開閉の状態は捨てる。未完了に戻したとき開いたまま出てこないように
+  useEffect(() => {
+    const ids = new Set(tasks.map((task) => task.id));
+    setOpenTaskIds((prev) => {
+      const kept = [...prev].filter((id) => ids.has(id));
+      return kept.length === prev.size ? prev : new Set(kept);
+    });
+  }, [tasks]);
+
+  // ジャンルと添付は、出しうるタスク（終わった小プロジェクトのもの以外）の分をまとめて読む。
+  // 画面が読み直すと tasks が新しい配列になるので、それで読み直す
   useEffect(() => {
     const taskIds = tasks
       .filter((task) => !task.small_projects.isFinished)
@@ -137,7 +157,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     return () => {
       ignore = true;
     };
-  }, [tasks, pageUpdated]);
+  }, [tasks]);
 
   const closeAllDetails = () => setOpenTaskIds(new Set());
 
@@ -255,11 +275,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
       {visibleTasks.length === 0 ? (
         <EmptyState
           icon={ListTodo}
-          title="タスクはありません"
+          title={onlyNotCompleted ? "未完了のタスクはありません" : "タスクはありません"}
           description={
-            isMine
-              ? "担当のタスクができると、ここに出ます。"
-              : "チームの未完了のタスクは、すべて片づいています。"
+            onlyNotCompleted
+              ? "「未完了だけ表示」を外すと、完了したタスクも出ます。"
+              : isMine
+                ? "担当のタスクができると、ここに出ます。"
+                : "チームの未完了のタスクは、すべて片づいています。"
           }
         />
       ) : (
@@ -316,7 +338,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                         isMine &&
                           newItem.id == task.id &&
                           newItem.target == 1 &&
-                          "bg-primary/10"
+                          "bg-primary/10 motion-safe:animate-pulse"
                       )}
                     >
                       <td className="py-2 pr-3 pl-3">
@@ -344,7 +366,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                               variant="outline"
                               size="sm"
                               className="gap-2"
-                              aria-label={`ステータス: ${statusName}（変更する）`}
+                              aria-label={`「${task.task_name}」のステータス: ${statusName}（変更する）`}
                             >
                               <span
                                 className={cn(

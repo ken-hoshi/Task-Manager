@@ -113,13 +113,22 @@ const TaskItem = ({
           <div className={styles[`task-name`]}>{task.task_name}</div>
         </div>
         <div className={styles[`button-area`]}>
+          {/* 青い帯の上なので、白い下地を付けて読めるようにする */}
           <EditButton
             workspaceId={displayWorkspaceId || undefined}
             taskId={task.id}
             projectId={null}
             userId={userId}
+            targetName={task.task_name}
+            className="size-6 bg-white/90 text-foreground hover:bg-white"
           />
-          <DeleteButton taskId={task.id} projectId={null} userId={userId} />
+          <DeleteButton
+            taskId={task.id}
+            projectId={null}
+            userId={userId}
+            targetName={task.task_name}
+            className="size-6 bg-white/90 text-foreground hover:bg-white hover:text-destructive"
+          />
         </div>
       </div>
 
