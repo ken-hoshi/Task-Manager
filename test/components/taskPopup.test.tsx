@@ -56,7 +56,7 @@ beforeEach(() => {
 
 const onClose = jest.fn();
 
-const renderPopup = async () => {
+const renderPopup = async (taskGenreId: number | null = null) => {
   await act(async () => {
     render(
       <TaskPopup
@@ -64,7 +64,7 @@ const renderPopup = async () => {
         onClose={onClose}
         userId={5}
         taskId={null}
-        taskGenreId={null}
+        taskGenreId={taskGenreId}
         projectId={1}
         smallProjectId={11}
       />
@@ -94,6 +94,18 @@ describe("TaskPopup（作成）", () => {
 
     choose(/ジャンル/, "設計");
 
+    expect(screen.getByRole("spinbutton", { name: /日数/ })).toHaveValue(5);
+  });
+
+  it("カレンダーからジャンルを決めて開くと、そのジャンルと期間・日数が入っている", async () => {
+    const genre = { id: 7, task_genre_name: "設計", start_date: "2024-04-01", deadline_date: "2024-04-05" };
+    // 1回目はジャンル1件の読み込み（.single()）、2回目以降は小プロジェクトのジャンルの一覧
+    setResponses("task_genre", ok(genre), ok([genre]));
+
+    await renderPopup(7);
+
+    expect(screen.getByRole("combobox", { name: /ジャンル/ })).toHaveTextContent("設計");
+    expect(screen.getByRole("textbox", { name: /期間/ })).toHaveValue("2024/04/01 - 2024/04/05");
     expect(screen.getByRole("spinbutton", { name: /日数/ })).toHaveValue(5);
   });
 
