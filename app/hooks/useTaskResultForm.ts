@@ -93,6 +93,10 @@ export const useTaskResultForm = () => {
         throw taskResultUpdateError;
       }
 
+      // 記録できたときだけ入力欄を空にする（失敗したら、入れた値を残して送り直せるようにする）
+      setSelectedResultDeadlineDate(undefined);
+      setSelectedResultStartDate(undefined);
+      setNumberOfResultDays(undefined);
       setPostLoading(false);
       setPageUpdated(true);
     } catch (error) {
@@ -104,9 +108,6 @@ export const useTaskResultForm = () => {
       setPostLoading(false);
       setPageUpdated(true);
     }
-    setSelectedResultDeadlineDate(undefined);
-    setSelectedResultStartDate(undefined);
-    setNumberOfResultDays(undefined);
   };
 
   return {

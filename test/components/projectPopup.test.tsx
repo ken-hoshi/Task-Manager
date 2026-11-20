@@ -3,7 +3,14 @@ import { act, createEvent, fireEvent, render, screen, waitFor, within } from "@t
 import ProjectPopup from "@/app/component/projectPopup/projectPopup";
 import { getUsers } from "@/app/lib/api/getUser";
 import { fetchAttachedFiles } from "@/app/lib/api/fetchAttachedFiles";
-import { insertsOf, opsOf, resetSupabaseMock, setResponses, storageCalls } from "../helpers/mockSupabase";
+import {
+  insertsOf,
+  opsOf,
+  resetSupabaseMock,
+  setResponses,
+  setUploadErrors,
+  storageCalls,
+} from "../helpers/mockSupabase";
 
 const setPageUpdated = jest.fn();
 const setNotificationValue = jest.fn();
@@ -329,7 +336,7 @@ describe("ProjectPopup（編集）", () => {
     setEditResponses();
     setResponses("small_project_attachments", ok([{ id: 80, file_path: "public/spec.pdf" }]), ok(null));
     (fetchAttachedFiles as jest.Mock).mockResolvedValue([
-      { id: 11, fileDataArray: [{ file: new File(["x"], "仕様.pdf") }] },
+      { id: 11, fileDataArray: [{ file: new File(["x"], "仕様.pdf"), attachmentId: 80 }] },
     ]);
     await renderPopup(4);
 
@@ -339,9 +346,13 @@ describe("ProjectPopup（編集）", () => {
     });
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect(opsOf("small_project_attachments")).toContainEqual(["eq", ["small_project_id", 11]]);
-    expect(opsOf("small_project_attachments")).toContainEqual(["in", ["file_name", ["仕様.pdf"]]]);
-    expect(opsOf("small_project_attachments")).toContainEqual(["in", ["id", [80]]]);
+    expect(opsOf("small_project_attachments")).toEqual([
+      ["select", ["id, file_path"]],
+      ["eq", ["small_project_id", 11]],
+      ["in", ["id", [80]]],
+      ["delete", []],
+      ["in", ["id", [80]]],
+    ]);
   });
 
   // 以前は、足した小プロジェクトの保存に失敗すると、既存のプロジェクトごと消していた
@@ -367,5 +378,31 @@ describe("ProjectPopup（編集）", () => {
     expect(opsOf("projects").some(([op]) => op === "delete")).toBe(false);
     expect(opsOf("small_projects")).toContainEqual(["delete", []]);
     expect(opsOf("small_projects")).toContainEqual(["in", ["id", [42]]]);
+  });
+
+  // 一部のアップロードだけ失敗したとき、上がったファイルと足した小プロジェクトを残さない。編集の失敗ではポップアップを閉じる
+  it("足した小プロジェクトの添付の一部が上がらなかったら、上がったファイルと足した小プロジェクトを消して閉じる", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    setEditResponses();
+    setResponses("small_projects", ok(null), ok({ id: 42, small_project_name: "詳細" }), ok(null));
+    setUploadErrors(null, { message: "too large" });
+    await renderPopup(4);
+    fireEvent.click(screen.getByRole("button", { name: "小プロジェクトを足す" }));
+    fireEvent.change(screen.getByRole("textbox", { name: /^小プロジェクト名/ }), { target: { value: "詳細" } });
+    chooseMember("田中");
+    fireEvent.change(document.querySelector('input[type="file"]')!, {
+      target: { files: [new File(["x"], "a.pdf"), new File(["y"], "b.pdf")] },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "更新する" }));
+    });
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    const uploaded = storageCalls.find((call) => call.op === "upload")!.args[0];
+    expect(storageCalls).toContainEqual({ bucket: "small_project_attachments", op: "remove", args: [[uploaded]] });
+    expect(opsOf("small_projects")).toContainEqual(["in", ["id", [42]]]);
+    expect(insertsOf("small_project_attachments")).toEqual([]);
+    expect(opsOf("projects").some(([op]) => op === "delete")).toBe(false);
   });
 });

@@ -192,19 +192,14 @@ const TaskTable: React.FC<TaskTableProps> = ({
         .eq("id", taskId);
       if (error) throw error;
 
-      const postEmailNotificationsError = await postMailNotifications(
-        displayWorkspaceId,
-        userId,
-        taskId,
-        null,
-        null,
-        null,
-        1,
-        []
+      // 通知は待たない（自分の表では送る相手がいないことが多く、待つとステータスの表示が変わるのが遅れる）
+      postMailNotifications(displayWorkspaceId, userId, taskId, null, null, null, 1, []).then(
+        (postEmailNotificationsError) => {
+          if (postEmailNotificationsError) {
+            console.error("Error post mail notifications ", postEmailNotificationsError);
+          }
+        }
       );
-      if (postEmailNotificationsError) {
-        console.error("Error post mail notifications ", postEmailNotificationsError);
-      }
     } catch (error) {
       console.error("Update Status", error);
       setNotificationValue({ message: "ステータスを変更できませんでした。", color: 1 });

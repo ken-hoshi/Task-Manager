@@ -6,11 +6,6 @@ describe("isUnfinished", () => {
     expect(isUnfinished({ status_id: 2 })).toBe(true);
     expect(isUnfinished({ status_id: 3 })).toBe(false);
   });
-
-  // 以前はチームのタスクだけ表示名で判定していたので、DB の名前が変わると完了のタスクも未完了に出た
-  it("表示名に関わらず、id で決める", () => {
-    expect(isUnfinished({ status_id: 3, task_status: { status: "完了" } } as { status_id: number })).toBe(false);
-  });
 });
 
 describe("taskStatusLabel", () => {

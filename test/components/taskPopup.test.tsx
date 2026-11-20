@@ -202,7 +202,7 @@ describe("TaskPopup（作成）", () => {
 
 describe("TaskPopup（編集）", () => {
   // 以前は添付をファイル名だけで探して消していたので、別のタスクにある同じ名前のファイルも消えた
-  it("外した添付は、このタスクのものだけを探して消す", async () => {
+  it("外した添付は、このタスクの、外したものだけを id で探して消す", async () => {
     setResponses(
       "tasks",
       ok({
@@ -222,8 +222,15 @@ describe("TaskPopup（編集）", () => {
     setResponses("task_genre", ok([]));
     setResponses("users", ok({ name: "星" }));
     setResponses("task_attachments", ok([{ id: 70, file_path: "public/spec.pdf" }]), ok(null));
+    // 同じ名前の添付が2つある。1つ目だけを外す
     (fetchAttachedFiles as jest.Mock).mockResolvedValue([
-      { id: 99, fileDataArray: [{ file: new File(["x"], "仕様.pdf") }] },
+      {
+        id: 99,
+        fileDataArray: [
+          { file: new File(["x"], "仕様.pdf"), attachmentId: 70 },
+          { file: new File(["y"], "仕様.pdf"), attachmentId: 71 },
+        ],
+      },
     ]);
     await act(async () => {
       render(
@@ -238,17 +245,21 @@ describe("TaskPopup（編集）", () => {
         />
       );
     });
-    await screen.findByRole("button", { name: "「仕様.pdf」を外す" });
+    await screen.findAllByRole("button", { name: "「仕様.pdf」を外す" });
 
-    fireEvent.click(screen.getByRole("button", { name: "「仕様.pdf」を外す" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "「仕様.pdf」を外す" })[0]);
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "更新する" }));
     });
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect(opsOf("task_attachments")).toContainEqual(["eq", ["task_id", 99]]);
-    expect(opsOf("task_attachments")).toContainEqual(["in", ["file_name", ["仕様.pdf"]]]);
-    // 探した行を id で消す
-    expect(opsOf("task_attachments")).toContainEqual(["in", ["id", [70]]]);
+    // このタスクの、外した添付の id だけで探して消す（同じ名前のもう1つ〈71〉は消さない）
+    expect(opsOf("task_attachments")).toEqual([
+      ["select", ["id, file_path"]],
+      ["eq", ["task_id", 99]],
+      ["in", ["id", [70]]],
+      ["delete", []],
+      ["in", ["id", [70]]],
+    ]);
   });
 });

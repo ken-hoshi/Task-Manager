@@ -8,7 +8,9 @@ enum Target {
 export async function fetchAttachedFiles(
   target: number,
   ids: number[]
-): Promise<{ id: number; fileDataArray: { file: File; url: string }[] }[]> {
+): Promise<
+  { id: number; fileDataArray: { file: File; url: string; attachmentId: number }[] }[]
+> {
   try {
     const tableName =
       target === Target.smallProject
@@ -59,7 +61,8 @@ export async function fetchAttachedFiles(
               });
               try {
                 const url = URL.createObjectURL(file);
-                return { file: file, url: url };
+                // attachmentId は添付の行の id。外したファイルを、名前ではなくこの id で消すのに使う
+                return { file: file, url: url, attachmentId: attached.id as number };
               } catch (error) {
                 console.error("Failed to create object URL", error);
                 return null;
@@ -75,6 +78,7 @@ export async function fetchAttachedFiles(
           fileDataArray: files.filter((file) => file !== null) as {
             file: File;
             url: string;
+            attachmentId: number;
           }[],
         };
       })

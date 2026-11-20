@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -107,6 +107,8 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
   );
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [beforeChangeFiles, setBeforeChangeFiles] = useState<File[]>([]);
+  // 読み込んだ添付の File → 添付の行の id。外したファイルを、名前ではなく id で消す（同じ名前の添付が2つあっても1つだけ消す）
+  const attachmentIdsRef = useRef(new WeakMap<File, number>());
 
   const [getLoading, setGetLoading] = useState(true);
   const [postLoading, setPostLoading] = useState(false);
@@ -239,7 +241,10 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           }
 
           const fileData = taskAttachmentsData[0].fileDataArray.map(
-            (fileData) => fileData.file
+            (fileData) => {
+              attachmentIdsRef.current.set(fileData.file, fileData.attachmentId);
+              return fileData.file;
+            }
           );
           setSelectedFiles(fileData);
           setBeforeChangeFiles(fileData);
@@ -398,11 +403,9 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             smallProjectList
               .filter((smallProject) =>
                 selectedUser
-                  ? selectedUser.value === 0
-                    ? true
-                    : smallProject.small_project_users.some(
-                        (user: any) => user.user_id === selectedUser.value
-                      )
+                  ? smallProject.small_project_users.some(
+                      (user: any) => user.user_id === selectedUser.value
+                    )
                   : true
               )
               .map((smallProject) => ({
@@ -604,9 +607,9 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
         );
 
         if (removedFiles.length > 0) {
-          const removedFileNames = removedFiles.map(
-            (removedFile) => removedFile.name
-          );
+          const removedAttachmentIds = removedFiles
+            .map((removedFile) => attachmentIdsRef.current.get(removedFile))
+            .filter((id): id is number => id !== undefined);
 
           const {
             data: removedFilePathList,
@@ -614,9 +617,9 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           } = await clientSupabase
             .from("task_attachments")
             .select("id, file_path")
-            // このタスクの添付だけを探す（ファイル名だけだと、別のタスクにある同じ名前のファイルも消える）
+            // このタスクの添付のうち、外したものだけを id で探す（ファイル名で探すと、同じ名前の別の添付も消える）
             .eq("task_id", taskId)
-            .in("file_name", removedFileNames);
+            .in("id", removedAttachmentIds);
 
           if (selectRemovedFilePathListError) {
             throw selectRemovedFilePathListError;
@@ -633,7 +636,6 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             throw removeError;
           }
 
-          // 探した行を id で消す（探した行と消す行を確実に一致させる）
           const { error: taskAttachmentsDeleteError } = await clientSupabase
             .from("task_attachments")
             .delete()

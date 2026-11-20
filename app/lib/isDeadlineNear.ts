@@ -1,5 +1,7 @@
+import { COMPLETED_STATUS_ID } from "./taskStatus";
+
 export const isDeadlineNear = (deadline: string, taskStatusId: number) => {
-  if (taskStatusId === 3) {
+  if (taskStatusId === COMPLETED_STATUS_ID) {
     return 0;
   }
   const now = new Date();

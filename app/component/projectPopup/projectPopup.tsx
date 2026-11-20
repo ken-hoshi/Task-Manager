@@ -99,6 +99,8 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
   >([]);
   const [tabNumber, setTabNumber] = useState<number[]>([1]);
   const formId = "project-popup-form";
+  // 読み込んだ添付の File → 添付の行の id。外したファイルを、名前ではなく id で消す
+  const attachmentIdsRef = useRef(new WeakMap<File, number>());
   // 外すボタンは押すと消えるので、外したあとはフォーカスを足すボタンへ移す
   const addSmallProjectButtonRef = useRef<HTMLButtonElement>(null);
   const addTaskGenreButtonRef = useRef<HTMLButtonElement>(null);
@@ -244,6 +246,9 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
 
               const smallProjectAttachedFilesArray = attachedFilesArray.find(
                 (attachedFiles) => attachedFiles.id === smallProject.id
+              );
+              smallProjectAttachedFilesArray?.fileDataArray.forEach((fileData) =>
+                attachmentIdsRef.current.set(fileData.file, fileData.attachmentId)
               );
 
               return {
@@ -522,27 +527,24 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
     const insertSmallProjects = async (
       rows: { small_project_name: string; details: string; project_id: number }[]
     ) => {
-      const results = await Promise.all(
-        rows.map((row) =>
-          clientSupabase.from("small_projects").insert(row).select().single()
-        )
-      );
-      const insertedIds: number[] = results
-        .filter((result) => !result.error && result.data)
-        .map((result) => result.data.id);
-      const failed = results.find((result) => result.error || !result.data);
-      if (failed) {
-        return {
-          ids: null,
-          insertedIds,
-          error: failed.error ?? new Error("Small Project couldn't insert."),
-        };
+      // 並べて作ると id が入力の順に振られず、id 順に出す画面でタブの順が入れ替わるので、1件ずつ順に作る
+      const insertedIds: number[] = [];
+      for (const row of rows) {
+        const { data, error } = await clientSupabase
+          .from("small_projects")
+          .insert(row)
+          .select()
+          .single();
+        if (error || !data) {
+          return {
+            ids: null,
+            insertedIds,
+            error: error ?? new Error("Small Project couldn't insert."),
+          };
+        }
+        insertedIds.push(data.id);
       }
-      return {
-        ids: results.map((result) => result.data.id as number),
-        insertedIds,
-        error: null,
-      };
+      return { ids: insertedIds, insertedIds, error: null };
     };
     try {
       if (projectId) {
@@ -830,24 +832,26 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
             }
           }
 
-          // 外した添付を、小プロジェクトごとに集める（ファイル名だけで探すと、別の小プロジェクトの同じ名前のファイルも消える）
+          // 外した添付を、小プロジェクトごとに添付の行の id で集める
+          // （ファイル名で探すと、同じ名前の別の添付も消える）
           const removedFilesBySmallProject = notAddedSmallProjectArray
             .map(({ id, beforeChangeFiles, selectedFiles }) => ({
               smallProjectId: id!,
-              fileNames: beforeChangeFiles
+              attachmentIds: beforeChangeFiles
                 .filter((file) => !selectedFiles.includes(file))
-                .map((file) => file.name),
+                .map((file) => attachmentIdsRef.current.get(file))
+                .filter((attachmentId): attachmentId is number => attachmentId !== undefined),
             }))
-            .filter(({ fileNames }) => fileNames.length > 0);
+            .filter(({ attachmentIds }) => attachmentIds.length > 0);
 
           if (removedFilesBySmallProject.length > 0) {
             const removedFilePathResults = await Promise.all(
-              removedFilesBySmallProject.map(({ smallProjectId, fileNames }) =>
+              removedFilesBySmallProject.map(({ smallProjectId, attachmentIds }) =>
                 clientSupabase
                   .from("small_project_attachments")
                   .select("id, file_path")
                   .eq("small_project_id", smallProjectId)
-                  .in("file_name", fileNames)
+                  .in("id", attachmentIds)
               )
             );
 
@@ -1032,11 +1036,13 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           // 失敗したら、この保存で作った小プロジェクトだけを消す。既存のプロジェクトは消さない
           // （以前は作成のときの巻き戻しを写していて、既存のプロジェクトごと消していた）
           const deleteAddedSmallProjects = async () => {
-            if (insertedIds.length > 0) {
-              await clientSupabase
-                .from("small_projects")
-                .delete()
-                .in("id", insertedIds);
+            if (insertedIds.length === 0) return;
+            const { error: deleteAddedSmallProjectsError } = await clientSupabase
+              .from("small_projects")
+              .delete()
+              .in("id", insertedIds);
+            if (deleteAddedSmallProjectsError) {
+              console.error("Roll back Added Small Projects", deleteAddedSmallProjectsError);
             }
           };
 
@@ -1107,17 +1113,33 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
               return {
                 small_project_id: selectedFile.small_project_id,
                 file_name: selectedFile.file.name,
-                file_path: storageData?.path,
+                file_path: storageData?.path as string,
               };
             }
           );
 
-          let insertSmallProjectAttachments;
-          try {
-            insertSmallProjectAttachments = await Promise.all(insertPromises);
-          } catch (uploadStorageDataError) {
+          // 一部のアップロードだけ失敗しても、上がった分を消せるよう、すべて終わるのを待つ
+          const uploadResults = await Promise.allSettled(insertPromises);
+          const insertSmallProjectAttachments = uploadResults
+            .filter(
+              (result): result is PromiseFulfilledResult<Awaited<(typeof insertPromises)[number]>> =>
+                result.status === "fulfilled"
+            )
+            .map((result) => result.value);
+          const removeUploadedFiles = async () => {
+            if (insertSmallProjectAttachments.length === 0) return;
+            await clientSupabase.storage
+              .from("small_project_attachments")
+              .remove(insertSmallProjectAttachments.map((attachment) => attachment.file_path));
+          };
+
+          const uploadFailure = uploadResults.find(
+            (result): result is PromiseRejectedResult => result.status === "rejected"
+          );
+          if (uploadFailure) {
+            await removeUploadedFiles();
             await deleteAddedSmallProjects();
-            throw uploadStorageDataError;
+            throw uploadFailure.reason;
           }
 
           const { error: insertSmallProjectAttachmentsDataError } =
@@ -1126,6 +1148,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
               .insert(insertSmallProjectAttachments);
 
           if (insertSmallProjectAttachmentsDataError) {
+            await removeUploadedFiles();
             await deleteAddedSmallProjects();
             throw insertSmallProjectAttachmentsDataError;
           }
@@ -1302,6 +1325,9 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
       });
       setPostLoading(false);
       setPageUpdated(true);
+      // 編集の失敗は、途中まで書き込んだ変更が残ることがある。開いたまま送り直すと、ジャンルや添付が重ねて入るので閉じる
+      // （開き直すと、DB の今の状態から読み直す）
+      if (projectId) onClose();
     }
   };
 
