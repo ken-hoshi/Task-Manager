@@ -1185,11 +1185,18 @@ const TaskList: React.FC<TaskListProps> = ({
                                         </div>
                                       </div>
 
-                                      <Comment
-                                        userId={userId}
-                                        taskId={task.id}
-                                        projectDetails={true}
-                                      />
+                                      {/* プロジェクト画面を作り直すまでの置き方。見出しはコメント欄の外に置く */}
+                                      <div className="mx-8 mt-4 mb-2">
+                                        <dt className="mb-2 text-sm font-medium">
+                                          コメント
+                                        </dt>
+                                        <dd className="m-0">
+                                          <Comment
+                                            userId={userId}
+                                            taskId={task.id}
+                                          />
+                                        </dd>
+                                      </div>
                                     </dl>
                                   </div>
                                 </div>

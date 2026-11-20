@@ -88,4 +88,9 @@ const storage = {
   }),
 };
 
-export const mockClient = { from, storage };
+// 認証の差し替え。AI チャットが送るときに、ログイン中の鍵（access_token）を読む
+const auth = {
+  getSession: async () => ({ data: { session: { access_token: "test-token" } }, error: null }),
+};
+
+export const mockClient = { from, storage, auth };

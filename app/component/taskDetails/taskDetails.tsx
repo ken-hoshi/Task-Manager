@@ -149,8 +149,9 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
         </Section>
       </div>
 
-      {/* コメントの見た目は、コメント・AI チャット・通知の PR で作り直す */}
-      <Comment userId={userId} taskId={task.id} />
+      <Section title="コメント">
+        <Comment userId={userId} taskId={task.id} />
+      </Section>
     </div>
   );
 };

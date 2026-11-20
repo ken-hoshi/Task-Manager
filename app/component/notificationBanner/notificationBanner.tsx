@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import styles from "./notificationBanner.module.css";
+import React, { useEffect } from "react";
+import { CircleCheck, CircleX } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
-import classNames from "classnames";
 
 enum Color {
   green,
@@ -13,6 +13,7 @@ interface NotificationBannerProps {
   color: Color | null;
 }
 
+// 操作の結果のお知らせ。画面の右上に4秒出して隠す
 const NotificationBanner: React.FC<NotificationBannerProps> = ({
   message,
   color,
@@ -37,30 +38,26 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({
     };
   }, []);
 
+  const success = color == Color.green;
+  const Icon = success ? CircleCheck : CircleX;
+
   return (
     <div
-      className={`${styles[`notification-banner`]} ${
-        show ? styles.show : styles.hide
-      } ${color == Color.green ? styles.green : styles.red}`}
+      // 失敗はすぐに読み上げ、成功は読み上げ中の文が終わってから読む
+      role={success ? "status" : "alert"}
+      className={cn(
+        "fixed top-4 right-4 z-[60] flex w-80 max-w-[calc(100vw-2rem)] items-start gap-2.5 rounded-lg border bg-popover p-3 text-sm text-popover-foreground shadow-lg transition-all duration-500",
+        show ? "translate-x-0 opacity-100" : "pointer-events-none translate-x-4 opacity-0"
+      )}
     >
-      <div className={styles[`flex-area`]}>
-        {color == Color.green ? (
-          <span
-            className={classNames("material-symbols-outlined", styles.success)}
-          >
-            check_circle
-          </span>
-        ) : (
-          <span
-            className={classNames("material-symbols-outlined", styles.failure)}
-          >
-            cancel
-          </span>
-        )}
-
-        <p>{color == Color.green ? "Success ! ! !" : "Failure !!!"}</p>
+      <Icon
+        className={cn("mt-0.5 size-5 shrink-0", success ? "text-status-done" : "text-destructive")}
+        aria-hidden
+      />
+      <div className="min-w-0">
+        <p className="m-0 font-medium">{success ? "完了" : "エラー"}</p>
+        <p className="m-0 mt-0.5 text-muted-foreground [overflow-wrap:anywhere]">{message}</p>
       </div>
-      {message}
     </div>
   );
 };
