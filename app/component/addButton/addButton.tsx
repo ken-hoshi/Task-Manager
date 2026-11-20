@@ -14,6 +14,8 @@ interface AddButtonProps {
   taskGenreId?: number;
   // 文字を出すときの見出し。省くとアイコンだけのボタンになる
   label?: string;
+  // 同じ文字のボタンが並ぶときに、読み上げで区別するための名前（見出しの文字を含めて書く）
+  accessibleName?: string;
 }
 
 const AddButton: React.FC<AddButtonProps> = ({
@@ -24,6 +26,7 @@ const AddButton: React.FC<AddButtonProps> = ({
   smallProjectId,
   taskGenreId,
   label,
+  accessibleName,
 }) => {
   const [showProjectPopup, setShowProjectPopup] = useState(false);
   const [showTaskPopup, setShowTaskPopup] = useState(false);
@@ -43,7 +46,7 @@ const AddButton: React.FC<AddButtonProps> = ({
       <Button
         variant={label ? "outline" : "ghost"}
         size={label ? "sm" : "icon-sm"}
-        aria-label={label ? undefined : name}
+        aria-label={accessibleName ?? (label ? undefined : name)}
         onClick={target === 0 ? toggleProjectPopup : toggleTaskPopup}
       >
         <Plus className="size-4" aria-hidden />

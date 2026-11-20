@@ -1,7 +1,10 @@
-// taskList の見出しを押したときの並べ替えを、部品を分ける前に固定する
+// プロジェクト画面の一覧（taskList）の、見出しを押したときの並べ替え。
+// 並びは行の名前（開閉のボタン）で、並べ替えの状態は見出しの aria-sort で確かめる。
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import TaskList from "@/app/project/taskList/taskList";
 import { genre, statuses, task } from "./taskFixtures";
+
+let pageUpdated = false;
 
 jest.mock("../../app/lib/supabase/client", () => ({
   clientSupabase: require("../helpers/mockSupabase").mockClient,
@@ -13,7 +16,7 @@ jest.mock("@/app/provider/notificationProvider", () => ({
   useNotificationContext: () => ({ setNotificationValue: jest.fn() }),
 }));
 jest.mock("@/app/provider/pageUpdateProvider", () => ({
-  usePageUpdateContext: () => ({ pageUpdated: false, setPageUpdated: jest.fn() }),
+  usePageUpdateContext: () => ({ pageUpdated, setPageUpdated: jest.fn() }),
 }));
 jest.mock("@/app/provider/displayWorkspaceIdProvider", () => ({
   useDisplayWorkspaceIdContext: () => ({ displayWorkspaceId: 1 }),
@@ -25,6 +28,10 @@ jest.mock("@/app/component/comment/comment", () => () => null);
 jest.mock("@/app/component/editButton/editButton", () => () => null);
 jest.mock("@/app/component/deleteButton/deleteButton", () => () => null);
 jest.mock("@/app/component/addButton/addButton", () => () => null);
+
+beforeEach(() => {
+  pageUpdated = false;
+});
 
 // ジャンル「設計」に B・C・A を、この順で渡す。列ごとに並びが変わるよう値をずらしてある
 //   status_id: A 1 / B 2 / C 3、開始日: C → A → B、日数: B 1 / A 2 / C 3、締切: C → A → B
@@ -50,113 +57,127 @@ const genreRow = (taskGenreId: number, taskGenreName: string) => ({
   numberOfDays: 5,
 });
 
-const renderTaskList = () =>
-  render(
-    <TaskList
-      userId={5}
-      projectId={1}
-      smallProjectIdList={[1]}
-      displaySmallProjectId={1}
-      taskData={[{ smallProjectId: 1, taskDataArray: tasks }]}
-      taskGenreData={[
-        { smallProjectId: 1, taskGenreDataArray: tasks.map((t) => ({ taskId: t.id, taskGenre: genre })) },
-      ]}
-      smallProjectTaskGenreData={[
-        { smallProjectId: 1, taskGenreDataArray: [genreRow(7, "設計"), genreRow(8, "実装")] },
-      ]}
-      statusData={statuses}
-      taskAttachedFileData={[{ smallProjectId: 1, fileDataList: [] }]}
-      filterMyTasks={false}
-    />
-  );
+const props = () => ({
+  userId: 5,
+  projectId: 1,
+  smallProjectIdList: [1],
+  displaySmallProjectId: 1,
+  taskData: [{ smallProjectId: 1, taskDataArray: tasks }],
+  taskGenreData: [
+    { smallProjectId: 1, taskGenreDataArray: tasks.map((t) => ({ taskId: t.id, taskGenre: genre })) },
+  ],
+  smallProjectTaskGenreData: [
+    { smallProjectId: 1, taskGenreDataArray: [genreRow(7, "設計"), genreRow(8, "実装")] },
+  ],
+  statusData: statuses,
+  taskAttachedFileData: [{ smallProjectId: 1, fileDataList: [] }],
+  filterMyTasks: false,
+});
 
-// ジャンルごとの表（見出しに「Task Name」がある表）。0 が「設計」、1 が「実装」
-const genreTable = (index: number) => {
-  const table = screen.getAllByText("Task Name")[index].closest("table");
-  if (!table) throw new Error("ジャンルの表が見つからない");
-  return table as HTMLElement;
-};
+// ジャンルごとの表（見出しがジャンルの名前の区画）
+const genreRegion = (name: string) => screen.getByRole("region", { name: new RegExp(`^${name}`) });
 
-// 表に出ているタスクの名前を、上から順に
-const taskNames = (index = 0) =>
-  within(genreTable(index))
-    .getAllByText(/^[A-E]$/)
+// 表に出ているタスクの名前を、上から順に（行の開閉のボタンの名前）
+const taskNames = (name = "設計") =>
+  within(genreRegion(name))
+    .getAllByRole("button", { name: /^[A-E]$/ })
     .map((el) => el.textContent);
 
-// 見出しの文字を押す（見出しの中にボタンを置いても、文字を押せば同じように届く）
-const clickHeader = (label: string, index = 0) => {
-  const header = within(genreTable(index))
-    .getAllByText(label)
-    .find((el) => el.closest("thead"));
-  if (!header) throw new Error(`見出し「${label}」が見つからない`);
-  fireEvent.click(header);
-};
+const clickHeader = (label: string, name = "設計") =>
+  fireEvent.click(within(genreRegion(name)).getByRole("button", { name: label }));
 
-const headerText = (label: string, index = 0) =>
-  within(genreTable(index))
-    .getAllByText(label)
-    .find((el) => el.closest("thead"))!
-    .closest("th")!.textContent;
+const sortOf = (label: string, name = "設計") =>
+  within(genreRegion(name)).getByRole("columnheader", { name: label }).getAttribute("aria-sort");
 
 describe("taskList の並べ替え", () => {
   it("同じ見出しを押すたびに、昇順 → 降順 → 渡した順 に戻る", async () => {
-    renderTaskList();
+    render(<TaskList {...props()} />);
     await waitFor(() => expect(taskNames()).toEqual(["B", "C", "A"]));
+    expect(sortOf("タスク名")).toBe("none");
 
-    clickHeader("Task Name");
+    clickHeader("タスク名");
     expect(taskNames()).toEqual(["A", "B", "C"]);
-    expect(headerText("Task Name")).toContain("keyboard_double_arrow_down");
+    expect(sortOf("タスク名")).toBe("ascending");
 
-    clickHeader("Task Name");
+    clickHeader("タスク名");
     expect(taskNames()).toEqual(["C", "B", "A"]);
+    expect(sortOf("タスク名")).toBe("descending");
 
-    clickHeader("Task Name");
+    clickHeader("タスク名");
     expect(taskNames()).toEqual(["B", "C", "A"]);
-    expect(headerText("Task Name")).toContain("swap_vert");
+    expect(sortOf("タスク名")).toBe("none");
   });
 
   it.each([
-    ["Status", ["A", "B", "C"]],
-    ["Start Date", ["C", "A", "B"]],
-    ["Deadline Date", ["C", "A", "B"]],
-    ["Days", ["B", "A", "C"]],
+    ["ステータス", ["A", "B", "C"]],
+    ["開始", ["C", "A", "B"]],
+    ["締切", ["C", "A", "B"]],
+    ["日数", ["B", "A", "C"]],
   ])("見出し「%s」を1回押すと昇順になる", async (label, expected) => {
-    renderTaskList();
+    render(<TaskList {...props()} />);
     await waitFor(() => expect(taskNames()).toHaveLength(3));
     clickHeader(label);
     expect(taskNames()).toEqual(expected);
   });
 
   it("担当者の見出しは、表示名ではなく assigned_user_id の数値で並べる（今の仕様）", async () => {
-    renderTaskList();
+    render(<TaskList {...props()} />);
     await waitFor(() => expect(taskNames()).toHaveLength(3));
-    clickHeader("Assigned");
+    clickHeader("担当者");
     expect(taskNames()).toEqual(["C", "B", "A"]);
   });
 
-  it("別の見出しを押すと、前の見出しの回数は 0 に戻り、次に押したときは昇順から始まる", async () => {
-    renderTaskList();
+  it("別の見出しを押すと、前の見出しは並べ替えなしに戻り、次に押したときは昇順から始まる", async () => {
+    render(<TaskList {...props()} />);
     await waitFor(() => expect(taskNames()).toHaveLength(3));
 
-    clickHeader("Task Name");
-    clickHeader("Deadline Date");
-    expect(headerText("Task Name")).toContain("swap_vert");
+    clickHeader("タスク名");
+    clickHeader("締切");
+    expect(sortOf("タスク名")).toBe("none");
+    expect(sortOf("締切")).toBe("ascending");
 
-    clickHeader("Task Name");
+    clickHeader("タスク名");
     expect(taskNames()).toEqual(["A", "B", "C"]);
   });
 
-  it("並べ替えはジャンルの表ごとに独立している", async () => {
-    renderTaskList();
-    await waitFor(() => expect(taskNames(1)).toEqual(["E", "D"]));
+  it("並べ替えはジャンルの表ごとに独立していて、ほかの表の並びと印は変わらない", async () => {
+    render(<TaskList {...props()} />);
+    await waitFor(() => expect(taskNames("実装")).toEqual(["E", "D"]));
 
-    clickHeader("Task Name", 0);
-    expect(taskNames(0)).toEqual(["A", "B", "C"]);
-    expect(taskNames(1)).toEqual(["E", "D"]);
-    expect(headerText("Task Name", 1)).toContain("swap_vert");
+    clickHeader("タスク名", "設計");
+    expect(taskNames("設計")).toEqual(["A", "B", "C"]);
+    expect(taskNames("実装")).toEqual(["E", "D"]);
+    expect(sortOf("タスク名", "実装")).toBe("none");
 
-    clickHeader("Task Name", 1);
-    expect(taskNames(1)).toEqual(["D", "E"]);
-    expect(taskNames(0)).toEqual(["A", "B", "C"]);
+    clickHeader("タスク名", "実装");
+    expect(taskNames("実装")).toEqual(["D", "E"]);
+    expect(sortOf("タスク名", "実装")).toBe("ascending");
+    // 先に並べ替えた表は、並びも印もそのまま
+    expect(taskNames("設計")).toEqual(["A", "B", "C"]);
+    expect(sortOf("タスク名", "設計")).toBe("ascending");
+  });
+
+  it("画面を読み直しても、並べた順は残る", async () => {
+    const { rerender } = render(<TaskList {...props()} />);
+    await waitFor(() => expect(taskNames()).toHaveLength(3));
+    clickHeader("タスク名");
+    expect(taskNames()).toEqual(["A", "B", "C"]);
+
+    // 読み直すと、新しい配列が渡ってくる
+    pageUpdated = true;
+    rerender(<TaskList {...props()} />);
+    await waitFor(() => expect(taskNames()).toEqual(["A", "B", "C"]));
+    expect(sortOf("タスク名")).toBe("ascending");
+  });
+
+  it("並べ替えると、開いていた詳細を閉じる", async () => {
+    render(<TaskList {...props()} />);
+    await waitFor(() => expect(taskNames()).toHaveLength(3));
+    const row = within(genreRegion("設計")).getByRole("button", { name: "A" });
+    fireEvent.click(row);
+    expect(row).toHaveAttribute("aria-expanded", "true");
+
+    clickHeader("日数");
+    expect(within(genreRegion("設計")).getByRole("button", { name: "A" })).toHaveAttribute("aria-expanded", "false");
   });
 });
