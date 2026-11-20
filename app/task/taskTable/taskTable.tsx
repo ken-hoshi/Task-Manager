@@ -28,7 +28,6 @@ import EditButton from "@/app/component/editButton/editButton";
 import DeleteButton from "@/app/component/deleteButton/deleteButton";
 import TaskDetails, { type DetailTask } from "@/app/component/taskDetails/taskDetails";
 import { AttachedFileData, TaskGenreDetail } from "@/app/component/taskDetails/types";
-import { useTaskResultForm } from "@/app/hooks/useTaskResultForm";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { fetchAttachedFiles } from "@/app/lib/api/fetchAttachedFiles";
 import { getTaskGenreData } from "@/app/lib/api/getTaskGenreData";
@@ -36,7 +35,7 @@ import { formatDate } from "@/app/lib/formatDateTime";
 import { isDeadlineNear } from "@/app/lib/isDeadlineNear";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
 import { sortTasks, type TaskSortKey } from "@/app/lib/sortTasks";
-import { TASK_STATUS_DOT_CLASSES, taskStatusLabel } from "@/app/lib/taskStatus";
+import { isUnfinished, TASK_STATUS_DOT_CLASSES, taskStatusLabel } from "@/app/lib/taskStatus";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
@@ -63,8 +62,8 @@ export interface TaskRow extends DetailTask {
 }
 
 // "mine"：自分のタスク。並べ替え・未完了だけの絞り込み・追加・編集・削除ができる。
-// "team"：チームの未完了のタスク。ステータスを変えると担当者に通知を送る。
-// shortcut: 通知を送るのが "team" だけなのは前からの動き（README の既知の問題）。直すのは別の PR
+// "team"：チームの未完了のタスク。
+// どちらの表でも、ステータスを変えると通知の処理を呼ぶ（送る相手は postMailNotifications が決め、変えた人が担当者なら送らない）
 type TaskTableVariant = "mine" | "team";
 
 interface TaskTableProps {
@@ -104,7 +103,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const { setPageUpdated } = usePageUpdateContext();
   const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
   const { newItem } = useFlashDisplayContext();
-  const resultForm = useTaskResultForm();
 
   const [onlyNotCompleted, setOnlyNotCompleted] = useState(false);
   const [sort, setSort] = useState<SortState>({ key: "task_name", step: 0 });
@@ -118,7 +116,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const visibleTasks = useMemo(() => {
     const unfinished = tasks.filter((task) => !task.small_projects.isFinished);
     const filtered = onlyNotCompleted
-      ? unfinished.filter((task) => task.status_id !== 3)
+      ? unfinished.filter(isUnfinished)
       : unfinished;
     if (sort.step === 0) return filtered;
     return sortTasks(filtered, sort.key, sort.step === 1 ? 0 : 1);
@@ -194,20 +192,18 @@ const TaskTable: React.FC<TaskTableProps> = ({
         .eq("id", taskId);
       if (error) throw error;
 
-      if (!isMine) {
-        const postEmailNotificationsError = await postMailNotifications(
-          displayWorkspaceId,
-          userId,
-          taskId,
-          null,
-          null,
-          null,
-          1,
-          []
-        );
-        if (postEmailNotificationsError) {
-          console.error("Error post mail notifications ", postEmailNotificationsError);
-        }
+      const postEmailNotificationsError = await postMailNotifications(
+        displayWorkspaceId,
+        userId,
+        taskId,
+        null,
+        null,
+        null,
+        1,
+        []
+      );
+      if (postEmailNotificationsError) {
+        console.error("Error post mail notifications ", postEmailNotificationsError);
       }
     } catch (error) {
       console.error("Update Status", error);
@@ -459,7 +455,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
                               attachedFileList.find((file) => file.id === task.id)?.fileDataArray
                             }
                             userId={userId}
-                            resultForm={resultForm}
                           />
                         </td>
                       </tr>

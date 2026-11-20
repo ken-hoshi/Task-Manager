@@ -129,19 +129,24 @@ describe.each(["mine", "team"] as const)("TaskTable（%s）", (variant) => {
 });
 
 describe("TaskTable の違い", () => {
-  it("チームの表でステータスを変えると担当者に通知を送り、自分の表では送らない（前からの動き）", async () => {
-    await renderTable("team");
+  // 送る相手は postMailNotifications の側で決まる（変えた人が担当者なら送らない）。表ごとに呼ぶ・呼ばないを分けない
+  it.each(["mine", "team"] as const)("%s の表でステータスを変えると、通知の処理を呼ぶ", async (variant) => {
+    await renderTable(variant);
     fireEvent.keyDown(screen.getByRole("button", { name: /のステータス: / }), { key: "Enter" });
     fireEvent.click(screen.getByRole("menuitemradio", { name: "完了" }));
     await waitFor(() => expect(postMailNotifications).toHaveBeenCalledWith(1, 5, 1, null, null, null, 1, []));
   });
 
-  it("自分の表でステータスを変えても通知は送らない", async () => {
-    await renderTable("mine");
-    fireEvent.keyDown(screen.getByRole("button", { name: /のステータス: / }), { key: "Enter" });
-    fireEvent.click(screen.getByRole("menuitemradio", { name: "完了" }));
-    await waitFor(() => expect(opsOf("tasks")).toContainEqual(["update", [{ status_id: 3 }]]));
-    expect(postMailNotifications).not.toHaveBeenCalled();
+  it("詳細を2つ開いても、実績の入力欄はそれぞれの値を持つ", async () => {
+    await renderTable("mine", [task, { ...task, id: 2, task_name: "API" }]);
+    fireEvent.click(screen.getByRole("button", { name: "画面" }));
+    fireEvent.click(screen.getByRole("button", { name: "API" }));
+
+    const [first, second] = screen.getAllByRole("form", { name: "実績を記録" });
+    fireEvent.change(within(first).getByRole("spinbutton", { name: "日数" }), { target: { value: "1.5" } });
+
+    expect(within(first).getByRole("spinbutton", { name: "日数" })).toHaveValue(1.5);
+    expect(within(second).getByRole("spinbutton", { name: "日数" })).toHaveValue(null);
   });
 
   it("自分の表だけに、絞り込み・追加・編集・削除のボタンがある", async () => {

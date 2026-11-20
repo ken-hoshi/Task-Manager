@@ -1,7 +1,7 @@
 export interface AssignedUserTaskResult {
   userId: number;
   userName: string;
-  taskId?: number;
+  taskId: number;
   taskName: string;
   numberOfResultDays: number;
 }

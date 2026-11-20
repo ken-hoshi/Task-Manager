@@ -4,7 +4,7 @@ import { useNotificationContext } from "../provider/notificationProvider";
 import { usePageUpdateContext } from "../provider/pageUpdateProvider";
 
 // 実績（作業した期間と日数）の入力欄の値と、送る・消す処理。
-// shortcut: 値は呼び出した部品の中で1つだけ持つので、詳細を2つ開くと入力欄が同じ値になる（README の既知の問題）
+// 値は呼び出した部品の中で持つので、入力欄ごとに呼ぶ（タスク画面は詳細ごとに呼ぶ）
 export const useTaskResultForm = () => {
   const { setNotificationValue } = useNotificationContext();
   const { setPageUpdated } = usePageUpdateContext();
@@ -57,7 +57,7 @@ export const useTaskResultForm = () => {
     } catch (error) {
       console.error("Update Task Result Data", error);
       setNotificationValue({
-        message: "Couldn't update Task Result Data.",
+        message: "実績を取り消せませんでした。",
         color: 1,
       });
       setPageUpdated(true);
@@ -98,7 +98,7 @@ export const useTaskResultForm = () => {
     } catch (error) {
       console.error("Add Task Result Data", error);
       setNotificationValue({
-        message: "Couldn't add Task Result Data.",
+        message: "実績を記録できませんでした。",
         color: 1,
       });
       setPostLoading(false);

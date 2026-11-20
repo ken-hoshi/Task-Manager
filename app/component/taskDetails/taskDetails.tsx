@@ -6,7 +6,7 @@ import Comment from "@/app/component/comment/comment";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TaskResultForm } from "@/app/hooks/useTaskResultForm";
+import { useTaskResultForm } from "@/app/hooks/useTaskResultForm";
 import { formatDate } from "@/app/lib/formatDateTime";
 import AttachedFileList from "./attachedFileList";
 import TaskGenreSummary from "./taskGenreSummary";
@@ -31,7 +31,6 @@ interface TaskDetailsProps {
   taskGenre: TaskGenreDetail | undefined;
   attachedFiles: AttachedFileData[] | undefined;
   userId: number;
-  resultForm: TaskResultForm;
 }
 
 // 詳細の欄の見出しと中身
@@ -51,10 +50,11 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   taskGenre,
   attachedFiles,
   userId,
-  resultForm,
 }) => {
   // 同じタスクを2つの表で同時に開いても、ラベルの付く先が重ならないようにする
   const fieldId = useId();
+  // 実績の入力欄の値は、詳細ごとに持つ（詳細を2つ開いても、それぞれの値になる）
+  const resultForm = useTaskResultForm();
 
   return (
     <div className="space-y-5 bg-muted/40 px-6 py-5">

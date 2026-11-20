@@ -105,7 +105,8 @@ describe("getTaskGenreData", () => {
     expect(opsOf("tasks")).toContainEqual(["eq", ["task_genre_id", 7]]);
   });
 
-  it("ジャンルの無いタスクは、担当者の実績だけを返す（実績が無ければ 0）", async () => {
+  // 実績の行に taskId が無いと、詳細の「実績を取り消す」が taskId なしで更新して失敗する
+  it("ジャンルの無いタスクは、担当者の実績だけを、取り消せるよう taskId 付きで返す（実績が無ければ 0）", async () => {
     setResponses("tasks", ok([
       { id: 4, task_genre_id: null, assigned_user_id: 5, task_name: "雑務", number_of_result_days: null, users: { name: "星" } },
     ]));
@@ -113,7 +114,7 @@ describe("getTaskGenreData", () => {
       {
         taskId: 4,
         assignedUserTaskResultData: [
-          { userId: 5, userName: "星", taskName: "雑務", numberOfResultDays: 0 },
+          { userId: 5, userName: "星", taskId: 4, taskName: "雑務", numberOfResultDays: 0 },
         ],
       },
     ]);
