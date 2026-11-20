@@ -14,7 +14,7 @@ import TaskGenreSummary from "./taskGenreSummary";
 import TaskResultList from "./taskResultList";
 import { AttachedFileData, TaskGenreDetail } from "./types";
 
-// 詳細に出すタスクの項目（fetchTasksData が返す行の一部）
+// 詳細に出すタスクの項目（fetchTasksData・fetchProjectDetailsData が返す行の一部）
 export interface DetailTask {
   id: number;
   assigned_user_id: number;
@@ -32,14 +32,21 @@ interface TaskDetailsProps {
   taskGenre: TaskGenreDetail | undefined;
   attachedFiles: AttachedFileData[] | undefined;
   userId: number;
+  // 「プロジェクト」の欄を出すか。プロジェクト画面ではどのプロジェクトかが画面で分かるので出さない
+  showProject?: boolean;
+  // 欄の見出しの段。タスク画面は表の見出し（h2）の下なので3、プロジェクト画面の一覧はジャンル（h3）の下なので4
+  headingLevel?: 3 | 4;
 }
 
-// タスク画面（自分のタスク・未完了のタスク）で、タスクを開いたときの詳細。表の行の中に置く
+// タスクを開いたときの詳細。表の行の中に置く。
+// タスク画面（自分のタスク・未完了のタスク）と、プロジェクト画面の一覧で使う
 const TaskDetails: React.FC<TaskDetailsProps> = ({
   task,
   taskGenre,
   attachedFiles,
   userId,
+  showProject = true,
+  headingLevel = 3,
 }) => {
   // 同じタスクを2つの表で同時に開いても、ラベルの付く先が重ならないようにする
   const fieldId = useId();
@@ -49,13 +56,15 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   return (
     <div className="space-y-5 bg-muted/40 px-6 py-5">
       <div className="grid gap-5 md:grid-cols-2">
-        <DetailSection title="プロジェクト">
-          <p className="m-0">{task.small_projects.projects.project_name}</p>
-          <p className="m-0 text-muted-foreground">
-            {task.small_projects.small_project_name}
-          </p>
-        </DetailSection>
-        <DetailSection title="期間">
+        {showProject && (
+          <DetailSection level={headingLevel} title="プロジェクト">
+            <p className="m-0">{task.small_projects.projects.project_name}</p>
+            <p className="m-0 text-muted-foreground">
+              {task.small_projects.small_project_name}
+            </p>
+          </DetailSection>
+        )}
+        <DetailSection level={headingLevel} title="期間">
           <p className="m-0 tabular-nums">
             <span>{formatDate(task.start_date)}</span>
             {" 〜 "}
@@ -63,10 +72,10 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
           </p>
         </DetailSection>
 
-        <DetailSection title="ジャンル">
+        <DetailSection level={headingLevel} title="ジャンル">
           <TaskGenreSummary taskGenre={taskGenre} />
         </DetailSection>
-        <DetailSection title="実績">
+        <DetailSection level={headingLevel} title="実績">
           <div className="space-y-3">
             <TaskResultList
               taskGenre={taskGenre}
@@ -127,19 +136,19 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
           </div>
         </DetailSection>
 
-        <DetailSection title="詳細">
+        <DetailSection level={headingLevel} title="詳細">
           {task.details ? (
             <p className="m-0 whitespace-pre-wrap">{task.details}</p>
           ) : (
             <p className="m-0 text-muted-foreground">詳細はありません</p>
           )}
         </DetailSection>
-        <DetailSection title="添付ファイル">
+        <DetailSection level={headingLevel} title="添付ファイル">
           <AttachedFileList fileDataArray={attachedFiles} />
         </DetailSection>
       </div>
 
-      <DetailSection title="コメント">
+      <DetailSection level={headingLevel} title="コメント">
         <Comment userId={userId} taskId={task.id} />
       </DetailSection>
     </div>
