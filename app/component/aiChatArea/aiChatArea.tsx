@@ -24,6 +24,7 @@ const AiChatArea: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const userMessageRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const sendMessage = async (message: string) => {
     try {
@@ -75,6 +76,8 @@ const AiChatArea: React.FC = () => {
     } finally {
       setInputMessage("");
       setLoading(false);
+      // 送っている間はボタンを押せなくするので、フォーカスが外れる。終わったら入力欄へ戻す
+      setTimeout(() => inputRef.current?.focus());
     }
   };
 
@@ -85,7 +88,8 @@ const AiChatArea: React.FC = () => {
         <SheetDescription>質問は保存されず、前のやり取りも覚えていません。</SheetDescription>
       </SheetHeader>
 
-      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+      {/* role="log" で、届いた答えを読み上げる */}
+      <div role="log" aria-label="AI とのやり取り" className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
         {displayMessages.length === 0 && (
           <p className="m-0 py-8 text-center text-sm text-muted-foreground">
             タスクの進め方や、文章の下書きなどを聞けます。
@@ -130,7 +134,8 @@ const AiChatArea: React.FC = () => {
                           <div className="max-w-full overflow-x-auto">
                             <table
                               {...props}
-                              className="border-collapse text-xs [&_td]:border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:bg-background [&_th]:px-2 [&_th]:py-1"
+                              // 列を潰して1文字ずつ折り返さないよう、見出しは折り返さず、長いセルだけ 15rem で折り返す
+                              className="w-max border-collapse text-xs [&_td]:max-w-60 [&_td]:border [&_td]:px-2 [&_td]:py-1 [&_td]:align-top [&_th]:border [&_th]:bg-background [&_th]:px-2 [&_th]:py-1 [&_th]:whitespace-nowrap"
                             />
                           </div>
                         ),
@@ -159,6 +164,7 @@ const AiChatArea: React.FC = () => {
           AI への質問
         </label>
         <Textarea
+          ref={inputRef}
           id="ai-chat-input"
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}

@@ -17,7 +17,8 @@ const RobotButton = () => {
           <Image src="/img/robot.png" alt="" fill sizes="40px" className="object-contain" />
         </button>
       </SheetTrigger>
-      <SheetContent className="w-full gap-0 p-0 sm:max-w-lg">
+      {/* Sheet の既定の幅は data-[side=right]: 付きで書かれているので、同じ書き方で上書きする */}
+      <SheetContent className="gap-0 p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-lg">
         {/* Sheet は閉じると中身を描かないので、閉じるとやり取りは消える（以前と同じ） */}
         <AiChatArea />
       </SheetContent>

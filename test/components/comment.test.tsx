@@ -84,12 +84,16 @@ describe("コメント欄", () => {
 
     await act(async () => {
       fireEvent.click(screen.getByRole("menuitem", { name: "編集" }));
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      // メニューが閉じ終わってフォーカスが落ち着くまで、何拍か待つ
+      for (let i = 0; i < 5; i++) await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
     const editor = screen.getByRole("textbox", { name: "コメントを編集" });
     expect(editor).toHaveValue("見ます");
     expect(editor).toHaveFocus();
+    expect(editor).toHaveAccessibleDescription("欄から離れると保存します");
+    // 離れる前に保存していない（フォーカスがメニューへ戻ると、ここで保存が走る）
+    expect(opsOf("comments").some(([op]) => op === "update")).toBe(false);
     fireEvent.change(editor, { target: { value: "明日見ます" } });
     await act(async () => {
       fireEvent.blur(editor);
@@ -114,5 +118,7 @@ describe("コメント欄", () => {
       ])
     );
     expect(opsOf("comments")).toContainEqual(["eq", ["id", 2]]);
+    // メニューのボタンは消えるので、フォーカスは書く欄へ移る
+    expect(screen.getByRole("textbox", { name: "コメント" })).toHaveFocus();
   });
 });

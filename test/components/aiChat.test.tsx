@@ -22,6 +22,10 @@ jest.mock("react-markdown", () => ({
     children: string;
     components: { table: React.FC<{ node?: unknown; children: React.ReactNode }> };
   }) => {
+    if (children.startsWith("http")) {
+      const A = (components as unknown as { a: React.FC<{ href: string; children: React.ReactNode }> }).a;
+      return <A href={children}>{children}</A>;
+    }
     if (!children.includes("|")) return <p>{children}</p>;
     const Table = components.table;
     return (
@@ -80,6 +84,33 @@ describe("AI チャット", () => {
     expect(screen.getByText("見積もりは？")).toBeInTheDocument();
     expect(screen.getByText("見積もりは3日です。")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "AI への質問" })).toHaveValue("");
+  });
+
+  it("送っている間は「送る」を押せず、終わると入力欄へフォーカスを戻す", async () => {
+    let reply: (value: unknown) => void = () => {};
+    fetchMock.mockReturnValue(new Promise((resolve) => (reply = resolve)));
+    openChat();
+
+    await ask("見積もりは？");
+
+    expect(screen.getByRole("button", { name: "送っています" })).toBeDisabled();
+    await act(async () => {
+      reply({ ok: true, json: async () => ({ content: "3日です。" }) });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(screen.getByRole("button", { name: "送る" })).not.toBeDisabled();
+    expect(screen.getByRole("textbox", { name: "AI への質問" })).toHaveFocus();
+  });
+
+  it("答えのリンクは、新しいタブで開き、開いた先にこの画面を触らせない", async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ content: "https://example.com" }) });
+    openChat();
+
+    await ask("参考は？");
+
+    const link = screen.getByRole("link", { name: "https://example.com" });
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
   it("答えの表は、横にスクロールする箱に入れる（吹き出しからはみ出さない）", async () => {

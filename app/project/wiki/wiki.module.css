@@ -531,7 +531,8 @@
 
 .content-form {
   position: absolute;
-  z-index: 1001;
+  /* 作り直した部品の Sheet・Dialog（z-index 50）より下に置く */
+  z-index: 40;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -558,7 +559,8 @@
   display: flex;
   justify-content: flex-end;
   gap: 1vh;
-  z-index: 1001;
+  /* 作り直した部品の Sheet・Dialog（z-index 50）より下に置く */
+  z-index: 40;
 }
 
 .post-button-area button {

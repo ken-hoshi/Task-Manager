@@ -1185,19 +1185,17 @@ const TaskList: React.FC<TaskListProps> = ({
                                         </div>
                                       </div>
 
-                                      {/* プロジェクト画面を作り直すまでの置き方。見出しはコメント欄の外に置く */}
-                                      <div className="mx-8 mt-4 mb-2">
-                                        <dt className="mb-2 text-sm font-medium">
-                                          コメント
-                                        </dt>
-                                        <dd className="m-0">
-                                          <Comment
-                                            userId={userId}
-                                            taskId={task.id}
-                                          />
-                                        </dd>
-                                      </div>
                                     </dl>
+                                    {/* プロジェクト画面を作り直すまでの置き方。dl の外に置き、この画面の dt・dd の CSS が効かないようにする */}
+                                    <section
+                                      aria-label="コメント"
+                                      className="mx-8 mt-4 mb-2 text-left"
+                                    >
+                                      <h4 className="m-0 mb-2 text-sm font-medium">
+                                        コメント
+                                      </h4>
+                                      <Comment userId={userId} taskId={task.id} />
+                                    </section>
                                   </div>
                                 </div>
                               </td>

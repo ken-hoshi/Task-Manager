@@ -28,7 +28,8 @@ interface CommentRow {
   comment_text: string;
   created_at: string;
   isDeleted: boolean;
-  users: { name: string };
+  // 読み取りの制限で users が読めないと null になる
+  users: { name: string } | null;
 }
 
 // タスクのコメントの一覧と、書く欄。見出しは呼ぶ側が付ける
@@ -44,9 +45,10 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId }) => {
   >([]);
 
   const textareaRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
-  // メニューで「編集」を選んだとき、メニューを閉じたあとフォーカスをメニューのボタンへ戻さない。
-  // 戻すと編集の欄から離れた扱いになり、すぐ保存されてしまう
-  const editSelectedRef = useRef(false);
+  const newCommentRef = useRef<HTMLTextAreaElement>(null);
+  // メニューで選んだあと、メニューが閉じ終わったときにフォーカスを移す先。
+  // 閉じる途中のメニューはフォーカスを中に引き戻すので、選んだ直後に移すと編集の欄から離れた扱いになり、すぐ保存されてしまう
+  const focusAfterMenuRef = useRef<HTMLTextAreaElement | null | (() => HTMLTextAreaElement | null)>(null);
 
   useEffect(() => {
     (async () => {
@@ -68,16 +70,22 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId }) => {
   };
 
   const handleOpenEditForm = (clickedNumber: number) => {
-    editSelectedRef.current = true;
+    // 編集の欄はこのあと描かれるので、閉じ終わった時点で探す
+    focusAfterMenuRef.current = () => textareaRefs.current[clickedNumber];
     setOpenEditFormJudgeArray((prevOpenEditFormJudgeArray) =>
       prevOpenEditFormJudgeArray.map((openEditFormJudgeArray, i) =>
         i === clickedNumber ? !openEditFormJudgeArray : openEditFormJudgeArray
       )
     );
+  };
 
-    setTimeout(() => {
-      textareaRefs.current[clickedNumber]?.focus();
-    }, 0);
+  // メニューが閉じ終わったら、選んだ操作に合わせてフォーカスを移す。何も選ばずに閉じたときは、メニューのボタンへ戻す（Radix の既定）
+  const handleMenuCloseAutoFocus = (e: Event) => {
+    const target = focusAfterMenuRef.current;
+    if (!target) return;
+    e.preventDefault();
+    focusAfterMenuRef.current = null;
+    (typeof target === "function" ? target() : target)?.focus();
   };
 
   const onChangeEditComment = (
@@ -171,7 +179,7 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId }) => {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 text-left">
       {commentData.length > 0 ? (
         <ul className="m-0 list-none space-y-3 p-0">
           {commentData.map((comment, index) => {
@@ -183,13 +191,13 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId }) => {
                 className={cn("flex flex-col gap-1", mine ? "items-end" : "items-start")}
               >
                 <div className="flex items-baseline gap-2 text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">{comment.users.name}</span>
+                  <span className="font-medium text-foreground">{comment.users?.name ?? "（不明）"}</span>
                   <time dateTime={comment.created_at}>{formatDateTime(comment.created_at)}</time>
                 </div>
                 <div className={cn("flex max-w-[85%] items-start gap-1", mine && "flex-row-reverse")}>
                   <div
                     className={cn(
-                      "min-w-0 rounded-xl px-3 py-2 text-sm whitespace-pre-wrap [overflow-wrap:anywhere]",
+                      "min-w-0 rounded-xl px-3 py-2 text-left text-sm whitespace-pre-wrap [overflow-wrap:anywhere]",
                       comment.isDeleted
                         ? "bg-muted/50 text-muted-foreground"
                         : mine
@@ -199,17 +207,23 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId }) => {
                     )}
                   >
                     {editing ? (
-                      <Textarea
-                        aria-label="コメントを編集"
-                        value={editComment[index]}
-                        required
-                        onChange={(e) => onChangeEditComment(e, index)}
-                        onBlur={() => handleUpdate(comment.id, index)}
-                        ref={(el) => {
-                          textareaRefs.current[index] = el;
-                        }}
-                        className="bg-background"
-                      />
+                      <>
+                        <Textarea
+                          aria-label="コメントを編集"
+                          aria-describedby={`comment-edit-hint-${comment.id}`}
+                          value={editComment[index]}
+                          required
+                          onChange={(e) => onChangeEditComment(e, index)}
+                          onBlur={() => handleUpdate(comment.id, index)}
+                          ref={(el) => {
+                            textareaRefs.current[index] = el;
+                          }}
+                          className="bg-background"
+                        />
+                        <p id={`comment-edit-hint-${comment.id}`} className="m-0 px-1 pt-1 text-xs text-muted-foreground">
+                          欄から離れると保存します
+                        </p>
+                      </>
                     ) : (
                       comment.comment_text
                     )}
@@ -223,18 +237,20 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId }) => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
                         align="end"
-                        onCloseAutoFocus={(e) => {
-                          if (editSelectedRef.current) {
-                            e.preventDefault();
-                            editSelectedRef.current = false;
-                          }
-                        }}
+                        onCloseAutoFocus={handleMenuCloseAutoFocus}
                       >
                         <DropdownMenuItem onSelect={() => handleOpenEditForm(index)}>
                           <Pencil aria-hidden />
                           編集
                         </DropdownMenuItem>
-                        <DropdownMenuItem variant="destructive" onSelect={() => handleDelete(comment.id)}>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onSelect={() => {
+                            // 削除するとメニューのボタンごと消えるので、書く欄へフォーカスを移す
+                            focusAfterMenuRef.current = newCommentRef.current;
+                            handleDelete(comment.id);
+                          }}
+                        >
                           <Trash2 aria-hidden />
                           削除
                         </DropdownMenuItem>
@@ -252,12 +268,14 @@ const Comment: React.FC<CommentProps> = ({ userId, taskId }) => {
 
       <form onSubmit={(e) => handleSubmit(e, taskId)} className="flex items-end gap-2">
         <Textarea
+          ref={newCommentRef}
           aria-label="コメント"
           placeholder="コメントを書く"
           value={sendComment}
           onChange={(e) => setSendComment(e.target.value)}
           required
-          className="max-h-40"
+          // 背景に写真がある画面（プロジェクト画面）でも読めるよう、白い地を付ける
+          className="max-h-40 bg-background"
         />
         <Button type="submit">送る</Button>
       </form>
