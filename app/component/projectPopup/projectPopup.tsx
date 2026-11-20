@@ -515,6 +515,35 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
       dateWithTime.setHours(9, 0, 0, 0);
       return dateWithTime;
     };
+
+    // 小プロジェクトを1件ずつ作り、入力と同じ順に id を返す。
+    // 以前はまとめて作ってから名前で探していたので、同じ名前（空どうしを含む）の小プロジェクトを取り違えた。
+    // insertedIds は、失敗したときに消すための「作れた分」の id
+    const insertSmallProjects = async (
+      rows: { small_project_name: string; details: string; project_id: number }[]
+    ) => {
+      const results = await Promise.all(
+        rows.map((row) =>
+          clientSupabase.from("small_projects").insert(row).select().single()
+        )
+      );
+      const insertedIds: number[] = results
+        .filter((result) => !result.error && result.data)
+        .map((result) => result.data.id);
+      const failed = results.find((result) => result.error || !result.data);
+      if (failed) {
+        return {
+          ids: null,
+          insertedIds,
+          error: failed.error ?? new Error("Small Project couldn't insert."),
+        };
+      }
+      return {
+        ids: results.map((result) => result.data.id as number),
+        insertedIds,
+        error: null,
+      };
+    };
     try {
       if (projectId) {
         const notAddedSmallProjectIdList = smallProjectArray
@@ -801,30 +830,38 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
             }
           }
 
-          const removedFiles = notAddedSmallProjectArray.flatMap(
-            ({ beforeChangeFiles, selectedFiles }) =>
-              beforeChangeFiles.filter((file) => !selectedFiles.includes(file))
-          );
+          // 外した添付を、小プロジェクトごとに集める（ファイル名だけで探すと、別の小プロジェクトの同じ名前のファイルも消える）
+          const removedFilesBySmallProject = notAddedSmallProjectArray
+            .map(({ id, beforeChangeFiles, selectedFiles }) => ({
+              smallProjectId: id!,
+              fileNames: beforeChangeFiles
+                .filter((file) => !selectedFiles.includes(file))
+                .map((file) => file.name),
+            }))
+            .filter(({ fileNames }) => fileNames.length > 0);
 
-          if (removedFiles.length > 0) {
-            const removedFileNames = removedFiles.map(
-              (removedFile) => removedFile.name
+          if (removedFilesBySmallProject.length > 0) {
+            const removedFilePathResults = await Promise.all(
+              removedFilesBySmallProject.map(({ smallProjectId, fileNames }) =>
+                clientSupabase
+                  .from("small_project_attachments")
+                  .select("id, file_path")
+                  .eq("small_project_id", smallProjectId)
+                  .in("file_name", fileNames)
+              )
             );
 
-            const {
-              data: removedFilePathList,
-              error: selectRemovedFilePathListError,
-            } = await clientSupabase
-              .from("small_project_attachments")
-              .select("file_path")
-              .in("file_name", removedFileNames);
-
+            const selectRemovedFilePathListError = removedFilePathResults.find(
+              (result) => result.error
+            )?.error;
             if (selectRemovedFilePathListError) {
               throw selectRemovedFilePathListError;
             }
 
-            const removedFilesPaths = removedFilePathList.map(
-              (removedFilePath) => removedFilePath.file_path
+            const removedFilesPaths = removedFilePathResults.flatMap((result) =>
+              (result.data ?? []).map(
+                (removedFilePath) => removedFilePath.file_path
+              )
             );
 
             const { error: removeError } = await clientSupabase.storage
@@ -835,11 +872,16 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
               throw removeError;
             }
 
+            // 探した行を id で消す（探した行と消す行を確実に一致させる）
+            const removedAttachmentIds = removedFilePathResults.flatMap(
+              (result) =>
+                (result.data ?? []).map((removedFilePath) => removedFilePath.id)
+            );
             const { error: deleteProjectAttachmentsError } =
               await clientSupabase
                 .from("small_project_attachments")
                 .delete()
-                .in("file_path", removedFilesPaths);
+                .in("id", removedAttachmentIds);
 
             if (deleteProjectAttachmentsError) {
               throw deleteProjectAttachmentsError;
@@ -975,55 +1017,50 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
             (smallProject) => addedSmallProjectIdList.includes(smallProject.id!)
           );
 
-          const smallProjectInsertRows = addedSmallProjectArray.map(
-            (smallProject) => ({
+          const {
+            ids: addedSmallProjectIds,
+            insertedIds,
+            error: insertSmallProjectDataError,
+          } = await insertSmallProjects(
+            addedSmallProjectArray.map((smallProject) => ({
               small_project_name: smallProject.smallProjectName,
               details: smallProject.details,
               project_id: projectId,
-            })
+            }))
           );
 
-          const {
-            data: insertSmallProjectData,
-            error: insertSmallProjectDataError,
-          } = await clientSupabase
-            .from("small_projects")
-            .insert(smallProjectInsertRows)
-            .select();
+          // 失敗したら、この保存で作った小プロジェクトだけを消す。既存のプロジェクトは消さない
+          // （以前は作成のときの巻き戻しを写していて、既存のプロジェクトごと消していた）
+          const deleteAddedSmallProjects = async () => {
+            if (insertedIds.length > 0) {
+              await clientSupabase
+                .from("small_projects")
+                .delete()
+                .in("id", insertedIds);
+            }
+          };
 
-          if (insertSmallProjectDataError) {
-            await clientSupabase.from("projects").delete().eq("id", projectId);
+          if (insertSmallProjectDataError || !addedSmallProjectIds) {
+            await deleteAddedSmallProjects();
             throw insertSmallProjectDataError;
           }
 
           const smallProjectUsersInsertRows = addedSmallProjectArray.flatMap(
-            ({ smallProjectName, selectedUsers }) => {
-              const insertedSmallProjectIncludeId = insertSmallProjectData.find(
-                (insertSmallProject) =>
-                  insertSmallProject.small_project_name === smallProjectName
-              );
-              return selectedUsers.map((selectedUser: UserOption) => ({
-                small_project_id: insertedSmallProjectIncludeId.id,
+            ({ selectedUsers }, index) =>
+              selectedUsers.map((selectedUser: UserOption) => ({
+                small_project_id: addedSmallProjectIds[index],
                 user_id: selectedUser.value,
-              }));
-            }
+              }))
           );
 
           const taskGenreInsertRows = addedSmallProjectArray.flatMap(
-            ({ smallProjectName, taskGenreDataArray }) => {
-              const insertedSmallProjectIncludeId = insertSmallProjectData.find(
-                (insertSmallProject) =>
-                  insertSmallProject.small_project_name === smallProjectName
-              );
-              return taskGenreDataArray.map(
-                (taskGenreData: TaskGenreDataProps) => ({
-                  task_genre_name: taskGenreData.taskGenreName,
-                  small_project_id: insertedSmallProjectIncludeId.id,
-                  start_date: addTime(taskGenreData.selectedStartDate),
-                  deadline_date: addTime(taskGenreData.selectedDeadlineDate),
-                })
-              );
-            }
+            ({ taskGenreDataArray }, index) =>
+              taskGenreDataArray.map((taskGenreData: TaskGenreDataProps) => ({
+                task_genre_name: taskGenreData.taskGenreName,
+                small_project_id: addedSmallProjectIds[index],
+                start_date: addTime(taskGenreData.selectedStartDate),
+                deadline_date: addTime(taskGenreData.selectedDeadlineDate),
+              }))
           );
 
           const [insertSmallProjectUsersResult, insertTaskGenreResult] =
@@ -1039,23 +1076,16 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           const insertTaskGenreError = insertTaskGenreResult.error;
 
           if (insertSmallProjectUsersError || insertTaskGenreError) {
-            await clientSupabase.from("projects").delete().eq("id", projectId);
+            await deleteAddedSmallProjects();
             throw insertSmallProjectUsersError || insertTaskGenreError;
           }
 
           const selectedFilesIncludeSmallProjectId =
-            addedSmallProjectArray.flatMap(
-              ({ smallProjectName, selectedFiles }) => {
-                const insertedSmallProjectIncludeId =
-                  insertSmallProjectData.find(
-                    (insertSmallProject) =>
-                      insertSmallProject.small_project_name === smallProjectName
-                  );
-                return selectedFiles.map((selectedFile: File) => ({
-                  small_project_id: insertedSmallProjectIncludeId.id,
-                  file: selectedFile,
-                }));
-              }
+            addedSmallProjectArray.flatMap(({ selectedFiles }, index) =>
+              selectedFiles.map((selectedFile: File) => ({
+                small_project_id: addedSmallProjectIds[index],
+                file: selectedFile,
+              }))
             );
 
           const insertPromises = selectedFilesIncludeSmallProjectId.map(
@@ -1071,10 +1101,6 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
                   .upload(`public/${cleanFileName}`, selectedFile.file);
 
               if (uploadStorageDataError) {
-                await clientSupabase
-                  .from("projects")
-                  .delete()
-                  .eq("id", projectId);
                 throw uploadStorageDataError;
               }
 
@@ -1085,9 +1111,14 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
               };
             }
           );
-          const insertSmallProjectAttachments = await Promise.all(
-            insertPromises
-          );
+
+          let insertSmallProjectAttachments;
+          try {
+            insertSmallProjectAttachments = await Promise.all(insertPromises);
+          } catch (uploadStorageDataError) {
+            await deleteAddedSmallProjects();
+            throw uploadStorageDataError;
+          }
 
           const { error: insertSmallProjectAttachmentsDataError } =
             await clientSupabase
@@ -1095,7 +1126,7 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
               .insert(insertSmallProjectAttachments);
 
           if (insertSmallProjectAttachmentsDataError) {
-            await clientSupabase.from("projects").delete().eq("id", projectId);
+            await deleteAddedSmallProjects();
             throw insertSmallProjectAttachmentsDataError;
           }
         }
@@ -1130,53 +1161,37 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
           })
         );
 
-        const {
-          data: insertSmallProjectData,
-          error: insertSmallProjectDataError,
-        } = await clientSupabase
-          .from("small_projects")
-          .insert(smallProjectInsertRows)
-          .select();
+        const { ids: insertedSmallProjectIds, error: insertSmallProjectDataError } =
+          await insertSmallProjects(smallProjectInsertRows);
 
+        // 作ったばかりのプロジェクトなので、失敗したらプロジェクトごと消す（小プロジェクトなども一緒に消える）
         const deleteProject = (projectId: number) => {
           return async () => {
             await clientSupabase.from("projects").delete().eq("id", projectId);
           };
         };
 
-        if (insertSmallProjectDataError) {
+        if (insertSmallProjectDataError || !insertedSmallProjectIds) {
           await deleteProject(projectId)();
           throw insertSmallProjectDataError;
         }
 
         const smallProjectUsersInsertRows = smallProjectArray.flatMap(
-          ({ smallProjectName, selectedUsers }) => {
-            const insertedSmallProjectIncludeId = insertSmallProjectData.find(
-              (insertSmallProject) =>
-                insertSmallProject.small_project_name === smallProjectName
-            );
-            return selectedUsers.map((selectedUser: UserOption) => ({
-              small_project_id: insertedSmallProjectIncludeId.id,
+          ({ selectedUsers }, index) =>
+            selectedUsers.map((selectedUser: UserOption) => ({
+              small_project_id: insertedSmallProjectIds[index],
               user_id: selectedUser.value,
-            }));
-          }
+            }))
         );
 
         const taskGenreInsertRows = smallProjectArray.flatMap(
-          ({ smallProjectName, taskGenreDataArray }) => {
-            const insertedSmallProjectIncludeId = insertSmallProjectData.find(
-              (insertSmallProject) =>
-                insertSmallProject.small_project_name === smallProjectName
-            );
-            return taskGenreDataArray.map(
-              (taskGenreData: TaskGenreDataProps) => ({
-                task_genre_name: taskGenreData.taskGenreName,
-                small_project_id: insertedSmallProjectIncludeId.id,
-                start_date: addTime(taskGenreData.selectedStartDate),
-                deadline_date: addTime(taskGenreData.selectedDeadlineDate),
-              })
-            );
-          }
+          ({ taskGenreDataArray }, index) =>
+            taskGenreDataArray.map((taskGenreData: TaskGenreDataProps) => ({
+              task_genre_name: taskGenreData.taskGenreName,
+              small_project_id: insertedSmallProjectIds[index],
+              start_date: addTime(taskGenreData.selectedStartDate),
+              deadline_date: addTime(taskGenreData.selectedDeadlineDate),
+            }))
         );
 
         const [insertSmallProjectUsersResult, insertTaskGenreResult] =
@@ -1197,16 +1212,11 @@ const ProjectPopup: React.FC<ProjectPopupProps> = ({
         }
 
         const selectedFilesIncludeSmallProjectId = smallProjectArray.flatMap(
-          ({ smallProjectName, selectedFiles }) => {
-            const insertedSmallProjectIncludeId = insertSmallProjectData.find(
-              (insertSmallProject) =>
-                insertSmallProject.small_project_name === smallProjectName
-            );
-            return selectedFiles.map((selectedFile: File) => ({
-              small_project_id: insertedSmallProjectIncludeId.id,
+          ({ selectedFiles }, index) =>
+            selectedFiles.map((selectedFile: File) => ({
+              small_project_id: insertedSmallProjectIds[index],
               file: selectedFile,
-            }));
-          }
+            }))
         );
 
         const insertPromises = selectedFilesIncludeSmallProjectId.map(

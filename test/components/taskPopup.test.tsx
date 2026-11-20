@@ -221,7 +221,7 @@ describe("TaskPopup（編集）", () => {
     );
     setResponses("task_genre", ok([]));
     setResponses("users", ok({ name: "星" }));
-    setResponses("task_attachments", ok([{ file_path: "public/spec.pdf" }]), ok(null));
+    setResponses("task_attachments", ok([{ id: 70, file_path: "public/spec.pdf" }]), ok(null));
     (fetchAttachedFiles as jest.Mock).mockResolvedValue([
       { id: 99, fileDataArray: [{ file: new File(["x"], "仕様.pdf") }] },
     ]);
@@ -248,5 +248,7 @@ describe("TaskPopup（編集）", () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(opsOf("task_attachments")).toContainEqual(["eq", ["task_id", 99]]);
     expect(opsOf("task_attachments")).toContainEqual(["in", ["file_name", ["仕様.pdf"]]]);
+    // 探した行を id で消す
+    expect(opsOf("task_attachments")).toContainEqual(["in", ["id", [70]]]);
   });
 });

@@ -613,7 +613,7 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             error: selectRemovedFilePathListError,
           } = await clientSupabase
             .from("task_attachments")
-            .select("file_path")
+            .select("id, file_path")
             // このタスクの添付だけを探す（ファイル名だけだと、別のタスクにある同じ名前のファイルも消える）
             .eq("task_id", taskId)
             .in("file_name", removedFileNames);
@@ -633,10 +633,14 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             throw removeError;
           }
 
+          // 探した行を id で消す（探した行と消す行を確実に一致させる）
           const { error: taskAttachmentsDeleteError } = await clientSupabase
             .from("task_attachments")
             .delete()
-            .in("file_path", removedFilesPaths);
+            .in(
+              "id",
+              removedFilePathList.map((removedFilePath) => removedFilePath.id)
+            );
 
           if (taskAttachmentsDeleteError) {
             throw taskAttachmentsDeleteError;
