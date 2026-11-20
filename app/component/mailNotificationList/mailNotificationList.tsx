@@ -1,7 +1,6 @@
 import { RefObject, useEffect } from "react";
-import styles from "./mailNotificationList.module.css";
+import { cn } from "@/lib/utils";
 import { clientSupabase } from "@/app/lib/supabase/client";
-import classNames from "classnames";
 
 export type Notification = {
   id: number;
@@ -17,6 +16,7 @@ interface MailNotificationListProps {
   listRef: RefObject<HTMLDivElement | null>;
 }
 
+// 通知の一覧。サイドバー（幅 16rem）のすぐ右に、下寄せで開く。閉じたときに未読を既読にする
 const MailNotificationList: React.FC<MailNotificationListProps> = ({
   id,
   notifications,
@@ -49,43 +49,44 @@ const MailNotificationList: React.FC<MailNotificationListProps> = ({
       id={id}
       role="region"
       aria-label="通知"
-      className={styles.container}
       ref={listRef}
+      className="fixed bottom-4 left-[16.5rem] z-50 max-h-[60vh] w-80 overflow-y-auto rounded-lg border bg-popover text-popover-foreground shadow-lg animate-in fade-in-0 slide-in-from-bottom-2"
     >
-      <ul className={styles.list}>
-        {notifications && notifications.length > 0 ? (
-          notifications
+      {notifications && notifications.length > 0 ? (
+        <ul className="m-0 list-none divide-y p-0">
+          {notifications
             .slice()
             .reverse()
-            .map((notification, index) => (
+            .map((notification) => (
               <li
                 key={notification.id}
-                className={classNames(
-                  notifications.length == index + 1
-                    ? styles[`last-list-item`]
-                    : styles[`list-item`],
-                  !notification.isRead ? styles[`un-read-list`] : ""
-                )}
+                className={cn("flex gap-2 px-3 py-2.5", !notification.isRead && "bg-primary/5")}
               >
-                {!notification.isRead && (
-                  <span className={styles[`un-read-dot`]}></span>
-                )}
-                <p
-                  className={
-                    !notification.isRead
-                      ? styles[`un-read-message`]
-                      : styles.message
-                  }
-                >
-                  {notification.message}
-                </p>
-                <p className={styles.timestamp}>{notification.timestamp}</p>
+                <span
+                  className={cn(
+                    "mt-1.5 size-2 shrink-0 rounded-full",
+                    notification.isRead ? "bg-transparent" : "bg-primary"
+                  )}
+                  aria-hidden
+                />
+                <div className="min-w-0 flex-1">
+                  {!notification.isRead && <span className="sr-only">未読: </span>}
+                  <p
+                    className={cn(
+                      "m-0 text-sm [overflow-wrap:anywhere]",
+                      !notification.isRead && "font-medium"
+                    )}
+                  >
+                    {notification.message}
+                  </p>
+                  <p className="m-0 mt-0.5 text-xs text-muted-foreground">{notification.timestamp}</p>
+                </div>
               </li>
-            ))
-        ) : (
-          <li className={styles[`non-notification`]}>No Notification</li>
-        )}
-      </ul>
+            ))}
+        </ul>
+      ) : (
+        <p className="m-0 px-3 py-6 text-center text-sm text-muted-foreground">通知はありません</p>
+      )}
     </div>
   );
 };

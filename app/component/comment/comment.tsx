@@ -1,7 +1,15 @@
-import classNames from "classnames";
-import styles from "./comment.module.css";
-import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { fetchCommentData } from "@/app/lib/api/fetchCommentData";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { formatDateTime } from "@/app/lib/formatDateTime";
@@ -11,31 +19,38 @@ import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdP
 interface CommentProps {
   userId: number;
   taskId: number;
-  projectDetails?: boolean;
 }
 
-const Comment: React.FC<CommentProps> = ({
-  userId,
-  taskId,
-  projectDetails,
-}) => {
+// comments を users(name) と合わせて読んだ1行
+interface CommentRow {
+  id: number;
+  user_id: number;
+  comment_text: string;
+  created_at: string;
+  isDeleted: boolean;
+  // 読み取りの制限で users が読めないと null になる
+  users: { name: string } | null;
+}
+
+// タスクのコメントの一覧と、書く欄。見出しは呼ぶ側が付ける
+const Comment: React.FC<CommentProps> = ({ userId, taskId }) => {
   const { setNotificationValue } = useNotificationContext();
   const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
   const [reRendering, setReRendering] = useState<boolean>(false);
-  const [commentData, setCommentData] = useState<{}[]>([]);
+  const [commentData, setCommentData] = useState<CommentRow[]>([]);
   const [sendComment, setSendComment] = useState("");
   const [editComment, setEditComment] = useState<string[]>([]);
-  const [showOptions, setShowOptions] = useState<null | number>(null);
   const [openEditFormJudgeArray, setOpenEditFormJudgeArray] = useState<
     boolean[]
   >([]);
 
-  const menuRef = useRef<HTMLDivElement>(null);
   const textareaRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
+  const newCommentRef = useRef<HTMLTextAreaElement>(null);
+  // メニューで選んだあと、メニューが閉じ終わったときにフォーカスを移す先。
+  // 閉じる途中のメニューはフォーカスを中に引き戻すので、選んだ直後に移すと編集の欄から離れた扱いになり、すぐ保存されてしまう
+  const focusAfterMenuRef = useRef<HTMLTextAreaElement | null | (() => HTMLTextAreaElement | null)>(null);
 
   useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside);
-
     (async () => {
       const commentData = await fetchCommentData(taskId);
       if (commentData) {
@@ -47,33 +62,30 @@ const Comment: React.FC<CommentProps> = ({
     })();
 
     setReRendering(false);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
   }, [reRendering]);
 
-  const handleOptionClick = (commentId: number) => {
-    setOpenEditFormJudgeArray(new Array(commentData.length).fill(false));
-    setShowOptions(showOptions === commentId ? null : commentId);
-  };
-
-  const handleClickOutside = (event: MouseEvent) => {
-    if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-      setShowOptions(null);
-    }
+  // メニューを開いたら、開いている編集の欄を閉じる（以前と同じ）
+  const handleMenuOpenChange = (open: boolean) => {
+    if (open) setOpenEditFormJudgeArray(new Array(commentData.length).fill(false));
   };
 
   const handleOpenEditForm = (clickedNumber: number) => {
+    // 編集の欄はこのあと描かれるので、閉じ終わった時点で探す
+    focusAfterMenuRef.current = () => textareaRefs.current[clickedNumber];
     setOpenEditFormJudgeArray((prevOpenEditFormJudgeArray) =>
       prevOpenEditFormJudgeArray.map((openEditFormJudgeArray, i) =>
         i === clickedNumber ? !openEditFormJudgeArray : openEditFormJudgeArray
       )
     );
-    setShowOptions(null);
+  };
 
-    setTimeout(() => {
-      textareaRefs.current[clickedNumber]?.focus();
-    }, 0);
+  // メニューが閉じ終わったら、選んだ操作に合わせてフォーカスを移す。何も選ばずに閉じたときは、メニューのボタンへ戻す（Radix の既定）
+  const handleMenuCloseAutoFocus = (e: Event) => {
+    const target = focusAfterMenuRef.current;
+    if (!target) return;
+    e.preventDefault();
+    focusAfterMenuRef.current = null;
+    (typeof target === "function" ? target() : target)?.focus();
   };
 
   const onChangeEditComment = (
@@ -98,11 +110,10 @@ const Comment: React.FC<CommentProps> = ({
     } catch (error) {
       console.error("Delete Comment", error);
       setNotificationValue({
-        message: "Couldn't delete Comment.",
+        message: "コメントを削除できませんでした。",
         color: 1,
       });
     }
-    setShowOptions(null);
     setReRendering(true);
   };
 
@@ -119,7 +130,7 @@ const Comment: React.FC<CommentProps> = ({
     } catch (error) {
       console.error("Update Comment", error);
       setNotificationValue({
-        message: "Couldn't update Comment.",
+        message: "コメントを更新できませんでした。",
         color: 1,
       });
     }
@@ -159,7 +170,7 @@ const Comment: React.FC<CommentProps> = ({
     } catch (error) {
       console.error("Add Comment", error);
       setNotificationValue({
-        message: "Couldn't add Comment.",
+        message: "コメントを追加できませんでした。",
         color: 1,
       });
     }
@@ -168,187 +179,106 @@ const Comment: React.FC<CommentProps> = ({
   };
 
   return (
-    <div className={styles[`comment-area`]}>
-      <dt>Comments</dt>
-      <dd className={classNames(styles[`dd-comment`], styles[`dd-last`])}>
-        <div
-          className={
-            projectDetails
-              ? styles[`project-details-comment-section`]
-              : styles[`comment-section`]
-          }
-        >
-          {Array.isArray(commentData) && commentData.length > 0 ? (
-            commentData?.map((comment: any, index) => (
-              <div
-                className={
-                  comment.user_id === userId
-                    ? styles[`comment-myself`]
-                    : styles[`comment-others`]
-                }
+    <div className="space-y-3 text-left">
+      {commentData.length > 0 ? (
+        <ul className="m-0 list-none space-y-3 p-0">
+          {commentData.map((comment, index) => {
+            const mine = comment.user_id === userId;
+            const editing = openEditFormJudgeArray[index];
+            return (
+              <li
                 key={comment.id}
+                className={cn("flex flex-col gap-1", mine ? "items-end" : "items-start")}
               >
-                {showOptions === comment.id && comment.user_id == userId && (
-                  <div className={styles[`options-menu-container`]}>
-                    <div
-                      className={classNames(
-                        styles[`options-menu`],
-                        styles[`user-menu`]
-                      )}
-                      ref={menuRef}
-                    >
-                      <div
-                        className={styles[`edit-text-container`]}
-                        onClick={() => handleOpenEditForm(index)}
-                      >
-                        <p>Edit</p>
-                      </div>
-                      <div
-                        className={styles[`delete-text-container`]}
-                        onClick={() => handleDelete(comment.id)}
-                      >
-                        <p>Delete</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                <div
-                  className={classNames(
-                    comment.user_id !== userId && styles.none,
-                    projectDetails
-                      ? styles[`project-details-comment-bubble`]
-                      : styles[`comment-bubble`],
-                    comment.isDeleted
-                      ? styles[`deleted-color`]
-                      : styles[`normal-color`]
-                  )}
-                >
-                  {!comment.isDeleted && (
-                    <div className={styles[`vert-container`]}>
-                      <span
-                        className={classNames(
-                          "material-symbols-outlined",
-                          projectDetails
-                            ? styles[`project-details-vert`]
-                            : styles.vert
-                        )}
-                        onClick={() => handleOptionClick(comment.id)}
-                      >
-                        more_vert
-                      </span>
-                    </div>
-                  )}
-                  {openEditFormJudgeArray[index] ? (
-                    <form>
-                      <textarea
-                        value={editComment[index]}
-                        required
-                        onChange={(e) => onChangeEditComment(e, index)}
-                        onBlur={() => handleUpdate(comment.id, index)}
-                        onInput={(e) => {
-                          const target = e.target as HTMLTextAreaElement;
-                          target.style.height = "auto";
-                          target.style.height = `${target.scrollHeight}px`;
-                        }}
-                        ref={(el) => {
-                          textareaRefs.current[index] = el;
-                        }}
-                        className={
-                          projectDetails
-                            ? styles[`project-details-bubble-textarea`]
-                            : styles[`bubble-textarea`]
-                        }
-                      />
-                    </form>
-                  ) : (
-                    <div
-                      className={
-                        projectDetails
-                          ? styles[`project-details-comment-text`]
-                          : styles[`comment-text`]
-                      }
-                    >
-                      {comment.comment_text}
-                    </div>
-                  )}
+                <div className="flex items-baseline gap-2 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">{comment.users?.name ?? "（不明）"}</span>
+                  <time dateTime={comment.created_at}>{formatDateTime(comment.created_at)}</time>
                 </div>
-
-                <div className={styles[`comment-header`]}>
-                  <div className={styles[`comment-author`]}>
-                    {comment.users.name}
-                  </div>
-
+                <div className={cn("flex max-w-[85%] items-start gap-1", mine && "flex-row-reverse")}>
                   <div
-                    className={
-                      projectDetails
-                        ? styles[`project-details-comment-date`]
-                        : styles[`comment-date`]
-                    }
+                    className={cn(
+                      "min-w-0 rounded-xl px-3 py-2 text-left text-sm whitespace-pre-wrap [overflow-wrap:anywhere]",
+                      comment.isDeleted
+                        ? "bg-muted/50 text-muted-foreground"
+                        : mine
+                          ? "bg-primary/10"
+                          : "bg-muted",
+                      editing && "w-80 max-w-full p-1"
+                    )}
                   >
-                    {formatDateTime(comment.created_at)}
+                    {editing ? (
+                      <>
+                        <Textarea
+                          aria-label="コメントを編集"
+                          aria-describedby={`comment-edit-hint-${comment.id}`}
+                          value={editComment[index]}
+                          required
+                          onChange={(e) => onChangeEditComment(e, index)}
+                          onBlur={() => handleUpdate(comment.id, index)}
+                          ref={(el) => {
+                            textareaRefs.current[index] = el;
+                          }}
+                          className="bg-background"
+                        />
+                        <p id={`comment-edit-hint-${comment.id}`} className="m-0 px-1 pt-1 text-xs text-muted-foreground">
+                          欄から離れると保存します
+                        </p>
+                      </>
+                    ) : (
+                      comment.comment_text
+                    )}
                   </div>
-                </div>
-
-                <div
-                  className={classNames(
-                    comment.user_id == userId && styles.none,
-                    projectDetails
-                      ? styles[`project-details-comment-bubble`]
-                      : styles[`comment-bubble`],
-                    comment.isDeleted
-                      ? styles[`deleted-color`]
-                      : styles[`normal-color`]
+                  {mine && !comment.isDeleted && (
+                    <DropdownMenu onOpenChange={handleMenuOpenChange}>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon-xs" aria-label="コメントの操作">
+                          <MoreVertical className="size-3.5" aria-hidden />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        onCloseAutoFocus={handleMenuCloseAutoFocus}
+                      >
+                        <DropdownMenuItem onSelect={() => handleOpenEditForm(index)}>
+                          <Pencil aria-hidden />
+                          編集
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onSelect={() => {
+                            // 削除するとメニューのボタンごと消えるので、書く欄へフォーカスを移す
+                            focusAfterMenuRef.current = newCommentRef.current;
+                            handleDelete(comment.id);
+                          }}
+                        >
+                          <Trash2 aria-hidden />
+                          削除
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
-                >
-                  <div
-                    className={
-                      projectDetails
-                        ? styles[`project-details-comment-text`]
-                        : styles[`comment-text`]
-                    }
-                  >
-                    {comment.comment_text}
-                  </div>
                 </div>
-              </div>
-            ))
-          ) : (
-            <p>No Comment</p>
-          )}
-        </div>
-        <div className={styles[`comment-form-area`]}>
-          <form onSubmit={(e) => handleSubmit(e, taskId)}>
-            <textarea
-              placeholder="Enter your comment"
-              value={sendComment}
-              onChange={(e) => setSendComment(e.target.value)}
-              required
-              className={
-                projectDetails
-                  ? styles[`project-details-textarea`]
-                  : styles[`task-textarea`]
-              }
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = "auto";
-                target.style.height = `${target.scrollHeight}px`;
-              }}
-            />
-            <div className={styles[`button-container`]}>
-              <button
-                type="submit"
-                className={
-                  projectDetails
-                    ? styles[`project-details-button`]
-                    : styles[`task-button`]
-                }
-              >
-                Comment
-              </button>
-            </div>
-          </form>
-        </div>
-      </dd>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="m-0 text-sm text-muted-foreground">コメントはありません</p>
+      )}
+
+      <form onSubmit={(e) => handleSubmit(e, taskId)} className="flex items-end gap-2">
+        <Textarea
+          ref={newCommentRef}
+          aria-label="コメント"
+          placeholder="コメントを書く"
+          value={sendComment}
+          onChange={(e) => setSendComment(e.target.value)}
+          required
+          // 背景に写真がある画面（プロジェクト画面）でも読めるよう、白い地を付ける
+          className="max-h-40 bg-background"
+        />
+        <Button type="submit">送る</Button>
+      </form>
     </div>
   );
 };

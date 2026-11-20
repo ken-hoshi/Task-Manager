@@ -68,7 +68,8 @@
   left: -35%;
   background-color: #fff;
   box-shadow: 0 5px 5px rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  /* 作り直した部品の Sheet・Dialog（z-index 50）より下に置く */
+  z-index: 40;
   width: 29.8vh;
   box-sizing: border-box;
   animation: open 0.3s ease-in-out forwards;
