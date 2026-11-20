@@ -231,6 +231,27 @@ describe("ProjectList", () => {
     expect(setPageUpdated).toHaveBeenCalledWith(true);
   });
 
+  // 以前は更新を待たずに読み直していたので、読み直しが先に済むと表示が古いまま残った
+  it("「完了にする」は、更新が終わるまで画面の読み直しを求めない", async () => {
+    let finish: (value: unknown) => void = () => {};
+    setResponses(
+      "small_projects",
+      new Promise((resolve) => (finish = resolve)) as unknown as { data: unknown; error: unknown }
+    );
+    await renderList();
+    openSearchProject();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "「一覧」を完了にする" }));
+    });
+    expect(setPageUpdated).not.toHaveBeenCalled();
+
+    await act(async () => {
+      finish({ data: null, error: null });
+    });
+    expect(setPageUpdated).toHaveBeenCalledWith(true);
+  });
+
   it("「完了にする」の更新に失敗したら、日本語の通知を出す", async () => {
     setResponses("small_projects", { data: null, error: { message: "boom" } });
     jest.spyOn(console, "error").mockImplementation(() => {});

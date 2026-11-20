@@ -441,15 +441,13 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
             setSelectedUser(null);
           }
 
-          setSmallProjectMember([
-            { id: 0, name: "未定" },
-            ...smallProjectMembersList[0].membersDataArray.map(
-              (membersData) => ({
-                id: membersData.id,
-                name: membersData.name,
-              })
-            ),
-          ]);
+          // 「未定」は出さない（DB の担当者の列は空を受け付けず、id 0 で保存すると必ず失敗していた）
+          setSmallProjectMember(
+            smallProjectMembersList[0].membersDataArray.map((membersData) => ({
+              id: membersData.id,
+              name: membersData.name,
+            }))
+          );
 
           const { data: taskGenreData, error: selectTaskGenreError } =
             await clientSupabase
@@ -616,6 +614,8 @@ const TaskPopup: React.FC<TaskPopupProps> = ({
           } = await clientSupabase
             .from("task_attachments")
             .select("file_path")
+            // このタスクの添付だけを探す（ファイル名だけだと、別のタスクにある同じ名前のファイルも消える）
+            .eq("task_id", taskId)
             .in("file_name", removedFileNames);
 
           if (selectRemovedFilePathListError) {

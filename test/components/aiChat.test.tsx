@@ -1,5 +1,5 @@
 // AI チャット（RobotButton と AiChatArea）。開く・送る・答えの表を横スクロールの箱に入れる、を確かめる
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import RobotButton from "@/app/component/robotButton/robotButton";
 
 const setNotificationValue = jest.fn();
@@ -111,6 +111,22 @@ describe("AI チャット", () => {
     const link = screen.getByRole("link", { name: "https://example.com" });
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  // 以前は sendMessage が失敗を握りつぶし、空の吹き出しを出してエラーも知らせなかった
+  it("問い合わせに失敗したら、吹き出しを足さずにエラーを知らせ、質問を入力欄に残す", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    fetchMock.mockResolvedValue({ ok: false, json: async () => ({}) });
+    openChat();
+
+    await ask("見積もりは？");
+
+    expect(setNotificationValue).toHaveBeenCalledWith({
+      message: "AI の答えを受け取れませんでした。",
+      color: 1,
+    });
+    expect(within(screen.getByRole("log", { name: "AI とのやり取り" })).queryByText("見積もりは？")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "AI への質問" })).toHaveValue("見積もりは？");
   });
 
   it("答えの表は、横にスクロールする箱に入れる（吹き出しからはみ出さない）", async () => {

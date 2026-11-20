@@ -6,6 +6,7 @@ import { getProjectData } from "@/app/lib/api/getProjectData";
 import { getSmallProjectData } from "@/app/lib/api/getSmallProjectData";
 import { getSmallProjectMember } from "@/app/lib/api/getSmallProjectMember";
 import { postMailNotifications } from "@/app/lib/postMailNotifications";
+import { fetchAttachedFiles } from "@/app/lib/api/fetchAttachedFiles";
 import { insertsOf, opsOf, resetSupabaseMock, setResponses, storageCalls } from "../helpers/mockSupabase";
 
 const setPageUpdated = jest.fn();
@@ -27,6 +28,7 @@ jest.mock("@/app/provider/flashDisplayProvider", () => ({
 jest.mock("@/app/lib/api/getProjectData", () => ({ getProjectData: jest.fn() }));
 jest.mock("@/app/lib/api/getSmallProjectData", () => ({ getSmallProjectData: jest.fn() }));
 jest.mock("@/app/lib/api/getSmallProjectMember", () => ({ getSmallProjectMember: jest.fn() }));
+jest.mock("@/app/lib/api/fetchAttachedFiles", () => ({ fetchAttachedFiles: jest.fn(async () => []) }));
 jest.mock("@/app/lib/postMailNotifications", () => ({
   postMailNotifications: jest.fn(async () => undefined),
 }));
@@ -180,11 +182,71 @@ describe("TaskPopup（作成）", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  // DB の担当者の列は空を受け付けないので、「未定」（id 0）で保存すると必ず失敗していた
+  it("担当者の選択肢に「未定」を出さない", async () => {
+    await renderPopup();
+
+    fireEvent.keyDown(screen.getByRole("combobox", { name: /担当者/ }), { key: "Enter" });
+
+    expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual(["星"]);
+  });
+
   it("選んでいる値も、選択肢に出る", async () => {
     await renderPopup();
 
     fireEvent.keyDown(screen.getByRole("combobox", { name: /^小プロジェクト/ }), { key: "Enter" });
 
     expect(screen.getByRole("option", { name: "一覧", selected: true })).toBeInTheDocument();
+  });
+});
+
+describe("TaskPopup（編集）", () => {
+  // 以前は添付をファイル名だけで探して消していたので、別のタスクにある同じ名前のファイルも消えた
+  it("外した添付は、このタスクのものだけを探して消す", async () => {
+    setResponses(
+      "tasks",
+      ok({
+        id: 99,
+        task_name: "API の設計",
+        small_projects: { project_id: 1 },
+        small_project_id: 11,
+        assigned_user_id: 5,
+        task_genre_id: null,
+        start_date: "2024-04-01",
+        deadline_date: "2024-04-02",
+        number_of_days: 2,
+        details: "",
+      }),
+      ok(null)
+    );
+    setResponses("task_genre", ok([]));
+    setResponses("users", ok({ name: "星" }));
+    setResponses("task_attachments", ok([{ file_path: "public/spec.pdf" }]), ok(null));
+    (fetchAttachedFiles as jest.Mock).mockResolvedValue([
+      { id: 99, fileDataArray: [{ file: new File(["x"], "仕様.pdf") }] },
+    ]);
+    await act(async () => {
+      render(
+        <TaskPopup
+          workspaceId={3}
+          onClose={onClose}
+          userId={5}
+          taskId={99}
+          taskGenreId={null}
+          projectId={null}
+          smallProjectId={null}
+        />
+      );
+    });
+    await screen.findByRole("button", { name: "「仕様.pdf」を外す" });
+
+    fireEvent.click(screen.getByRole("button", { name: "「仕様.pdf」を外す" }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "更新する" }));
+    });
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(opsOf("task_attachments")).toContainEqual(["eq", ["task_id", 99]]);
+    expect(opsOf("task_attachments")).toContainEqual(["in", ["file_name", ["仕様.pdf"]]]);
   });
 });

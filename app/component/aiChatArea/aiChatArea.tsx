@@ -26,27 +26,24 @@ const AiChatArea: React.FC = () => {
   const userMessageRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const sendMessage = async (message: string) => {
-    try {
-      const { data: sessionData } = await clientSupabase.auth.getSession();
-      const response = await fetch("/api/sendGeminiMessage", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionData.session?.access_token ?? ""}`,
-        },
-        body: JSON.stringify({ message }),
-      });
+  // 失敗したら投げる（受け取る側で、吹き出しを足さずにエラーを知らせる）
+  const sendMessage = async (message: string): Promise<string> => {
+    const { data: sessionData } = await clientSupabase.auth.getSession();
+    const response = await fetch("/api/sendGeminiMessage", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionData.session?.access_token ?? ""}`,
+      },
+      body: JSON.stringify({ message }),
+    });
 
-      if (!response.ok) {
-        throw new Error("APIエラー");
-      }
-
-      const data = await response.json();
-      return data.content;
-    } catch (error) {
-      console.error("エラー:", error);
+    if (!response.ok) {
+      throw new Error(`AI の問い合わせに失敗しました（${response.status}）`);
     }
+
+    const data = await response.json();
+    return data.content;
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -62,6 +59,9 @@ const AiChatArea: React.FC = () => {
         { user: "ai", content: response },
       ]);
 
+      // 答えを受け取れたときだけ入力欄を空にする（失敗したら、質問を送り直せるよう残す）
+      setInputMessage("");
+
       setTimeout(() => {
         userMessageRef.current?.scrollIntoView({
           behavior: "smooth",
@@ -69,12 +69,12 @@ const AiChatArea: React.FC = () => {
         });
       }, 100);
     } catch (error) {
+      console.error("Send AI Message", error);
       setNotificationValue({
         message: "AI の答えを受け取れませんでした。",
         color: 1,
       });
     } finally {
-      setInputMessage("");
       setLoading(false);
       // 送っている間はボタンを押せなくするので、フォーカスが外れる。終わったら入力欄へ戻す
       setTimeout(() => inputRef.current?.focus());
