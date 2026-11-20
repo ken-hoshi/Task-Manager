@@ -5,15 +5,14 @@ import Link from "next/link";
 import { ArrowUpRight, CircleCheck, ChevronRight, FolderKanban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
+import { StatusCounts, type StatusCountsValue } from "@/components/status-counts";
 import { cn } from "@/lib/utils";
 import AddButton from "@/app/component/addButton/addButton";
 import EditButton from "@/app/component/editButton/editButton";
 import DeleteButton from "@/app/component/deleteButton/deleteButton";
-import TaskGenreSummary from "@/app/component/taskDetails/taskGenreSummary";
-import AttachedFileList from "@/app/component/taskDetails/attachedFileList";
+import SmallProjectDetails, { UNNAMED } from "@/app/component/smallProjectDetails/smallProjectDetails";
 import { AttachedFileData } from "@/app/component/taskDetails/types";
 import { clientSupabase } from "@/app/lib/supabase/client";
-import { TASK_STATUS_DOT_CLASSES, TASK_STATUS_LABELS } from "@/app/lib/taskStatus";
 import { useFlashDisplayContext } from "@/app/provider/flashDisplayProvider";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
@@ -73,47 +72,6 @@ interface ProjectListProps {
   userId: number;
 }
 
-interface StatusCountsValue {
-  notStarted: number;
-  processing: number;
-  completed: number;
-}
-
-// 名前の無い小プロジェクトを、ボタンの名前や読み上げで指すときの言い方
-const UNNAMED = "（名前なし）";
-
-// ステータスごとの件数。色の点・日本語の名前・数を並べる
-const StatusCounts: React.FC<{ counts: StatusCountsValue; label: string }> = ({
-  counts,
-  label,
-}) => (
-  <ul
-    aria-label={label}
-    className="m-0 flex list-none items-center gap-3 p-0 text-xs text-muted-foreground"
-  >
-    {(
-      [
-        [1, counts.notStarted],
-        [2, counts.processing],
-        [3, counts.completed],
-      ] as const
-    ).map(([statusId, count]) => (
-      <li key={statusId} className="inline-flex items-center gap-1.5">
-        <span className={cn("size-2 rounded-full", TASK_STATUS_DOT_CLASSES[statusId])} aria-hidden />
-        {TASK_STATUS_LABELS[statusId]}
-        <span className="font-medium tabular-nums text-foreground">{count}</span>
-      </li>
-    ))}
-  </ul>
-);
-
-// 詳細の欄の見出しと中身（ページの h1・表の h2 の下なので h3）
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <section className="space-y-1.5">
-    <h3 className="m-0 text-xs font-medium text-muted-foreground">{title}</h3>
-    <div className="text-sm">{children}</div>
-  </section>
-);
 
 // 押すとプロジェクト画面へ移る名前。移ると分かるよう、矢印を添えたリンクにする
 const NameLink: React.FC<{ href: string; name: string; strong: boolean }> = ({
@@ -267,42 +225,12 @@ const ProjectList: React.FC<ProjectListProps> = ({
     const files = attachedFileDataArray.find((f) => f.id === smallProject.id)?.fileDataArray;
 
     return (
-      <div className="grid gap-5 bg-muted/40 px-6 py-5 md:grid-cols-2">
-        <Section title="メンバー">
-          {members.length > 0 ? (
-            <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
-              {members.map((member) => (
-                <li key={member.id} className="rounded-full bg-background px-2.5 py-0.5 text-xs ring-1 ring-border">
-                  {member.name}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="m-0 text-muted-foreground">メンバーはいません</p>
-          )}
-        </Section>
-        <Section title="ジャンル">
-          {genres.length > 0 ? (
-            <div className="space-y-4">
-              {genres.map((genre) => (
-                <TaskGenreSummary key={genre.taskGenreId} taskGenre={genre} />
-              ))}
-            </div>
-          ) : (
-            <p className="m-0 text-muted-foreground">ジャンルはありません</p>
-          )}
-        </Section>
-        <Section title="詳細">
-          {smallProject.details ? (
-            <p className="m-0 whitespace-pre-wrap">{smallProject.details}</p>
-          ) : (
-            <p className="m-0 text-muted-foreground">詳細はありません</p>
-          )}
-        </Section>
-        <Section title="添付ファイル">
-          <AttachedFileList fileDataArray={files} />
-        </Section>
-      </div>
+      <SmallProjectDetails
+        members={members}
+        genres={genres}
+        details={smallProject.details}
+        attachedFiles={files}
+      />
     );
   };
 

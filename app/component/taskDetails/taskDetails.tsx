@@ -3,6 +3,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Loader2 } from "lucide-react";
 import Comment from "@/app/component/comment/comment";
+import { DetailSection } from "@/components/detail-section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,17 +34,6 @@ interface TaskDetailsProps {
   userId: number;
 }
 
-// 詳細の欄の見出しと中身
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
-  title,
-  children,
-}) => (
-  <section className="space-y-1.5">
-    <h3 className="m-0 text-xs font-medium text-muted-foreground">{title}</h3>
-    <div className="text-sm">{children}</div>
-  </section>
-);
-
 // タスク画面（自分のタスク・未完了のタスク）で、タスクを開いたときの詳細。表の行の中に置く
 const TaskDetails: React.FC<TaskDetailsProps> = ({
   task,
@@ -59,24 +49,24 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
   return (
     <div className="space-y-5 bg-muted/40 px-6 py-5">
       <div className="grid gap-5 md:grid-cols-2">
-        <Section title="プロジェクト">
+        <DetailSection title="プロジェクト">
           <p className="m-0">{task.small_projects.projects.project_name}</p>
           <p className="m-0 text-muted-foreground">
             {task.small_projects.small_project_name}
           </p>
-        </Section>
-        <Section title="期間">
+        </DetailSection>
+        <DetailSection title="期間">
           <p className="m-0 tabular-nums">
             <span>{formatDate(task.start_date)}</span>
             {" 〜 "}
             <span>{formatDate(task.deadline_date)}</span>
           </p>
-        </Section>
+        </DetailSection>
 
-        <Section title="ジャンル">
+        <DetailSection title="ジャンル">
           <TaskGenreSummary taskGenre={taskGenre} />
-        </Section>
-        <Section title="実績">
+        </DetailSection>
+        <DetailSection title="実績">
           <div className="space-y-3">
             <TaskResultList
               taskGenre={taskGenre}
@@ -135,23 +125,23 @@ const TaskDetails: React.FC<TaskDetailsProps> = ({
               </form>
             )}
           </div>
-        </Section>
+        </DetailSection>
 
-        <Section title="詳細">
+        <DetailSection title="詳細">
           {task.details ? (
             <p className="m-0 whitespace-pre-wrap">{task.details}</p>
           ) : (
             <p className="m-0 text-muted-foreground">詳細はありません</p>
           )}
-        </Section>
-        <Section title="添付ファイル">
+        </DetailSection>
+        <DetailSection title="添付ファイル">
           <AttachedFileList fileDataArray={attachedFiles} />
-        </Section>
+        </DetailSection>
       </div>
 
-      <Section title="コメント">
+      <DetailSection title="コメント">
         <Comment userId={userId} taskId={task.id} />
-      </Section>
+      </DetailSection>
     </div>
   );
 };

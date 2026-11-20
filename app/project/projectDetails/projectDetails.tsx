@@ -1,13 +1,32 @@
 "use client";
 
-import { useNotificationContext } from "@/app/provider/notificationProvider";
-import classNames from "classnames";
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import styles from "./projectDetails.module.css";
-import { formatDate } from "@/app/lib/formatDateTime";
-import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronDown, ChevronsUpDown, CircleCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { StatusCounts } from "@/components/status-counts";
+import { cn } from "@/lib/utils";
+import SmallProjectDetails, {
+  type SmallProjectGenre,
+  UNNAMED,
+} from "@/app/component/smallProjectDetails/smallProjectDetails";
+import { AttachedFileData } from "@/app/component/taskDetails/types";
 import { clientSupabase } from "@/app/lib/supabase/client";
+import { useNotificationContext } from "@/app/provider/notificationProvider";
+import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 
 interface SmallProjectStatusProps {
   smallProjectId: number;
@@ -27,26 +46,25 @@ interface SmallProjectMembersProps {
 
 interface SmallProjectTaskGenreProps {
   smallProjectId: number;
-  taskGenreDataArray: {
-    taskGenreId: number;
-    taskGenreName: string;
-    numberOfPersons: number;
-    startDate: string;
-    deadlineDate: string;
-    numberOfDays: number;
-  }[];
+  taskGenreDataArray: SmallProjectGenre[];
 }
 
 interface SmallProjectAttachedFileProps {
   id: number;
-  fileDataArray: {
-    file: File;
-    url: string;
-  }[];
+  fileDataArray: AttachedFileData[];
 }
+
+// fetchProjectDetailsData が返す小プロジェクトの行のうち、帯で使う項目
+interface SmallProjectRow {
+  id: number;
+  small_project_name: string | null;
+  isFinished: boolean;
+  details: string | null;
+}
+
 interface ProjectDetailsProps {
   userId: number;
-  smallProjectData: any[];
+  smallProjectData: SmallProjectRow[];
   smallProjectStatusData: SmallProjectStatusProps[];
   smallProjectMemberData: SmallProjectMembersProps[];
   smallProjectTaskGenreData: SmallProjectTaskGenreProps[];
@@ -56,13 +74,7 @@ interface ProjectDetailsProps {
   setDisplaySmallProjectId: Dispatch<SetStateAction<number | null>>;
 }
 
-interface ProjectDetailsArrowProps {
-  projectMember: boolean;
-  taskGenre: boolean;
-  details: boolean;
-  attachedFiles: boolean;
-}
-
+// プロジェクト画面のタブの上の帯。表示している小プロジェクトの名前・切り替え・件数・「完了にする」と、開くと出る詳細
 const ProjectDetails: React.FC<ProjectDetailsProps> = ({
   smallProjectData,
   smallProjectStatusData,
@@ -73,7 +85,10 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
   displaySmallProjectId,
   setDisplaySmallProjectId,
 }) => {
-  const [displaySmallProject, setDisplaySmallProject] = useState<any>({});
+  // 最初の描画（データを選ぶ前）とデータが見つからないときは undefined にして、帯を描かない
+  const [displaySmallProject, setDisplaySmallProject] = useState<
+    SmallProjectRow | undefined
+  >(undefined);
   const [smallProjectStatus, setSmallProjectStatus] =
     useState<SmallProjectStatusProps>({
       smallProjectId: 0,
@@ -99,27 +114,13 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
     id: 0,
     fileDataArray: [],
   });
-
-  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-  const [pullDownSmallProjectData, setPullDownSmallProjectData] = useState<
-    any[] | undefined
-  >(undefined);
-  const [projectDetailArrow, setProjectDetailsArrow] =
-    useState<ProjectDetailsArrowProps>({
-      projectMember: false,
-      taskGenre: false,
-      details: false,
-      attachedFiles: false,
-    });
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const { setNotificationValue } = useNotificationContext();
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const router = useRouter();
-  const pullDownMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside);
-
     const changedDisplaySmallProjectId =
       displaySmallProjectId &&
       smallProjectIdList.includes(displaySmallProjectId)
@@ -160,7 +161,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
     ) {
       console.error("Data associated with displaySmallProjectId not found.");
       setNotificationValue({
-        message: "Couldn't get Project Data.",
+        message: "プロジェクトのデータを読めませんでした。",
         color: 1,
       });
       router.push("/task");
@@ -170,40 +171,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
     setSmallProjectMemberListData(smallProjectMemberListData!);
     setSmallProjectTaskGenreListData(smallProjectTaskGenreListData!);
     setSmallProjectAttachedFileListData(smallProjectAttachedFileListData!);
-    setPullDownSmallProjectData(
-      smallProjectData.filter(
-        (smallProject: any) => smallProject.id !== changedDisplaySmallProjectId
-      )
-    );
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
   }, [pageUpdated, displaySmallProjectId]);
-
-  const handleClickOutside = (event: MouseEvent) => {
-    if (
-      pullDownMenuRef.current &&
-      !pullDownMenuRef.current.contains(event.target as Node)
-    ) {
-      setIsDropdownOpen(false);
-    }
-  };
-
-  const toggleDropdown = () => {
-    setIsDropdownOpen((prev) => !prev);
-  };
-
-  const handleSelectSmallProject = (smallProjectId: number) => {
-    setDisplaySmallProjectId(smallProjectId);
-    setIsDropdownOpen(false);
-  };
-
-  const toggleProjectDetailsArrow = (target: string) => {
-    setProjectDetailsArrow((prevData) => ({
-      ...prevData,
-      [target]: !prevData[target as keyof ProjectDetailsArrowProps],
-    }));
-  };
 
   const handleFinishedSmallProject = (
     smallProjectId: number,
@@ -220,7 +188,7 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
       if (updateSmallProjectError) {
         console.error("Update Small Projects", updateSmallProjectError);
         setNotificationValue({
-          message: "Couldn't update the Small Project Data.",
+          message: "小プロジェクトを更新できませんでした。",
           color: 1,
         });
       }
@@ -228,381 +196,94 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
     setPageUpdated(true);
   };
 
+  // データが見つからないとき（タスク画面へ戻る途中）は何も描かない
+  if (!displaySmallProject || !smallProjectStatus) return null;
+
+  const name = displaySmallProject.small_project_name || UNNAMED;
+  const isFinished = Boolean(displaySmallProject.isFinished);
+
   return (
-    <>
-      <div className={styles[`small-project-area`]}>
-        <table>
-          <thead>
-            <tr>
-              <th>
-                {smallProjectData.length > 1 && (
-                  <div className={styles[`pull-down-container`]}>
-                    <span
-                      className={classNames(
-                        "material-symbols-outlined",
-                        styles[`pull-down`]
-                      )}
-                      onClick={toggleDropdown}
-                    >
-                      arrow_right
-                    </span>
-                    {isDropdownOpen && (
-                      <div
-                        className={styles[`dropdown-menu`]}
-                        ref={pullDownMenuRef}
+    <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen} asChild>
+      <section
+        aria-labelledby="small-project-title"
+        className="overflow-hidden rounded-xl border bg-card text-sm text-card-foreground shadow-xs"
+      >
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <h2
+              id="small-project-title"
+              className="m-0 truncate text-base font-semibold"
+            >
+              {name}
+            </h2>
+            {smallProjectData.length > 1 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <ChevronsUpDown className="size-4" aria-hidden />
+                    小プロジェクトを切り替える
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-56">
+                  <DropdownMenuLabel>小プロジェクト</DropdownMenuLabel>
+                  <DropdownMenuRadioGroup
+                    value={String(displaySmallProject.id)}
+                    onValueChange={(value) =>
+                      setDisplaySmallProjectId(Number(value))
+                    }
+                  >
+                    {smallProjectData.map((smallProject) => (
+                      <DropdownMenuRadioItem
+                        key={smallProject.id}
+                        value={String(smallProject.id)}
                       >
-                        {pullDownSmallProjectData ? (
-                          pullDownSmallProjectData.map((smallProject: any) => (
-                            <div
-                              key={smallProject.id}
-                              className={styles[`dropdown-item`]}
-                              onClick={() =>
-                                handleSelectSmallProject(smallProject.id)
-                              }
-                            >
-                              {smallProject.small_project_name}
-                            </div>
-                          ))
-                        ) : (
-                          <div className={styles[`dropdown-item`]}>
-                            No Small Project
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                        {smallProject.small_project_name || UNNAMED}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+          <StatusCounts counts={smallProjectStatus} label="タスクの件数" />
+          {/* 押されているか（完了か）は aria-pressed と色で伝え、文字と名前は押しても変えない */}
+          <Button
+            variant={isFinished ? "secondary" : "outline"}
+            size="sm"
+            aria-pressed={isFinished}
+            aria-label={`「${name}」を完了にする`}
+            className={cn(isFinished && "text-status-done")}
+            onClick={() =>
+              handleFinishedSmallProject(displaySmallProject.id, isFinished)
+            }
+          >
+            <CircleCheck className="size-4" aria-hidden />
+            完了
+          </Button>
+          {/* 開いているかは aria-expanded と矢印の向きで伝え、名前は変えない */}
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm">
+              詳細
+              <ChevronDown
+                className={cn(
+                  "size-4 transition-transform",
+                  detailsOpen && "rotate-180"
                 )}
-                <p className={styles[`small-project-name`]}>
-                  {displaySmallProject!.small_project_name ||
-                    "No Small Project Name"}
-                </p>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className={styles[`col-status-situation`]}>
-                <div className={styles[`status-icon-part`]}>
-                  <div
-                    className={classNames(
-                      styles[`status-icon`],
-                      styles[`not-started`]
-                    )}
-                  >
-                    Not Started
-                  </div>
-                  <div className={styles.value}>
-                    {smallProjectStatus.notStarted}
-                  </div>
-                </div>
-                <div className={styles[`status-icon-part`]}>
-                  <div
-                    className={classNames(
-                      styles[`status-icon`],
-                      styles.processing
-                    )}
-                  >
-                    Processing
-                  </div>
-                  <div className={styles.value}>
-                    {smallProjectStatus.processing}
-                  </div>
-                </div>
-                <div className={styles[`status-icon-part`]}>
-                  <div
-                    className={classNames(
-                      styles[`status-icon`],
-                      styles.completed
-                    )}
-                  >
-                    Complete
-                  </div>
-                  <div className={styles.value}>
-                    {smallProjectStatus.completed}
-                  </div>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td className={styles[`scrollable-content-td`]}>
-                <div className={styles[`scrollable-content`]}>
-                  <dl>
-                    <div className={styles[`col-members`]}>
-                      <dt>
-                        <span
-                          className={classNames(
-                            "material-symbols-outlined",
-                            styles.arrow
-                          )}
-                          onClick={() =>
-                            toggleProjectDetailsArrow("projectMember")
-                          }
-                        >
-                          {projectDetailArrow.projectMember
-                            ? "arrow_drop_down"
-                            : "arrow_right"}{" "}
-                        </span>
-                        <p>Member</p>
-                      </dt>
-
-                      <dd
-                        className={
-                          projectDetailArrow.projectMember
-                            ? classNames(
-                                styles[`details-open`],
-                                styles["member-area"]
-                              )
-                            : styles[`details-hidden`]
-                        }
-                      >
-                        {smallProjectMemberListData.membersDataArray.map(
-                          (projectMember, index) => (
-                            <div className={styles.member} key={index}>
-                              {projectMember.name}
-                            </div>
-                          )
-                        )}
-                      </dd>
-                    </div>
-                  </dl>
-
-                  <dl>
-                    <div className={styles[`col-task-genre`]}>
-                      <dt>
-                        <span
-                          className={classNames(
-                            "material-symbols-outlined",
-                            styles.arrow
-                          )}
-                          onClick={() => toggleProjectDetailsArrow("taskGenre")}
-                        >
-                          {projectDetailArrow.taskGenre
-                            ? "arrow_drop_down"
-                            : "arrow_right"}{" "}
-                        </span>
-                        <p>Task Genre</p>
-                      </dt>
-
-                      <dd
-                        className={
-                          projectDetailArrow.taskGenre
-                            ? styles[`details-open`]
-                            : styles[`details-hidden`]
-                        }
-                      >
-                        {smallProjectTaskGenreListData &&
-                        smallProjectTaskGenreListData.taskGenreDataArray
-                          .length > 0 ? (
-                          <div className={styles[`task-genre-area`]}>
-                            {smallProjectTaskGenreListData.taskGenreDataArray.map(
-                              (projectTaskGenre: any, index: number) => (
-                                <div
-                                  className={styles[`task-genre-block`]}
-                                  key={index}
-                                >
-                                  <div className={styles[`task-genre-name`]}>
-                                    {projectTaskGenre.taskGenreName}
-                                  </div>
-
-                                  <div
-                                    className={
-                                      styles[`task-genre-table-container`]
-                                    }
-                                  >
-                                    <table>
-                                      <tbody>
-                                        <tr>
-                                          <td>Period</td>
-                                          <td>
-                                            {formatDate(
-                                              projectTaskGenre.startDate
-                                            )}{" "}
-                                            ~
-                                            {formatDate(
-                                              projectTaskGenre.deadlineDate
-                                            )}
-                                          </td>
-                                        </tr>
-                                        <tr>
-                                          <td>Days</td>
-                                          <td>
-                                            {projectTaskGenre.numberOfDays.toFixed(
-                                              1
-                                            )}
-                                          </td>
-                                        </tr>
-                                        <tr>
-                                          <td>Persons</td>
-                                          <td>
-                                            {projectTaskGenre.numberOfPersons}
-                                          </td>
-                                        </tr>
-                                        <tr>
-                                          <td>Persons/Days</td>
-                                          <td>
-                                            {(
-                                              projectTaskGenre.numberOfDays *
-                                              projectTaskGenre.numberOfPersons
-                                            ).toFixed(1)}
-                                          </td>
-                                        </tr>
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        ) : (
-                          <div className={styles[`non-task-genre`]}>
-                            No Task Genre
-                          </div>
-                        )}
-                      </dd>
-                    </div>
-                  </dl>
-
-                  <dl>
-                    <div className={styles[`col-details`]}>
-                      <dt>
-                        {" "}
-                        <span
-                          className={classNames(
-                            "material-symbols-outlined",
-                            styles.arrow
-                          )}
-                          onClick={() => toggleProjectDetailsArrow("details")}
-                        >
-                          {projectDetailArrow.details
-                            ? "arrow_drop_down"
-                            : "arrow_right"}{" "}
-                        </span>
-                        <p>Details</p>
-                      </dt>
-                      <dd
-                        className={
-                          projectDetailArrow.details
-                            ? styles[`details-open`]
-                            : styles[`details-hidden`]
-                        }
-                      >
-                        {displaySmallProject.details ? (
-                          <p className={styles[`details-text`]}>
-                            {displaySmallProject.details}
-                          </p>
-                        ) : (
-                          <p className={styles[`non-details-text`]}>
-                            No Details
-                          </p>
-                        )}
-                      </dd>
-                    </div>
-                  </dl>
-
-                  <dl>
-                    <div className={styles[`col-attached-file`]}>
-                      <dt>
-                        {" "}
-                        <span
-                          className={classNames(
-                            "material-symbols-outlined",
-                            styles.arrow
-                          )}
-                          onClick={() =>
-                            toggleProjectDetailsArrow("attachedFiles")
-                          }
-                        >
-                          {projectDetailArrow.attachedFiles
-                            ? "arrow_drop_down"
-                            : "arrow_right"}{" "}
-                        </span>
-                        <p>Attached File</p>
-                      </dt>
-
-                      <dd
-                        className={
-                          projectDetailArrow.attachedFiles
-                            ? classNames(
-                                styles[`details-open`],
-                                styles["attachedFile-area"]
-                              )
-                            : styles[`details-hidden`]
-                        }
-                      >
-                        {smallProjectAttachedFileListData &&
-                        smallProjectAttachedFileListData.fileDataArray
-                          .length !== 0 ? (
-                          smallProjectAttachedFileListData.fileDataArray.map(
-                            (fileData, index) => (
-                              <div
-                                className={
-                                  styles["display-attachedFile-container"]
-                                }
-                                key={index}
-                              >
-                                <div className={styles["file-info"]}>
-                                  <a
-                                    href={fileData.url || "#"}
-                                    download={fileData.file.name}
-                                  >
-                                    <span
-                                      className={classNames(
-                                        "material-symbols-outlined",
-                                        styles.downloadIcon
-                                      )}
-                                    >
-                                      download
-                                    </span>
-                                  </a>
-                                </div>
-                                <p>{fileData.file.name}</p>
-                              </div>
-                            )
-                          )
-                        ) : (
-                          <p> No Attached File</p>
-                        )}
-                      </dd>
-                    </div>
-                  </dl>
-                  <dl>
-                    <dt
-                      className={styles[`col-finished-button`]}
-                      onClick={() =>
-                        handleFinishedSmallProject(
-                          displaySmallProject.id,
-                          displaySmallProject.isFinished
-                        )
-                      }
-                    >
-                      <div
-                        className={classNames(
-                          styles[`finished-button-area`],
-                          displaySmallProject.isFinished
-                            ? styles[`finished-button-green`]
-                            : styles[`finished-button-black`]
-                        )}
-                      >
-                        <p>Finished</p>
-                        <span
-                          className={classNames(
-                            "material-symbols-outlined",
-                            styles.check
-                          )}
-                        >
-                          select_check_box
-                        </span>
-                      </div>
-                    </dt>
-                  </dl>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </>
+                aria-hidden
+              />
+            </Button>
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent className="border-t">
+          <SmallProjectDetails
+            members={smallProjectMemberListData?.membersDataArray ?? []}
+            genres={smallProjectTaskGenreListData?.taskGenreDataArray ?? []}
+            details={displaySmallProject.details}
+            attachedFiles={smallProjectAttachedFileListData?.fileDataArray}
+          />
+        </CollapsibleContent>
+      </section>
+    </Collapsible>
   );
 };
 
