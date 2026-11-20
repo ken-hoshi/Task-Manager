@@ -1,16 +1,17 @@
 "use client";
 
-import styles from "./suspenseProject.module.css";
 import { Pencil } from "lucide-react";
 import AppShell from "@/app/component/appShell/appShell";
 import ProjectPopup from "@/app/component/projectPopup/projectPopup";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Loading from "@/app/component/loading/loading";
 import NotificationBanner from "@/app/component/notificationBanner/notificationBanner";
 import { getStatus } from "@/app/lib/api/getStatus";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
-import classNames from "classnames";
 import { useEffect, useState } from "react";
 import ProjectDetails from "../projectDetails/projectDetails";
 import TaskBoard from "../taskBoard/taskBoard";
@@ -106,12 +107,15 @@ interface WikiProps {
   }[];
 }
 
-enum Switch {
-  list,
-  board,
-  calender,
-  wiki,
-}
+// タブの値と、タブに出す名前
+type ProjectTab = "list" | "calendar" | "board" | "wiki";
+
+const PROJECT_TABS: { value: ProjectTab; label: string }[] = [
+  { value: "list", label: "一覧" },
+  { value: "calendar", label: "カレンダー" },
+  { value: "board", label: "ボード" },
+  { value: "wiki", label: "Wiki" },
+];
 
 const SuspenseProject: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -124,12 +128,7 @@ const SuspenseProject: React.FC = () => {
   });
   const [userId, setUserId] = useState(0);
   const [showProjectPopup, setShowProjectPopup] = useState(false);
-  const [tabJudgeList, setTabJudgeList] = useState({
-    list: true,
-    calender: false,
-    board: false,
-    wiki: false,
-  });
+  const [tab, setTab] = useState<ProjectTab>("list");
 
   const [projectData, setProjectData] = useState<any>({});
   const [smallProjectData, setSmallProjectData] = useState<any[]>([]);
@@ -292,7 +291,7 @@ const SuspenseProject: React.FC = () => {
       } catch (error) {
         console.error("Fetch Project Details Data", error);
         setNotificationValue({
-          message: "Couldn't get Project Data.",
+          message: "プロジェクトのデータを読めませんでした。",
           color: 1,
         });
         router.push("/task");
@@ -307,51 +306,6 @@ const SuspenseProject: React.FC = () => {
   const handleToggleFilterTask = () => {
     setFilterMyTasks(!filterMyTasks);
     setPageUpdated(true);
-  };
-
-  const handleTabSwitch = (target: Switch) => {
-    switch (target) {
-      case Switch.list:
-        setTabJudgeList({
-          list: true,
-          board: false,
-          calender: false,
-          wiki: false,
-        });
-        break;
-      case Switch.board:
-        setTabJudgeList({
-          list: false,
-          board: true,
-          calender: false,
-          wiki: false,
-        });
-        break;
-      case Switch.calender:
-        setTabJudgeList({
-          list: false,
-          board: false,
-          calender: true,
-          wiki: false,
-        });
-        break;
-      case Switch.wiki:
-        setTabJudgeList({
-          list: false,
-          board: false,
-          calender: false,
-          wiki: true,
-        });
-        break;
-      default:
-        setTabJudgeList({
-          list: true,
-          board: false,
-          calender: false,
-          wiki: false,
-        });
-        break;
-    }
   };
 
   return (
@@ -370,30 +324,31 @@ const SuspenseProject: React.FC = () => {
         {loading ? (
           <Loading />
         ) : (
-          <div className={styles.project}>
-            {/* 以前はヘッダーにあったプロジェクト名と編集の入口。戻る矢印はサイドバーの「タスク」に任せた */}
-            <div className="flex items-center gap-2 px-6 pb-2 text-base">
-              <h1 className="m-0 truncate text-xl font-semibold">
-                {projectData.project_name}
-              </h1>
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label="プロジェクトを編集"
-                onClick={() => setShowProjectPopup(true)}
-              >
-                <Pencil className="size-4" aria-hidden />
-                編集
-              </Button>
-              {showProjectPopup && (
-                <ProjectPopup
-                  onClose={() => setShowProjectPopup(false)}
-                  projectId={projectData.id}
-                  userId={userId}
-                />
-              )}
-            </div>
-            <div className={styles[`project-container`]}>
+          <div className="relative min-h-full">
+            <div className="space-y-4 px-6 pt-6 pb-24">
+              {/* 以前はヘッダーにあったプロジェクト名と編集の入口。戻る矢印はサイドバーの「タスク」に任せた */}
+              <div className="flex items-center gap-2">
+                <h1 className="m-0 truncate text-xl font-semibold">
+                  {projectData.project_name}
+                </h1>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label="プロジェクトを編集"
+                  onClick={() => setShowProjectPopup(true)}
+                >
+                  <Pencil className="size-4" aria-hidden />
+                  編集
+                </Button>
+                {showProjectPopup && (
+                  <ProjectPopup
+                    onClose={() => setShowProjectPopup(false)}
+                    projectId={projectData.id}
+                    userId={userId}
+                  />
+                )}
+              </div>
+
               <ProjectDetails
                 userId={userId}
                 smallProjectData={smallProjectData}
@@ -406,117 +361,81 @@ const SuspenseProject: React.FC = () => {
                 setDisplaySmallProjectId={setDisplaySmallProjectId}
               />
 
-              <div className={styles[`task-area`]}>
-                <div className={styles[`tab-area`]}>
-                  <div className={styles[`button-container`]}>
-                    <button
-                      className={classNames(
-                        styles[`tab-button`],
-                        tabJudgeList.list && styles.active,
-                      )}
-                      onClick={() => handleTabSwitch(Switch.list)}
-                    >
-                      List
-                    </button>
-                    <button
-                      className={classNames(
-                        styles[`tab-button`],
-                        tabJudgeList.calender && styles.active,
-                      )}
-                      onClick={() => handleTabSwitch(Switch.calender)}
-                    >
-                      Calender
-                    </button>
-                    <button
-                      className={classNames(
-                        styles[`tab-button`],
-                        tabJudgeList.board && styles.active,
-                      )}
-                      onClick={() => handleTabSwitch(Switch.board)}
-                    >
-                      Board
-                    </button>
-                    <button
-                      className={classNames(
-                        styles[`tab-button`],
-                        tabJudgeList.wiki && styles.active,
-                      )}
-                      onClick={() => handleTabSwitch(Switch.wiki)}
-                    >
-                      Wiki
-                    </button>
-                  </div>
-                  <div className={styles[`filter-switch-area`]}>
-                    <div className={styles[`background-area`]}>
-                      <p>My Tasks</p>
-                      <div
-                        className={classNames(styles.toggle, {
-                          [styles.checked]: filterMyTasks,
-                        })}
-                        onClick={handleToggleFilterTask}
-                      >
-                        <input
-                          type="checkbox"
-                          name="check"
-                          checked={filterMyTasks}
-                          onChange={handleToggleFilterTask}
-                          className={styles.input}
-                        />
-                      </div>
-                    </div>
+              <Tabs
+                value={tab}
+                onValueChange={(value) => {
+                  const next = PROJECT_TABS.find((t) => t.value === value);
+                  if (next) setTab(next.value);
+                }}
+                className="gap-3"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <TabsList aria-label="タスクの見せ方">
+                    {PROJECT_TABS.map(({ value, label }) => (
+                      <TabsTrigger key={value} value={value} className="px-3">
+                        {label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="filter-my-tasks"
+                      checked={filterMyTasks}
+                      onCheckedChange={handleToggleFilterTask}
+                    />
+                    <Label htmlFor="filter-my-tasks">自分のタスクだけ</Label>
                   </div>
                 </div>
 
-                <div className={classNames(styles[`tab-content`])}>
-                  {tabJudgeList.list && (
-                    <TaskList
-                      userId={userId}
-                      projectId={params.projectId}
-                      smallProjectIdList={smallProjectIds}
-                      displaySmallProjectId={displaySmallProjectId}
-                      taskData={taskData}
-                      taskGenreData={taskGenreData}
-                      smallProjectTaskGenreData={smallProjectTaskGenreData}
-                      statusData={statusData}
-                      taskAttachedFileData={taskAttachedFileData}
-                      filterMyTasks={filterMyTasks}
-                    />
-                  )}
-                  {tabJudgeList.calender && (
-                    <TaskCalender
-                      userId={userId}
-                      projectId={params.projectId}
-                      smallProjectIdList={smallProjectIds}
-                      displaySmallProjectId={displaySmallProjectId}
-                      taskData={taskData}
-                      smallProjectTaskGenreData={smallProjectTaskGenreData}
-                      filterMyTasks={filterMyTasks}
-                      statusData={statusData}
-                    />
-                  )}
-                  {tabJudgeList.board && (
-                    <TaskBoard
-                      userId={userId}
-                      smallProjectIdList={smallProjectIds}
-                      displaySmallProjectId={displaySmallProjectId}
-                      taskData={taskData}
-                      statusData={statusData}
-                      taskAttachedFileData={taskAttachedFileData}
-                      filterMyTasks={filterMyTasks}
-                    />
-                  )}
-                  {tabJudgeList.wiki && (
-                    <Wiki
-                      userId={userId}
-                      smallProjectIdList={smallProjectIds}
-                      displaySmallProjectId={displaySmallProjectId}
-                      wikiDataList={wikiData}
-                    />
-                  )}
-                </div>
-              </div>
+                {/* 中身の部品はまだ作り直していない。開いているタブの部品だけを描くのは以前と同じ */}
+                <TabsContent value="list">
+                  <TaskList
+                    userId={userId}
+                    projectId={params.projectId}
+                    smallProjectIdList={smallProjectIds}
+                    displaySmallProjectId={displaySmallProjectId}
+                    taskData={taskData}
+                    taskGenreData={taskGenreData}
+                    smallProjectTaskGenreData={smallProjectTaskGenreData}
+                    statusData={statusData}
+                    taskAttachedFileData={taskAttachedFileData}
+                    filterMyTasks={filterMyTasks}
+                  />
+                </TabsContent>
+                <TabsContent value="calendar">
+                  <TaskCalender
+                    userId={userId}
+                    projectId={params.projectId}
+                    smallProjectIdList={smallProjectIds}
+                    displaySmallProjectId={displaySmallProjectId}
+                    taskData={taskData}
+                    smallProjectTaskGenreData={smallProjectTaskGenreData}
+                    filterMyTasks={filterMyTasks}
+                    statusData={statusData}
+                  />
+                </TabsContent>
+                <TabsContent value="board">
+                  <TaskBoard
+                    userId={userId}
+                    smallProjectIdList={smallProjectIds}
+                    displaySmallProjectId={displaySmallProjectId}
+                    taskData={taskData}
+                    statusData={statusData}
+                    taskAttachedFileData={taskAttachedFileData}
+                    filterMyTasks={filterMyTasks}
+                  />
+                </TabsContent>
+                <TabsContent value="wiki">
+                  <Wiki
+                    userId={userId}
+                    smallProjectIdList={smallProjectIds}
+                    displaySmallProjectId={displaySmallProjectId}
+                    wikiDataList={wikiData}
+                  />
+                </TabsContent>
+              </Tabs>
             </div>
-            <div className={styles[`robot-button-container`]}>
+            <div className="absolute right-4 bottom-4">
               <RobotButton />
             </div>
           </div>
