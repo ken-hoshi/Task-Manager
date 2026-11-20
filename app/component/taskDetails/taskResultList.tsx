@@ -47,8 +47,7 @@ const TaskResultList: React.FC<TaskResultListProps> = ({
                 variant="ghost"
                 size="icon-xs"
                 aria-label={`「${result.taskName}」の実績を取り消す`}
-                // shortcut: ジャンルの無いタスクの実績は getTaskGenreData が taskId を返さず、消すと失敗する（既知の問題）
-                onClick={(e) => onReset(e, result.taskId as number)}
+                onClick={(e) => onReset(e, result.taskId)}
               >
                 <X className="size-3.5" aria-hidden />
               </Button>

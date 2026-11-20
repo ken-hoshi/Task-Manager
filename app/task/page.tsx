@@ -34,6 +34,7 @@ import { Logout } from "../hooks/logout";
 import { getWorkspace } from "../lib/api/getWorkspace";
 import { useDisplayWorkspaceIdContext } from "../provider/displayWorkspaceIdProvider";
 import { getDataUpdate } from "../hooks/getDataUpdate";
+import { isUnfinished } from "../lib/taskStatus";
 
 interface StatusProps {
   id: number;
@@ -181,7 +182,7 @@ const Task: React.FC = () => {
 
               (async () => {
                 const notificationPromises = myTasksData
-                  .filter((myTask) => myTask.status_id !== 3)
+                  .filter(isUnfinished)
                   .map(async (myTask: any) => {
                     const taskDeadline = new Date(myTask.deadline_date);
 
@@ -230,9 +231,8 @@ const Task: React.FC = () => {
               setMyTasks([]);
             }
 
-            const notYetCompletedTasksData = tasksData.filter(
-              (taskData) => taskData.task_status.status !== "Completed"
-            );
+            // 未完了は status_id で決める（以前は表示名 "Completed" で決めていて、自分のタスクと判定が分かれていた）
+            const notYetCompletedTasksData = tasksData.filter(isUnfinished);
             if (notYetCompletedTasksData.length > 0) {
               const sortedNotYetCompletedTasks = notYetCompletedTasksData.sort(
                 (a, b) =>

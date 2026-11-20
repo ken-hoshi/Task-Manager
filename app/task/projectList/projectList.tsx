@@ -238,18 +238,16 @@ const ProjectList: React.FC<ProjectListProps> = ({
       ? `/project?workspaceId=${displayWorkspaceId}&projectId=${projectId}&smallProjectId=${smallProjectId}`
       : `/project?workspaceId=${displayWorkspaceId}&projectId=${projectId}`;
 
-  // shortcut: 更新を待たずに画面を読み直す（前からの動き）。読み直しが更新より先に済むと、表示が古いまま残る
-  const handleToggleFinished = (smallProject: SmallProject) => {
-    (async () => {
-      const { error } = await clientSupabase
-        .from("small_projects")
-        .update({ isFinished: !smallProject.isFinished })
-        .eq("id", smallProject.id);
-      if (error) {
-        console.error("Update Small Projects", error);
-        setNotificationValue({ message: "小プロジェクトを更新できませんでした。", color: 1 });
-      }
-    })();
+  // 更新が終わってから画面を読み直す（先に読み直すと、表示が古いまま残ることがある）
+  const handleToggleFinished = async (smallProject: SmallProject) => {
+    const { error } = await clientSupabase
+      .from("small_projects")
+      .update({ isFinished: !smallProject.isFinished })
+      .eq("id", smallProject.id);
+    if (error) {
+      console.error("Update Small Projects", error);
+      setNotificationValue({ message: "小プロジェクトを更新できませんでした。", color: 1 });
+    }
     setPageUpdated(true);
   };
 

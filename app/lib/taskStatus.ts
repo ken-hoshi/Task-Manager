@@ -15,3 +15,9 @@ export const TASK_STATUS_DOT_CLASSES: Record<number, string> = {
 // id に対応する日本語名。知らない id のときは DB の名前をそのまま出す
 export const taskStatusLabel = (statusId: number, dbName?: string) =>
   TASK_STATUS_LABELS[statusId] ?? dbName ?? "";
+
+// 「完了」の status_id。未完了かどうかは、表示名（"Completed"）ではなくこの id で決める
+export const COMPLETED_STATUS_ID = 3;
+
+export const isUnfinished = (task: { status_id: number }) =>
+  task.status_id !== COMPLETED_STATUS_ID;

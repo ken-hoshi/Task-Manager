@@ -26,6 +26,8 @@ export async function getTaskGenreData(taskIdList: number[]) {
               {
                 userId: task.assigned_user_id,
                 userName: task.users.name,
+                // 詳細の「実績を取り消す」が使う
+                taskId: task.id,
                 taskName: task.task_name,
                 numberOfResultDays: task.number_of_result_days
                   ? task.number_of_result_days

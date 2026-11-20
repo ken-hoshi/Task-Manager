@@ -2,7 +2,15 @@
 import { act, createEvent, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import ProjectPopup from "@/app/component/projectPopup/projectPopup";
 import { getUsers } from "@/app/lib/api/getUser";
-import { insertsOf, opsOf, resetSupabaseMock, setResponses, storageCalls } from "../helpers/mockSupabase";
+import { fetchAttachedFiles } from "@/app/lib/api/fetchAttachedFiles";
+import {
+  insertsOf,
+  opsOf,
+  resetSupabaseMock,
+  setResponses,
+  setUploadErrors,
+  storageCalls,
+} from "../helpers/mockSupabase";
 
 const setPageUpdated = jest.fn();
 const setNotificationValue = jest.fn();
@@ -83,7 +91,7 @@ describe("ProjectPopup（作成）", () => {
 
   it("「追加する」で、入れた値でプロジェクト・小プロジェクト・メンバー・ジャンルを作って閉じる", async () => {
     setResponses("projects", ok([{ id: 40 }]));
-    setResponses("small_projects", ok([{ id: 41, small_project_name: "一覧" }]));
+    setResponses("small_projects", ok({ id: 41, small_project_name: "一覧" }));
     await renderPopup();
     fillRequired();
     // 見えない入力欄に、ファイルを選んだときと同じ change を送る
@@ -97,7 +105,7 @@ describe("ProjectPopup（作成）", () => {
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(insertsOf("projects")[0]).toEqual({ project_name: "検索画面", workspace_id: 3 });
-    expect(insertsOf("small_projects")[0]).toEqual([
+    expect(insertsOf("small_projects")).toEqual([
       { small_project_name: "一覧", details: "", project_id: 40 },
     ]);
     expect(insertsOf("small_project_users")[0]).toEqual([{ small_project_id: 41, user_id: 5 }]);
@@ -157,6 +165,28 @@ describe("ProjectPopup（作成）", () => {
     fireEvent.keyDown(members, { key: "Enter" });
 
     expect(screen.getByRole("button", { name: "「田中」を外す" })).toBeInTheDocument();
+  });
+
+  // 以前は作った小プロジェクトを名前で探していたので、同じ名前（空どうしを含む）だとメンバーを取り違えた
+  it("同じ名前の小プロジェクトが2つあっても、それぞれのメンバーを正しく結び付ける", async () => {
+    setResponses("workspace_task_genre", ok([]));
+    setResponses("projects", ok([{ id: 40 }]));
+    setResponses("small_projects", ok({ id: 41, small_project_name: "" }), ok({ id: 42, small_project_name: "" }));
+    await renderPopup();
+    fireEvent.change(screen.getByRole("textbox", { name: /^プロジェクト名/ }), { target: { value: "検索画面" } });
+    chooseMember("星");
+    fireEvent.click(screen.getByRole("button", { name: "小プロジェクトを足す" }));
+    chooseMember("田中");
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "追加する" }));
+    });
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(insertsOf("small_project_users")[0]).toEqual([
+      { small_project_id: 41, user_id: 5 },
+      { small_project_id: 42, user_id: 6 },
+    ]);
   });
 
   // 入力がそろった状態で押す。送信のボタンを兼ねていたら、ここで projects に送ってしまう
@@ -299,5 +329,80 @@ describe("ProjectPopup（編集）", () => {
     expect(updatesOf("projects")).toContainEqual({ project_name: "検索画面2" });
     expect(updatesOf("small_projects")).toContainEqual({ small_project_name: "一覧2", details: "メモ" });
     expect(setNotificationValue).toHaveBeenCalledWith({ message: "プロジェクトを更新しました。", color: 0 });
+  });
+
+  // 以前は添付をファイル名だけで探して消していたので、別の小プロジェクトにある同じ名前のファイルも消えた
+  it("外した添付は、この小プロジェクトのものだけを探して消す", async () => {
+    setEditResponses();
+    setResponses("small_project_attachments", ok([{ id: 80, file_path: "public/spec.pdf" }]), ok(null));
+    (fetchAttachedFiles as jest.Mock).mockResolvedValue([
+      { id: 11, fileDataArray: [{ file: new File(["x"], "仕様.pdf"), attachmentId: 80 }] },
+    ]);
+    await renderPopup(4);
+
+    fireEvent.click(screen.getByRole("button", { name: "「仕様.pdf」を外す" }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "更新する" }));
+    });
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(opsOf("small_project_attachments")).toEqual([
+      ["select", ["id, file_path"]],
+      ["eq", ["small_project_id", 11]],
+      ["in", ["id", [80]]],
+      ["delete", []],
+      ["in", ["id", [80]]],
+    ]);
+  });
+
+  // 以前は、足した小プロジェクトの保存に失敗すると、既存のプロジェクトごと消していた
+  it("足した小プロジェクトの保存に失敗しても、プロジェクトは消さず、足した小プロジェクトだけを消す", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    setEditResponses();
+    // 既存の小プロジェクトの更新 → 足した小プロジェクトの作成
+    setResponses("small_projects", ok(null), ok({ id: 42, small_project_name: "詳細" }), ok(null));
+    // 既存のメンバーの消す・入れる → 足した小プロジェクトのメンバーを入れる（ここで失敗させる）
+    setResponses("small_project_users", ok(null), ok(null), { data: null, error: { message: "boom" } });
+    await renderPopup(4);
+    fireEvent.click(screen.getByRole("button", { name: "小プロジェクトを足す" }));
+    fireEvent.change(screen.getByRole("textbox", { name: /^小プロジェクト名/ }), { target: { value: "詳細" } });
+    chooseMember("田中");
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "更新する" }));
+    });
+
+    await waitFor(() =>
+      expect(setNotificationValue).toHaveBeenCalledWith({ message: "プロジェクトを更新できませんでした。", color: 1 })
+    );
+    expect(opsOf("projects").some(([op]) => op === "delete")).toBe(false);
+    expect(opsOf("small_projects")).toContainEqual(["delete", []]);
+    expect(opsOf("small_projects")).toContainEqual(["in", ["id", [42]]]);
+  });
+
+  // 一部のアップロードだけ失敗したとき、上がったファイルと足した小プロジェクトを残さない。編集の失敗ではポップアップを閉じる
+  it("足した小プロジェクトの添付の一部が上がらなかったら、上がったファイルと足した小プロジェクトを消して閉じる", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    setEditResponses();
+    setResponses("small_projects", ok(null), ok({ id: 42, small_project_name: "詳細" }), ok(null));
+    setUploadErrors(null, { message: "too large" });
+    await renderPopup(4);
+    fireEvent.click(screen.getByRole("button", { name: "小プロジェクトを足す" }));
+    fireEvent.change(screen.getByRole("textbox", { name: /^小プロジェクト名/ }), { target: { value: "詳細" } });
+    chooseMember("田中");
+    fireEvent.change(document.querySelector('input[type="file"]')!, {
+      target: { files: [new File(["x"], "a.pdf"), new File(["y"], "b.pdf")] },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "更新する" }));
+    });
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    const uploaded = storageCalls.find((call) => call.op === "upload")!.args[0];
+    expect(storageCalls).toContainEqual({ bucket: "small_project_attachments", op: "remove", args: [[uploaded]] });
+    expect(opsOf("small_projects")).toContainEqual(["in", ["id", [42]]]);
+    expect(insertsOf("small_project_attachments")).toEqual([]);
+    expect(opsOf("projects").some(([op]) => op === "delete")).toBe(false);
   });
 });
