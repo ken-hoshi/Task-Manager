@@ -34,3 +34,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Claude Code の個人の手順（アカウント名・手元のパスを含むので入れない）
+CLAUDE.local.md
