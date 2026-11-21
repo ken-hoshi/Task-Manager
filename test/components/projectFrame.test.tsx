@@ -1,8 +1,8 @@
 // プロジェクト画面の枠（タブ・「自分のタスクだけ」）と、小プロジェクトの帯（ProjectDetails）。
 // タブの中身の部品は別に確かめるので、ここでは受け取った値を文字で出すだけの部品に差し替える。
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import SuspenseProject from "@/app/project/suspenseProject/suspenseProject";
-import { opsOf, resetSupabaseMock } from "../helpers/mockSupabase";
+import { opsOf, resetSupabaseMock, setResponses } from "../helpers/mockSupabase";
 
 const setPageUpdated = jest.fn();
 const setNotificationValue = jest.fn();
@@ -225,6 +225,20 @@ describe("小プロジェクトの帯", () => {
       ])
     );
     expect(setPageUpdated).toHaveBeenCalledWith(true);
+  });
+
+  test("「完了にする」は、保存の返事が来てから画面を読み直す", async () => {
+    let finish: (value: unknown) => void = () => {};
+    setResponses("small_projects", new Promise((resolve) => (finish = resolve)) as never);
+    await renderPage();
+    setPageUpdated.mockClear();
+
+    fireEvent.click(screen.getByRole("button", { name: "「一覧」を完了にする" }));
+    await waitFor(() => expect(opsOf("small_projects")).toContainEqual(["update", [{ isFinished: true }]]));
+    expect(setPageUpdated).not.toHaveBeenCalled();
+
+    await act(async () => finish({ data: null, error: null }));
+    await waitFor(() => expect(setPageUpdated).toHaveBeenCalledWith(true));
   });
 
   test("完了済みの小プロジェクトで押すと、isFinished を false で送る", async () => {

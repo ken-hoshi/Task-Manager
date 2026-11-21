@@ -2,6 +2,7 @@
 
 import React, { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { differenceInCalendarDays, format, parseISO, startOfDay } from "date-fns";
 import holidayJp from "holiday-jp";
 import {
   AlarmClock,
@@ -165,6 +166,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
   const [taskGenreIdUseTaskPopup, setTaskGenreIdUseTaskPopup] = useState<
     null | number
   >(null);
+  const [savingPeriod, setSavingPeriod] = useState(false);
 
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { setNotificationValue } = useNotificationContext();
@@ -208,10 +210,9 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
     ): TasksPeriodList[] => {
       return list.map((item) => {
         const { id, start, deadline } = pick(item);
-        const startDate = new Date(start as string);
-        startDate.setHours(0, 0, 0, 0);
-        const deadlineDate = new Date(deadline as string);
-        deadlineDate.setHours(0, 0, 0, 0);
+        // date の列は、その地域の日付として読む。実績が未入力の行は null のままにして、帯を描かない
+        const startDate = start ? startOfDay(parseISO(start)) : null;
+        const deadlineDate = deadline ? startOfDay(parseISO(deadline)) : null;
         return {
           id,
           startDate: startDate,
@@ -368,6 +369,15 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
       if (error) {
         throw error;
       }
+
+      // 通知は待たない（待つと、ステータスの表示が変わるのが遅れる。タスク画面の表と同じ）
+      postMailNotifications(displayWorkspaceId, userId, taskId, null, null, null, 1, []).then(
+        (postEmailNotificationsError) => {
+          if (postEmailNotificationsError) {
+            console.error("Error post mail notifications ", postEmailNotificationsError);
+          }
+        }
+      );
     } catch (error) {
       console.error("Update Status", error);
       setNotificationValue({
@@ -379,6 +389,8 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
   };
 
   const updateTaskPeriod = async (taskId: number, target: Target) => {
+    if (savingPeriod) return;
+    setSavingPeriod(true);
     try {
       let startDate,
         endDate,
@@ -420,16 +432,13 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
 
       if (startDate) {
         const numberOfDays = endDate
-          ? Math.ceil(
-              (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-            ) + 1
+          ? differenceInCalendarDays(endDate, startDate) + 1
           : 1;
 
-        const updateData: { [key: string]: Date | number } = {
-          [startField]: new Date(startDate.setDate(startDate.getDate() + 1)),
-          [endField]: endDate
-            ? new Date(endDate.setDate(endDate.getDate() + 1))
-            : startDate,
+        // date の列には、選んだ日をそのまま文字列で送る。どの時間帯でも同じ日になり、state の Date も書き換えない
+        const updateData: { [key: string]: string | number } = {
+          [startField]: format(startDate, "yyyy-MM-dd"),
+          [endField]: format(endDate ?? startDate, "yyyy-MM-dd"),
         };
 
         if (
@@ -492,25 +501,13 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
     } catch (error) {
       console.error("Update Task", error);
 
-      setPageUpdated(true);
-      if (target === Target.task) {
-        setUpdateTaskStartDate(null);
-        setUpdateTaskEndDate(null);
-        setOnEditTaskId(null);
-      } else if (target === Target.taskResult) {
-        setUpdateTaskResultStartDate(null);
-        setUpdateTaskResultEndDate(null);
-        setOnEditResultTaskId(null);
-      } else if (target === Target.taskGenre) {
-        setUpdateTaskGenreStartDate(null);
-        setUpdateTaskGenreEndDate(null);
-        setOnEditTaskGenreId(null);
-      }
-
+      // 編集の行と選んだ日は残す（送り直せるようにする）。DB は変わっていないので読み直さない
       setNotificationValue({
         message: "期間を更新できませんでした。",
         color: 1,
       });
+    } finally {
+      setSavingPeriod(false);
     }
   };
 
@@ -540,9 +537,32 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
   const isEditing =
     onEditResultTaskId !== null || onEditTaskId !== null || onEditTaskGenreId !== null;
 
+  const returnFocusTo = useRef<string | null>(null);
+
+  // 切り替えや絞り込みで編集中の行が一覧から消えたら、編集をやめる（残すと、全行の「期間を変更」が押せないままになる）
+  useEffect(() => {
+    if (onEditTaskId !== null && !smallProjectTask.some((task) => task.id === onEditTaskId)) {
+      returnFocusTo.current = null;
+      cancelTaskPeriod(Target.task);
+    }
+    if (
+      onEditResultTaskId !== null &&
+      !smallProjectTask.some((task) => task.id === onEditResultTaskId)
+    ) {
+      returnFocusTo.current = null;
+      cancelTaskPeriod(Target.taskResult);
+    }
+    if (
+      onEditTaskGenreId !== null &&
+      !smallProjectTaskGenre?.some((genre) => genre.taskGenreId === onEditTaskGenreId)
+    ) {
+      returnFocusTo.current = null;
+      cancelTaskPeriod(Target.taskGenre);
+    }
+  }, [smallProjectTask, smallProjectTaskGenre]);
+
   // 編集の行を閉じたら（保存・やめる）、開いた行の「期間を変更」にフォーカスを戻す。
   // 戻さないと、消えた行と一緒にフォーカスが body へ落ち、キーボードでは表のどこにいたか分からなくなる
-  const returnFocusTo = useRef<string | null>(null);
   useEffect(() => {
     if (isEditing || !returnFocusTo.current) return;
     document.getElementById(returnFocusTo.current)?.focus();
@@ -634,10 +654,19 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
                 portalId="project-calendar-datepicker"
               />
             </div>
-            <Button size="sm" disabled={!start} onClick={() => updateTaskPeriod(id, target)}>
+            <Button
+              size="sm"
+              disabled={!start || savingPeriod}
+              onClick={() => updateTaskPeriod(id, target)}
+            >
               保存
             </Button>
-            <Button size="sm" variant="outline" onClick={() => cancelTaskPeriod(target)}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={savingPeriod}
+              onClick={() => cancelTaskPeriod(target)}
+            >
               やめる
             </Button>
           </div>

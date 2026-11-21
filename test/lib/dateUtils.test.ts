@@ -44,4 +44,10 @@ describe("formatDateTime / formatDate", () => {
     expect(formatDate("2024-12-31T23:59:00")).toBe("2024/12/31");
     expect(formatDate("2024-04-03")).toBe("2024/04/03");
   });
+
+  // TZ を変えて動かしても同じ日になることを確かめる（date の列は、その地域の日付として読む）
+  it("date の列の値は、時間帯によらず書いてある日付のまま出す", () => {
+    expect(formatDate("2026-05-10")).toBe("2026/05/10");
+    expect(formatDate("2026-01-01")).toBe("2026/01/01");
+  });
 });

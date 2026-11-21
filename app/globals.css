@@ -2,6 +2,9 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* ダークモードは作っていない。shadcn/ui の dark: の色が OS の設定で効かないよう、.dark のクラスがあるときだけにする */
+@custom-variant dark (&:is(.dark *));
+
 /* Tailwind のクラスに渡す色・角丸・書体。値は下の :root で決める */
 @theme inline {
   --font-sans: var(--font-noto-sans-jp), ui-sans-serif, system-ui, sans-serif;

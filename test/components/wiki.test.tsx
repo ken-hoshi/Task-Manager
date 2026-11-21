@@ -249,6 +249,69 @@ describe("追加", () => {
     await waitFor(() => expect(button("ページを追加")).toHaveFocus());
   });
 
+  it("保存できたら「追加しました」と出す", async () => {
+    render(<Wiki {...props()} />);
+    fireEvent.click(button("ページを追加"));
+    fireEvent.change(titleInput(), { target: { value: "題" } });
+    fireEvent.change(contentInput(), { target: { value: "文" } });
+    fireEvent.click(button("追加する"));
+    await waitFor(() =>
+      expect(setNotificationValue).toHaveBeenCalledWith({ message: "Wiki のページを追加しました。", color: 0 })
+    );
+  });
+
+  it("ページが入ったあとに通知の処理が失敗しても、「追加しました」と出してフォームを閉じる", async () => {
+    // プロジェクトが読めないと、通知の文を作るところで例外になる
+    setResponses("small_projects", {
+      data: { small_project_name: "SP", projects: null, small_project_users: [] },
+      error: null,
+    });
+    render(<Wiki {...props()} />);
+    fireEvent.click(button("ページを追加"));
+    fireEvent.change(titleInput(), { target: { value: "題" } });
+    fireEvent.change(contentInput(), { target: { value: "文" } });
+    fireEvent.click(button("追加する"));
+    await waitFor(() =>
+      expect(setNotificationValue).toHaveBeenCalledWith({ message: "Wiki のページを追加しました。", color: 0 })
+    );
+    expect(screen.queryByRole("textbox", { name: "タイトル" })).not.toBeInTheDocument();
+  });
+
+  it("保存に失敗したら、フォームと入れた値を残す", async () => {
+    setResponses("wiki", { data: null, error: { message: "boom" } });
+    render(<Wiki {...props()} />);
+    fireEvent.click(button("ページを追加"));
+    fireEvent.change(titleInput(), { target: { value: "書いた題" } });
+    fireEvent.change(contentInput(), { target: { value: "書いた本文" } });
+    // フォームを開くとタイトルにフォーカスが入るので、押したボタンへ移してから確かめる
+    button("追加する").focus();
+    fireEvent.click(button("追加する"));
+
+    await waitFor(() =>
+      expect(setNotificationValue).toHaveBeenCalledWith({ message: "Wiki のページを追加できませんでした。", color: 1 })
+    );
+    await waitFor(() => expect(button("追加する")).toBeEnabled());
+    expect(titleInput()).toHaveValue("書いた題");
+    expect(contentInput()).toHaveValue("書いた本文");
+    expect(titleInput()).toHaveFocus();
+    // DB は変わっていないので読み直さない（読み直しの途中に送り直すと、保存後の読み直しが起きず古い表示が残る）
+    expect(setPageUpdated).not.toHaveBeenCalled();
+  });
+
+  it("追加のフォームを開いたまま小プロジェクトを切り替えても、書き始めた小プロジェクトに入れる", async () => {
+    const { rerender } = render(<Wiki {...props(1)} />);
+    fireEvent.click(button("ページを追加"));
+    fireEvent.change(titleInput(), { target: { value: "題" } });
+    fireEvent.change(contentInput(), { target: { value: "文" } });
+    rerender(<Wiki {...props(2)} />);
+
+    fireEvent.click(button("追加する"));
+    await waitFor(() =>
+      expect(insertsOf("wiki")).toEqual([{ title: "題", content: "文", small_project_id: 1 }])
+    );
+    await waitFor(() => expect(opsOf("small_projects")).toContainEqual(["eq", ["id", 1]]));
+  });
+
   it("「キャンセル」では、入力がそろっていても何も送らず、開いたボタンへフォーカスを戻す", () => {
     render(<Wiki {...props()} />);
     fireEvent.click(button("ページを追加"));
@@ -298,6 +361,7 @@ describe("Enter の扱い", () => {
 
 describe("編集", () => {
   it("今のタイトルと本文をフォームに出し、更新するとそのページの id に送る", async () => {
+    setResponses("wiki", { data: [{ id: 2 }], error: null });
     render(<Wiki {...props()} />);
     fireEvent.click(button("議事録"));
     fireEvent.click(button("「議事録」を編集"));
@@ -314,9 +378,85 @@ describe("編集", () => {
       expect(opsOf("wiki")).toEqual([
         ["update", [{ title: "議事録（改）", content: "議事録の本文" }]],
         ["eq", ["id", 2]],
+        ["select", ["id"]],
       ])
     );
     await waitFor(() => expect(button("「議事録」を編集")).toHaveFocus());
+  });
+
+  it("編集中に小プロジェクトを切り替えても、編集を開いたページに保存する", async () => {
+    setResponses("wiki", { data: [{ id: 2 }], error: null });
+    const { rerender } = render(<Wiki {...props(1)} />);
+    fireEvent.click(button("議事録"));
+    fireEvent.click(button("「議事録」を編集"));
+    rerender(<Wiki {...props(2)} />);
+
+    fireEvent.click(button("更新する"));
+    await waitFor(() => expect(opsOf("wiki")).toContainEqual(["eq", ["id", 2]]));
+    expect(opsOf("wiki")).not.toContainEqual(["eq", ["id", 3]]);
+  });
+
+  it("保存できたら「更新しました」と出す", async () => {
+    setResponses("wiki", { data: [{ id: 1 }], error: null });
+    render(<Wiki {...props()} />);
+    fireEvent.click(button("「設計メモ」を編集"));
+    fireEvent.click(button("更新する"));
+    await waitFor(() =>
+      expect(setNotificationValue).toHaveBeenCalledWith({ message: "Wiki のページを更新しました。", color: 0 })
+    );
+  });
+
+  it("ほかの人が先にページを消していたら（0件の更新）、失敗として入力を残す", async () => {
+    setResponses("wiki", { data: [], error: null });
+    render(<Wiki {...props()} />);
+    fireEvent.click(button("「設計メモ」を編集"));
+    fireEvent.change(titleInput(), { target: { value: "直した題" } });
+    fireEvent.click(button("更新する"));
+
+    await waitFor(() =>
+      expect(setNotificationValue).toHaveBeenCalledWith({ message: "Wiki のページを更新できませんでした。", color: 1 })
+    );
+    await waitFor(() => expect(button("更新する")).toBeEnabled());
+    expect(titleInput()).toHaveValue("直した題");
+    // ページが消えたことを一覧に映すため、この失敗だけは読み直す
+    expect(setPageUpdated).toHaveBeenCalledWith(true);
+  });
+
+  it("編集を保存したあと、ほかの人がページを足しても、読んでいるページのまま", async () => {
+    setResponses("wiki", { data: [{ id: 1 }], error: null });
+    const { rerender } = render(<Wiki {...props()} />);
+    fireEvent.click(button("「設計メモ」を編集"));
+    fireEvent.click(button("更新する"));
+    await waitFor(() => expect(screen.queryByRole("textbox", { name: "タイトル" })).not.toBeInTheDocument());
+
+    pageUpdatedForTest = true;
+    rerender(
+      <Wiki
+        {...props()}
+        wikiDataList={[
+          {
+            smallProjectId: 1,
+            wikiDataArray: [page(1, "設計メモ", 1), page(2, "議事録", 1), page(9, "ほかの人のページ", 1)],
+          },
+        ]}
+      />
+    );
+    expect(screen.getByTestId("markdown")).toHaveTextContent("設計メモの本文");
+  });
+
+  it("保存に失敗したら、フォームと入れた値を残す", async () => {
+    setResponses("wiki", { data: null, error: { message: "boom" } });
+    render(<Wiki {...props()} />);
+    fireEvent.click(button("「設計メモ」を編集"));
+    fireEvent.change(titleInput(), { target: { value: "直した題" } });
+    fireEvent.click(button("更新する"));
+
+    await waitFor(() =>
+      expect(setNotificationValue).toHaveBeenCalledWith({ message: "Wiki のページを更新できませんでした。", color: 1 })
+    );
+    await waitFor(() => expect(button("更新する")).toBeEnabled());
+    expect(titleInput()).toHaveValue("直した題");
+    expect(setPageUpdated).not.toHaveBeenCalled();
   });
 
   it("「キャンセル」で閉じると、「編集」へフォーカスを戻す", () => {
@@ -330,7 +470,7 @@ describe("編集", () => {
   it("「編集」をもう一度押して閉じると入力を捨て、次の「追加」のフォームに残さない", () => {
     render(<Wiki {...props()} />);
     fireEvent.click(button("「設計メモ」を編集"));
-    fireEvent.click(button("「設計メモ」を編集"));
+    fireEvent.click(button("編集を閉じる"));
     expect(screen.queryByRole("textbox", { name: "タイトル" })).not.toBeInTheDocument();
     expect(button("「設計メモ」を編集")).toHaveFocus();
 
@@ -341,9 +481,11 @@ describe("編集", () => {
 });
 
 describe("削除", () => {
-  it("確認で「削除する」を押すと、表示中のページの id を消す", async () => {
+  it("確認にページの名前を出し、「削除する」を押すと、そのページの id を消す", async () => {
+    setResponses("wiki", { data: [{ id: 1 }], error: null });
     render(<Wiki {...props()} />);
     fireEvent.click(button("「設計メモ」を削除"));
+    expect(screen.getByText("「設計メモ」を削除します。元に戻せません。")).toBeInTheDocument();
     expect(opsOf("wiki")).toEqual([]);
 
     fireEvent.click(screen.getByRole("button", { name: "削除する" }));
@@ -351,6 +493,7 @@ describe("削除", () => {
       expect(opsOf("wiki")).toEqual([
         ["delete", []],
         ["eq", ["id", 1]],
+        ["select", ["id"]],
       ])
     );
     await waitFor(() =>
@@ -358,7 +501,61 @@ describe("削除", () => {
     );
   });
 
+  it("ほかの人が先に消していたら（0件の削除）、失敗と出す", async () => {
+    setResponses("wiki", { data: [], error: null });
+    render(<Wiki {...props()} />);
+    fireEvent.click(button("「設計メモ」を削除"));
+    fireEvent.click(screen.getByRole("button", { name: "削除する" }));
+    await waitFor(() =>
+      expect(setNotificationValue).toHaveBeenCalledWith({
+        message: "Wiki のページを削除できませんでした。",
+        color: 1,
+      })
+    );
+  });
+
+  it("最後のページの削除に失敗しても、表示中のページのまま", async () => {
+    setResponses("wiki", { data: null, error: { message: "boom" } });
+    render(<Wiki {...props()} />);
+    fireEvent.click(button("議事録"));
+    fireEvent.click(button("「議事録」を削除"));
+    fireEvent.click(screen.getByRole("button", { name: "削除する" }));
+    // 確認は返事を待たずに閉じるので、失敗の通知が出るまで待つ
+    await waitFor(() =>
+      expect(setNotificationValue).toHaveBeenCalledWith({
+        message: "Wiki のページを削除できませんでした。",
+        color: 1,
+      })
+    );
+    expect(screen.getByTestId("markdown")).toHaveTextContent("議事録の本文");
+  });
+
+  it("確認を開いたあとに一覧の並びが変わっても、確認を開いたページを消す", async () => {
+    setResponses("wiki", { data: [{ id: 2 }], error: null });
+    const { rerender } = render(<Wiki {...props()} />);
+    fireEvent.click(button("議事録"));
+    fireEvent.click(button("「議事録」を削除"));
+
+    // 定期の読み直しで、2番目に別のページが入る
+    pageUpdatedForTest = true;
+    rerender(
+      <Wiki
+        {...props()}
+        wikiDataList={[
+          {
+            smallProjectId: 1,
+            wikiDataArray: [page(1, "設計メモ", 1), page(9, "別のページ", 1), page(2, "議事録", 1)],
+          },
+        ]}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "削除する" }));
+    await waitFor(() => expect(opsOf("wiki")).toContainEqual(["eq", ["id", 2]]));
+    expect(opsOf("wiki")).not.toContainEqual(["eq", ["id", 9]]);
+  });
+
   it("最後のページを消して「削除」が押せなくなったら、フォーカスを「追加」へ移す", async () => {
+    setResponses("wiki", { data: [{ id: 1 }], error: null });
     const onePage = [{ smallProjectId: 1, wikiDataArray: [page(1, "設計メモ", 1)] }];
     const { rerender } = render(<Wiki {...props()} wikiDataList={onePage} />);
     fireEvent.click(button("「設計メモ」を削除"));

@@ -1,3 +1,4 @@
+import { differenceInCalendarDays, parseISO } from "date-fns";
 import { COMPLETED_STATUS_ID } from "./taskStatus";
 
 export const isDeadlineNear = (deadline: string, taskStatusId: number) => {
@@ -7,12 +8,11 @@ export const isDeadlineNear = (deadline: string, taskStatusId: number) => {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
 
-  const deadlineDate = new Date(deadline);
+  // date の列（"2026-11-19"）は、その地域の日付として読む（new Date だと UTC より西で前日になる）
+  const deadlineDate = parseISO(deadline);
   deadlineDate.setHours(0, 0, 0, 0);
 
-  const diffInDays = Math.floor(
-    (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  const diffInDays = differenceInCalendarDays(deadlineDate, now);
 
   if (diffInDays < 0) {
     return 2;
