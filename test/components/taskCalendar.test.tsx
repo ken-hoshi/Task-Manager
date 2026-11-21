@@ -1,6 +1,6 @@
 // プロジェクト画面の「カレンダー」（taskCalender）。画面に出る文字・ボタンの名前と、DB に送る値で確かめる。
 // 日付のマスは見るだけ。期間は行の「期間を変更」で開く期間の欄で選ぶ。
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import TaskCalender from "@/app/project/taskCalender/taskCalender";
 import { opsOf, resetSupabaseMock, setResponses } from "../helpers/mockSupabase";
 import { statuses, task } from "./taskFixtures";
@@ -224,7 +224,60 @@ describe("期間の変更", () => {
     );
   });
 
-  // 送る値は今の作りのまま（選んだ日の翌日を送る）。この日付のずれは fix の PR で直し、ここの値も書き換える
+  it("保存に失敗したら編集の行と選んだ日を残し、送り直すと同じ日を送る", async () => {
+    setResponses("tasks", { data: null, error: { message: "boom" } }, { data: null, error: null });
+    render(<TaskCalender {...baseProps()} />);
+    fireEvent.click(button("「画面」の予定の期間を変更"));
+    choosePeriod("「画面」の予定の期間", 3, 5);
+    fireEvent.click(button("保存"));
+    await waitFor(() =>
+      expect(setNotificationValue).toHaveBeenCalledWith({ message: "期間を更新できませんでした。", color: 1 })
+    );
+    await waitFor(() => expect(button("保存")).toBeEnabled());
+    // DB は変わっていないので読み直さない（読み直しの途中に送り直すと、保存後の読み直しが起きず古い表示が残る）
+    expect(setPageUpdated).not.toHaveBeenCalled();
+
+    fireEvent.click(button("保存"));
+    await waitFor(() =>
+      expect(setNotificationValue).toHaveBeenCalledWith({ message: "期間を更新しました。", color: 0 })
+    );
+    expect(setPageUpdated).toHaveBeenCalledWith(true);
+    const updates = opsOf("tasks").filter(([op]) => op === "update");
+    expect(updates).toEqual([
+      ["update", [{ start_date: ymd(3), deadline_date: ymd(5), number_of_days: 3 }]],
+      ["update", [{ start_date: ymd(3), deadline_date: ymd(5), number_of_days: 3 }]],
+    ]);
+  });
+
+  it("編集中の行が絞り込みで消えたら編集をやめ、ほかの行の「期間を変更」が押せる", () => {
+    const other = { ...calendarTask, id: 2, task_name: "別", assigned_user_id: 5 };
+    const mine = { ...calendarTask, id: 1, task_name: "画面", assigned_user_id: 6 };
+    const taskData = [{ smallProjectId: 1, taskDataArray: [mine, other] }];
+    const { rerender } = render(<TaskCalender {...baseProps({ taskData })} />);
+    fireEvent.click(button("「画面」の予定の期間を変更"));
+    expect(button("「別」の予定の期間を変更")).toBeDisabled();
+
+    rerender(<TaskCalender {...baseProps({ taskData, filterMyTasks: true })} />);
+    expect(screen.queryByLabelText("「画面」の予定の期間")).not.toBeInTheDocument();
+    expect(button("「別」の予定の期間を変更")).toBeEnabled();
+  });
+
+  it("保存の返事を待つ間は「保存」も「やめる」も押せず、2回送らない", async () => {
+    let finish: (value: unknown) => void = () => {};
+    setResponses("tasks", new Promise((resolve) => (finish = resolve)) as never);
+    render(<TaskCalender {...baseProps()} />);
+    fireEvent.click(button("「画面」の予定の期間を変更"));
+    choosePeriod("「画面」の予定の期間", 3, 5);
+    fireEvent.click(button("保存"));
+    fireEvent.click(button("保存"));
+
+    await waitFor(() => expect(button("保存")).toBeDisabled());
+    expect(button("やめる")).toBeDisabled();
+    expect(opsOf("tasks").filter(([op]) => op === "update")).toHaveLength(1);
+    await act(async () => finish({ data: null, error: null }));
+  });
+
+  // 選んだ日を、時間帯に左右されない日付の文字列で送る
   it("予定の期間を選んで「保存」すると、tasks の開始・締切・日数を送り、通知の処理を呼ぶ", async () => {
     render(<TaskCalender {...baseProps()} />);
     fireEvent.click(button("「画面」の予定の期間を変更"));
@@ -234,7 +287,7 @@ describe("期間の変更", () => {
     await waitFor(() =>
       expect(opsOf("tasks")).toContainEqual([
         "update",
-        [{ start_date: new Date(y, m, 4), deadline_date: new Date(y, m, 6), number_of_days: 3 }],
+        [{ start_date: ymd(3), deadline_date: ymd(5), number_of_days: 3 }],
       ])
     );
     expect(opsOf("tasks")).toContainEqual(["eq", ["id", 1]]);
@@ -251,7 +304,7 @@ describe("期間の変更", () => {
     await waitFor(() =>
       expect(opsOf("tasks")).toContainEqual([
         "update",
-        [{ result_start_date: new Date(y, m, 7), result_deadline_date: new Date(y, m, 8), number_of_result_days: 2 }],
+        [{ result_start_date: ymd(6), result_deadline_date: ymd(7), number_of_result_days: 2 }],
       ])
     );
   });
@@ -264,7 +317,7 @@ describe("期間の変更", () => {
 
     await waitFor(() =>
       expect(opsOf("task_genre")).toEqual([
-        ["update", [{ start_date: new Date(y, m, 9), deadline_date: new Date(y, m, 10) }]],
+        ["update", [{ start_date: ymd(8), deadline_date: ymd(9) }]],
         ["eq", ["id", 7]],
       ])
     );
@@ -282,6 +335,13 @@ describe("ステータス", () => {
     fireEvent.click(menu.getByRole("menuitemradio", { name: "完了" }));
     await waitFor(() => expect(opsOf("tasks")).toContainEqual(["update", [{ status_id: 3 }]]));
     expect(opsOf("tasks")).toContainEqual(["eq", ["id", 1]]);
+  });
+
+  it("変えたら、ほかの画面と同じく通知の処理を呼ぶ", async () => {
+    render(<TaskCalender {...baseProps()} />);
+    fireEvent.keyDown(button(/のステータス: /), { key: "Enter" });
+    fireEvent.click((await openMenu()).getByRole("menuitemradio", { name: "完了" }));
+    await waitFor(() => expect(postMailNotifications).toHaveBeenCalledWith(1, 5, 1, null, null, null, 1, []));
   });
 
   it("今のステータスを選び直しても、何も送らない", async () => {

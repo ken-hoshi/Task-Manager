@@ -173,26 +173,25 @@ const ProjectDetails: React.FC<ProjectDetailsProps> = ({
     setSmallProjectAttachedFileListData(smallProjectAttachedFileListData!);
   }, [pageUpdated, displaySmallProjectId]);
 
-  const handleFinishedSmallProject = (
+  // 更新が終わってから画面を読み直す（先に読み直すと、表示が古いまま残ることがある）
+  const handleFinishedSmallProject = async (
     smallProjectId: number,
     boolValue: boolean
   ) => {
-    (async () => {
-      const { error: updateSmallProjectError } = await clientSupabase
-        .from("small_projects")
-        .update({
-          isFinished: !boolValue,
-        })
-        .eq("id", smallProjectId);
+    const { error: updateSmallProjectError } = await clientSupabase
+      .from("small_projects")
+      .update({
+        isFinished: !boolValue,
+      })
+      .eq("id", smallProjectId);
 
-      if (updateSmallProjectError) {
-        console.error("Update Small Projects", updateSmallProjectError);
-        setNotificationValue({
-          message: "小プロジェクトを更新できませんでした。",
-          color: 1,
-        });
-      }
-    })();
+    if (updateSmallProjectError) {
+      console.error("Update Small Projects", updateSmallProjectError);
+      setNotificationValue({
+        message: "小プロジェクトを更新できませんでした。",
+        color: 1,
+      });
+    }
     setPageUpdated(true);
   };
 

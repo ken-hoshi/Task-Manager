@@ -53,7 +53,7 @@ interface BoardTask {
 
 interface TasksDividedBySmallProjectIdProps {
   smallProjectId: number;
-  taskDataArray: any[];
+  taskDataArray: BoardTask[];
 }
 
 interface AttachedFileProps {
@@ -333,9 +333,7 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
   taskAttachedFileData,
   filterMyTasks,
 }) => {
-  const [useDisplaySmallProjectId, setUseDisplaySmallProjectId] = useState(0);
-  // moveTask が別の種類の行を入れる不具合（README の既知の問題）を fix の PR で直すまで any のままにする
-  const [smallProjectTask, setSmallProjectTask] = useState<any[]>([]);
+  const [smallProjectTask, setSmallProjectTask] = useState<BoardTask[]>([]);
   const [taskAttachedFileListData, setTaskAttachedFileListData] = useState<
     AttachedFileProps[]
   >([]);
@@ -367,8 +365,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
       smallProjectIdList.includes(displaySmallProjectId)
         ? displaySmallProjectId
         : smallProjectIdList[0];
-
-    setUseDisplaySmallProjectId(changedDisplaySmallProjectId);
 
     const smallProjectTask = taskData.find(
       (task) => task.smallProjectId === changedDisplaySmallProjectId
@@ -425,24 +421,6 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
       }
       setPageUpdated(true);
 
-      setSmallProjectTask(
-        taskData?.map((task) =>
-          task.smallProjectId === useDisplaySmallProjectId
-            ? {
-                ...task,
-                taskDataArray: task.taskDataArray.map((taskData) =>
-                  taskData.id.toString() === id
-                    ? {
-                        ...task,
-                        status_id: statusId.id,
-                        task_status: { status: status },
-                      }
-                    : task
-                ),
-              }
-            : taskData
-        )
-      );
       const postEmailNotificationsError = await postMailNotifications(
         displayWorkspaceId,
         userId,
@@ -472,12 +450,8 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
     }
   };
 
-  const getTaskDataByStatus = (statusId: number, tasks: any[]): BoardTask[] => {
-    if (tasks && tasks.length > 0) {
-      return tasks.filter((task) => task.status_id === statusId);
-    }
-    return [];
-  };
+  const getTaskDataByStatus = (statusId: number, tasks: BoardTask[]) =>
+    tasks.filter((task) => task.status_id === statusId);
 
   const handleDragStart = ({ active }: DragStartEvent) => {
     setDraggingTask(
@@ -489,6 +463,9 @@ const TaskBoard: React.FC<TaskBoardProps> = ({
     setDraggingTask(null);
     const status = statusData.find((row) => columnId(row.id) === over?.id);
     if (!status) return;
+    // 同じ列に置いたら何も変わらないので、保存も通知もしない
+    const task = smallProjectTask.find((row) => String(row.id) === String(active.id));
+    if (task?.status_id === status.id) return;
     if (activatorEvent instanceof KeyboardEvent) {
       focusAfterMove.current = { taskId: Number(active.id), statusId: status.id };
     }

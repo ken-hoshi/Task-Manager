@@ -162,6 +162,9 @@ const Wiki: React.FC<WikiProps> = ({
   const [addFormOpen, setAddFormOpen] = useState(false);
   const [editFormOpen, setEditFormOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; title: string } | null>(null);
+  // 追加のフォームを開いたときの小プロジェクト。途中で切り替えても、書き始めた小プロジェクトに入れる
+  const [addTargetSmallProjectId, setAddTargetSmallProjectId] = useState(0);
   const [displayWikiNumber, setDisplayWikiNumber] = useState(0);
   const [updateFlg, setUpdateFlg] = useState(false);
   const [postLoading, setPostLoading] = useState(false);
@@ -175,7 +178,8 @@ const Wiki: React.FC<WikiProps> = ({
   const formId = `${fieldId}-form`;
   const previousSmallProjectId = useRef<number | null>(null);
   const returnFocusTo = useRef<string | null>(null);
-  const pageCountBeforeDelete = useRef<number | null>(null);
+  const deletedPageId = useRef<number | null>(null);
+  const focusTitleAfterFailure = useRef(false);
 
   const isFormOpen = addFormOpen || editFormOpen;
   const currentPage: WikiDataProps | undefined = wikiData[displayWikiNumber];
@@ -228,20 +232,26 @@ const Wiki: React.FC<WikiProps> = ({
     returnFocusTo.current = null;
   }, [isFormOpen, postLoading]);
 
-  // 削除のあと、読み直しで「削除」が押せなくなる（最後のページだった）などでフォーカスを失ったら、「追加」へ移す。
+  // 保存に失敗したら、押した送信のボタンが保存中に押せなくなって失ったフォーカスを、タイトルの欄へ戻す
+  useEffect(() => {
+    if (postLoading || !focusTitleAfterFailure.current) return;
+    focusTitleAfterFailure.current = false;
+    document.getElementById(`${fieldId}-input-title`)?.focus();
+  }, [postLoading]);
+
+  // 消したページが一覧から消えたあと、「削除」が押せなくなる（最後のページだった）などでフォーカスを失ったら、「追加」へ移す。
   // Radix のダイアログが閉じたあとフォーカスを戻す処理（setTimeout）より後に確かめる
   useEffect(() => {
-    const countBefore = pageCountBeforeDelete.current;
-    if (deleteModalOpen || countBefore === null) return;
-    const shrunk = wikiData.length < countBefore;
-    const timer = setTimeout(() => {
+    const deletedId = deletedPageId.current;
+    if (deleteModalOpen || deletedId === null) return;
+    if (wikiData.some((wiki) => wiki.id === deletedId)) return;
+    deletedPageId.current = null;
+    setTimeout(() => {
       const active = document.activeElement;
       if (!active || active === document.body || active.matches(":disabled")) {
         document.getElementById(addButtonId)?.focus();
       }
-      if (shrunk) pageCountBeforeDelete.current = null;
     }, 0);
-    return () => clearTimeout(timer);
   }, [deleteModalOpen, wikiData]);
 
   const handleClickWikiPage = (index: number) => {
@@ -266,6 +276,7 @@ const Wiki: React.FC<WikiProps> = ({
       return;
     }
     returnFocusTo.current = addButtonId;
+    if (!addFormOpen) setAddTargetSmallProjectId(useDisplaySmallProjectId);
     setAddFormOpen(!addFormOpen);
   };
 
@@ -291,6 +302,11 @@ const Wiki: React.FC<WikiProps> = ({
     if (wikiData.length === 0 || editFormOpen || addFormOpen) {
       return;
     }
+    // 確認の間に読み直しで番号がずれても、確認を開いたページを消す
+    setDeleteTarget({
+      id: wikiData[displayWikiNumber].id,
+      title: wikiData[displayWikiNumber].title,
+    });
     setDeleteModalOpen(true);
   };
 
@@ -300,36 +316,40 @@ const Wiki: React.FC<WikiProps> = ({
 
   const handleDeleteWikiPage = async () => {
     try {
-      if (wikiData.length === 0) {
+      if (deleteTarget === null) {
         return;
       }
 
-      const { error: wikiDeleteError } = await clientSupabase
+      // ほかの人が先に消していると、エラーにならず0件になるので確かめる
+      const { data: deletedRows, error: wikiDeleteError } = await clientSupabase
         .from("wiki")
         .delete()
-        .eq("id", wikiData[displayWikiNumber].id);
+        .eq("id", deleteTarget.id)
+        .select("id");
 
       if (wikiDeleteError) {
         throw wikiDeleteError;
       }
+      if (!deletedRows || deletedRows.length === 0) {
+        throw new Error("Wiki page to delete was not found.");
+      }
 
+      deletedPageId.current = deleteTarget.id;
+      if (displayWikiNumber === wikiData.length - 1) {
+        setDisplayWikiNumber(0);
+      }
       setNotificationValue({
         message: "Wiki のページを削除しました。",
         color: 0,
       });
     } catch (error) {
       console.error("Delete Wiki Data", error);
-      // 消えなかったので、フォーカスを移す予定を取り消す
-      pageCountBeforeDelete.current = null;
       setNotificationValue({
         message: "Wiki のページを削除できませんでした。",
         color: 1,
       });
     }
     setPageUpdated(true);
-    if (displayWikiNumber === wikiData.length - 1) {
-      setDisplayWikiNumber(0);
-    }
     setDeleteModalOpen(false);
   };
 
@@ -346,7 +366,7 @@ const Wiki: React.FC<WikiProps> = ({
           .insert({
             title: enteredWikiData.title,
             content: enteredWikiData.content,
-            small_project_id: useDisplaySmallProjectId,
+            small_project_id: addTargetSmallProjectId,
           });
 
         if (insertWikiDataError) {
@@ -355,60 +375,81 @@ const Wiki: React.FC<WikiProps> = ({
 
         setAddFormOpen(!addFormOpen);
 
-        const { data: smallProjectData } = await clientSupabase
-          .from("small_projects")
-          .select(
-            "small_project_name, projects(*), small_project_users(user_id)"
-          )
-          .eq("id", displaySmallProjectId)
-          .single();
+        // ページは入ったので、通知の処理が失敗しても「追加できなかった」とは出さない
+        try {
+          const { data: smallProjectData } = await clientSupabase
+            .from("small_projects")
+            .select(
+              "small_project_name, projects(*), small_project_users(user_id)"
+            )
+            .eq("id", addTargetSmallProjectId)
+            .single();
 
-        if (smallProjectData) {
-          const postEmailNotificationsError = await postMailNotifications(
-            displayWorkspaceId,
-            userId,
-            null,
-            (Array.isArray(smallProjectData.projects)
-              ? smallProjectData.projects[0]
-              : smallProjectData.projects
-            ).project_name,
-            smallProjectData.small_project_name,
-            enteredWikiData.title,
-            0,
-            smallProjectData.small_project_users.map((users) => users.user_id)
-          );
-
-          if (postEmailNotificationsError) {
-            console.error(
-              "Error post mail notifications ",
-              postEmailNotificationsError
+          if (smallProjectData) {
+            const postEmailNotificationsError = await postMailNotifications(
+              displayWorkspaceId,
+              userId,
+              null,
+              (Array.isArray(smallProjectData.projects)
+                ? smallProjectData.projects[0]
+                : smallProjectData.projects
+              ).project_name,
+              smallProjectData.small_project_name,
+              enteredWikiData.title,
+              0,
+              smallProjectData.small_project_users.map((users) => users.user_id)
             );
+
+            if (postEmailNotificationsError) {
+              console.error(
+                "Error post mail notifications ",
+                postEmailNotificationsError
+              );
+            }
           }
+        } catch (notificationError) {
+          console.error("Error post mail notifications ", notificationError);
         }
+        // 足したページを読み直しのあとで開く
+        setUpdateFlg(true);
       } else if (editFormOpen) {
-        const { error: updateWikiDataError } = await clientSupabase
+        // 編集を開いたページに保存する（表示中の番号は、切り替えや読み直しでずれる）。
+        // ほかの人が先に消していると、エラーにならず0件になるので確かめる
+        const { data: updatedRows, error: updateWikiDataError } = await clientSupabase
           .from("wiki")
           .update({
             title: enteredWikiData.title,
             content: enteredWikiData.content,
           })
-          .eq("id", wikiData[displayWikiNumber].id);
+          .eq("id", enteredWikiData.id)
+          .select("id");
 
         if (updateWikiDataError) {
           throw updateWikiDataError;
         }
+        if (!updatedRows || updatedRows.length === 0) {
+          // ページが消えたことを一覧に映す
+          setPageUpdated(true);
+          throw new Error("Wiki page to update was not found.");
+        }
         setEditFormOpen(!editFormOpen);
       }
       setNotificationValue({
-        message: "Wiki のページを追加しました。",
+        message: addFormOpen
+          ? "Wiki のページを追加しました。"
+          : "Wiki のページを更新しました。",
         color: 0,
       });
-      setUpdateFlg(true);
+      // 保存できたときだけ入力を消して読み直す。失敗では DB が変わらないので読み直さない
+      // （読み直しの途中に送り直すと、保存後の読み直しが起きず古い表示が残る）
+      onClose();
+      setPageUpdated(true);
     } catch (error) {
       console.error(
         addFormOpen ? "Error Add Wiki Data " : "Error Update Wiki Data ",
         error
       );
+      focusTitleAfterFailure.current = true;
       setNotificationValue({
         message: addFormOpen
           ? "Wiki のページを追加できませんでした。"
@@ -417,8 +458,6 @@ const Wiki: React.FC<WikiProps> = ({
       });
     }
     setPostLoading(false);
-    onClose();
-    setPageUpdated(true);
   };
 
   const heading = addFormOpen
@@ -432,14 +471,11 @@ const Wiki: React.FC<WikiProps> = ({
       {deleteModalOpen && (
         <ConfirmDialog
           title="この Wiki のページを削除しますか？"
-          description="元に戻せません。"
+          description={`「${deleteTarget?.title}」を削除します。元に戻せません。`}
           confirmLabel="削除する"
           pendingLabel="削除中"
           destructive
-          onConfirm={() => {
-            pageCountBeforeDelete.current = wikiData.length;
-            return handleDeleteWikiPage();
-          }}
+          onConfirm={handleDeleteWikiPage}
           onCancel={closeModal}
         />
       )}
@@ -541,7 +577,13 @@ const Wiki: React.FC<WikiProps> = ({
                 id={editButtonId}
                 variant="outline"
                 size="sm"
-                aria-label={currentPage ? `「${currentPage.title}」を編集` : "ページを編集"}
+                aria-label={
+                  editFormOpen
+                    ? "編集を閉じる"
+                    : currentPage
+                      ? `「${currentPage.title}」を編集`
+                      : "ページを編集"
+                }
                 aria-expanded={editFormOpen}
                 aria-controls={editFormOpen ? formId : undefined}
                 disabled={wikiData.length === 0 || addFormOpen || postLoading}

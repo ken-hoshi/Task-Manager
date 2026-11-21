@@ -145,6 +145,26 @@ describe("カードを別の列へ移す", () => {
     expect(setPageUpdated).toHaveBeenCalledWith(true);
   });
 
+  it("同じ列に置いたら、保存も通知もしない", async () => {
+    render(<TaskBoard {...baseProps()} />);
+    await act(async () => {
+      dnd.onDragEnd({ active: { id: "1" }, over: { id: "status-1" }, activatorEvent: new MouseEvent("pointerdown") });
+    });
+    expect(opsOf("task_status")).toEqual([]);
+    expect(opsOf("tasks")).toEqual([]);
+    expect(postMailNotifications).not.toHaveBeenCalled();
+    expect(setPageUpdated).not.toHaveBeenCalled();
+  });
+
+  it("移したあと、読み直しが届くまでの間もほかのカードが消えない", async () => {
+    setResponses("task_status", { data: { id: 3 }, error: null });
+    render(<TaskBoard {...baseProps()} />);
+    await dropOnCompleted();
+    await waitFor(() => expect(postMailNotifications).toHaveBeenCalled());
+    expect(screen.getByRole("button", { name: "API" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "画面" })).toBeInTheDocument();
+  });
+
   it("列の外に落としたら、何も送らない", async () => {
     render(<TaskBoard {...baseProps()} />);
     await act(async () => {
