@@ -11,6 +11,7 @@ const setPageUpdated = jest.fn();
 const useLogout = jest.fn();
 // 画面ごとに変えられるよう、context の値は変数で持つ
 let displayWorkspaceId: number | null = 1;
+let pageUpdated = false;
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
@@ -35,7 +36,7 @@ jest.mock("../../app/provider/displayWorkspaceIdProvider", () => ({
   }),
 }));
 jest.mock("../../app/provider/pageUpdateProvider", () => ({
-  usePageUpdateContext: () => ({ pageUpdated: false, setPageUpdated }),
+  usePageUpdateContext: () => ({ pageUpdated, setPageUpdated }),
 }));
 
 const daysAgo = (days: number) =>
@@ -45,6 +46,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   resetSupabaseMock();
   displayWorkspaceId = 1;
+  pageUpdated = false;
   (getWorkspace as jest.Mock).mockResolvedValue([
     { workspace: { id: 1, workspace_name: "開発チーム" } },
     { workspace: [{ id: 2, workspace_name: "営業チーム" }] },
@@ -92,6 +94,39 @@ describe("AppShell", () => {
       screen.getByRole("button", { name: "ワークスペースを切り替える: 開発チーム" })
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "通知 未読 1 件" })).toBeInTheDocument();
+  });
+
+  it("設定の画面でワークスペースを切り替えると、切り替え先の設定を開く", async () => {
+    await renderShell({ kind: "workspaceSettings" });
+
+    chooseWorkspace("開発チーム", "営業チーム");
+
+    expect(setDisplayWorkspaceId).toHaveBeenCalledWith(2);
+    expect(push).toHaveBeenCalledWith("/editWorkspace?workspaceId=2");
+    expect(setPageUpdated).not.toHaveBeenCalled();
+  });
+
+  it("設定の画面では、読み直しの合図でワークスペースの一覧も読み直す", async () => {
+    const { rerender } = await renderShell({ kind: "workspaceSettings" });
+    expect(getWorkspace).toHaveBeenCalledTimes(1);
+
+    pageUpdated = true;
+    await act(async () => {
+      rerender(shell({ kind: "workspaceSettings" }));
+    });
+
+    expect(getWorkspace).toHaveBeenCalledTimes(2);
+  });
+
+  it("タスク画面では、読み直しの合図でワークスペースの一覧を読み直さない", async () => {
+    const { rerender } = await renderShell({ kind: "tasks" });
+
+    pageUpdated = true;
+    await act(async () => {
+      rerender(shell({ kind: "tasks" }));
+    });
+
+    expect(getWorkspace).toHaveBeenCalledTimes(1);
   });
 
   it("ページの読み込み中（userId が 0）は何も読まない", async () => {

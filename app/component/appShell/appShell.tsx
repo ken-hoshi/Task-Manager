@@ -52,6 +52,9 @@ const AppShell: React.FC<AppShellProps> = ({ userId, current, children }) => {
     if (pageUpdated) setRefreshCount((count) => count + 1);
   }, [pageUpdated]);
 
+  // ワークスペースの名前を変えられるのは設定の画面だけなので、そこでだけ一覧を読み直す
+  const workspaceListRefresh = current?.kind === "workspaceSettings" ? refreshCount : 0;
+
   useEffect(() => {
     if (!userId) return;
     let ignore = false;
@@ -73,7 +76,7 @@ const AppShell: React.FC<AppShellProps> = ({ userId, current, children }) => {
     return () => {
       ignore = true;
     };
-  }, [userId]);
+  }, [userId, workspaceListRefresh]);
 
   // ワークスペースを素早く切り替えたとき、前のワークスペースの遅れた応答で上書きしない
   useEffect(() => {
@@ -167,6 +170,9 @@ const AppShell: React.FC<AppShellProps> = ({ userId, current, children }) => {
       // 開いているプロジェクトは前のワークスペースのものなので、タスク画面に戻る。
       // タスク画面は開いたときに読むので、読み直しは求めない
       router.push("/task");
+    } else if (current?.kind === "workspaceSettings") {
+      // 設定の画面は URL のワークスペースを読むので、切り替え先の設定を開く
+      router.push(`/editWorkspace?workspaceId=${workspaceId}`);
     } else {
       setPageUpdated(true);
     }

@@ -33,10 +33,11 @@ export interface SidebarProject {
   projectName: string;
 }
 
-// 今どの画面にいるか。タスク画面・プロジェクト画面のどちらでもない画面（アカウントなど）では null
+// 今どの画面にいるか。タスク・プロジェクト・ワークスペースの設定のどれでもない画面（アカウントなど）では null
 export type SidebarCurrent =
   | { kind: "tasks" }
   | { kind: "project"; id: number }
+  | { kind: "workspaceSettings" }
   | null;
 
 interface AppSidebarProps {
