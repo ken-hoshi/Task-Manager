@@ -1,15 +1,20 @@
 "use client";
 
-import styles from "./register.module.css";
-import classNames from "classnames";
 import { useRouter } from "next/navigation";
-import { useFormContext } from "../provider/formProvider";
 import { useState } from "react";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { AuthCard } from "@/components/auth-card";
+import { FormField } from "@/components/form-field";
+import { SignupSteps } from "@/components/signup-steps";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useFormContext } from "../provider/formProvider";
 import { signUp } from "../hooks/signUp";
-import BackgroundImage2 from "../component/backgroundImage2/backgroundImage2";
 import { useNotificationContext } from "../provider/notificationProvider";
 import NotificationBanner from "../component/notificationBanner/notificationBanner";
 import { isAllowedEmail } from "../lib/isAllowedEmail";
+
+const PASSWORD_ERROR = "パスワードは、英字と数字だけで両方を含む8文字以上にしてください。";
 
 const Register: React.FC = () => {
   const { setBackForm } = useFormContext();
@@ -28,20 +33,23 @@ const Register: React.FC = () => {
   });
 
   const validate = (email: string, password: string) => {
-    let judge = false;
     const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    const emailInvalid = !isAllowedEmail(email);
+    const passwordInvalid = !regex.test(password);
 
-    if (!isAllowedEmail(email)) {
+    if (emailInvalid) {
       setEmailError("このメールアドレスは使用できません。");
-      judge = true;
     }
-    if (!regex.test(password)) {
-      setPasswordError(
-        "パスワードは英字と数字を含む8文字以上でなければなりません。"
-      );
-      judge = true;
+    if (passwordInvalid) {
+      setPasswordError(PASSWORD_ERROR);
     }
-    return judge;
+    // 同じ文言のエラーが出たままだと読み上げが起きないので、直す欄へフォーカスを移して伝える
+    if (emailInvalid) {
+      document.getElementById("register-email")?.focus();
+    } else if (passwordInvalid) {
+      document.getElementById("register-password")?.focus();
+    }
+    return emailInvalid || passwordInvalid;
   };
 
   const handleBackTop = () => {
@@ -76,7 +84,7 @@ const Register: React.FC = () => {
     if (signUpError) {
       console.error("Sign up ", signUpError);
       setNotificationValue({
-        message: "Couldn't sign up.",
+        message: "登録できませんでした。",
         color: 1,
       });
       setLoading(false);
@@ -92,94 +100,82 @@ const Register: React.FC = () => {
         />
       )}
 
-      <div>
-        <BackgroundImage2 />
+      <AuthCard>
+        <SignupSteps current={0} />
 
-        <div className={styles[`inner-area`]}>
-          <span
-            className={classNames("material-symbols-outlined", styles.back)}
-            onClick={handleBackTop}
-          >
-            arrow_back
-          </span>
+        <h1 className="m-0 text-2xl font-semibold tracking-tight">新規登録</h1>
 
-          <div className={styles[`progress-bar-container`]}>
-            <div className={styles[`progress-bar`]}>
-              <div className={`${styles.step} ${styles.active}`}>
-                <div className={styles.circle}></div>
-                <span className={styles.active}>Sign Up</span>
-              </div>
-              <div className={styles.line}></div>
-              <div className={styles.step}>
-                <div className={styles.circle}></div>
-                <span>Email Verification</span>
-              </div>
-              <div className={styles.line}></div>
-              <div className={styles.step}>
-                <div className={styles.circle}></div>
-                <span>Workspace Setup</span>
-              </div>
-            </div>
-          </div>
+        <form aria-label="新規登録" onSubmit={handleSubmit} className="space-y-4">
+          <FormField label="名前" htmlFor="register-name" required>
+            <Input
+              id="register-name"
+              type="text"
+              name="name"
+              autoComplete="name"
+              required
+              value={formData.name}
+              onChange={handleChange}
+              onFocus={handleFocus}
+            />
+          </FormField>
 
-          <div className={styles[`form-area`]}>
-            <h1>Sign up</h1>
+          <FormField label="メールアドレス" htmlFor="register-email" required>
+            <Input
+              id="register-email"
+              type="email"
+              name="email"
+              autoComplete="email"
+              required
+              aria-invalid={emailError ? true : undefined}
+              aria-describedby={emailError ? "register-email-error" : undefined}
+              value={formData.email}
+              onChange={handleChange}
+              onFocus={handleFocus}
+            />
+            {emailError && (
+              <p id="register-email-error" role="alert" className="m-0 text-sm text-destructive">
+                {emailError}
+              </p>
+            )}
+          </FormField>
 
-            <form role="form" onSubmit={handleSubmit}>
-              <input
-                type="text"
-                placeholder="Name"
-                name="name"
-                autoComplete="off"
-                required
-                value={formData.name}
-                onChange={handleChange}
-                onFocus={handleFocus}
-                className={styles.input}
-              />
-              <p className={styles.instruction}>Enter your Name</p>
+          <FormField label="パスワード" htmlFor="register-password" required>
+            <Input
+              id="register-password"
+              type="password"
+              name="password"
+              // ブラウザが提案する記号入りのパスワードは検証を通らないので、提案を出さない
+              autoComplete="off"
+              required
+              aria-invalid={passwordError ? true : undefined}
+              aria-describedby="register-password-note"
+              value={formData.password}
+              onChange={handleChange}
+              onFocus={handleFocus}
+            />
+            {/* key を分けて要素ごと入れ替える（既存の要素に role="alert" を足すだけだと読み上げられない環境がある） */}
+            {passwordError ? (
+              <p key="error" id="register-password-note" role="alert" className="m-0 text-sm text-destructive">
+                {passwordError}
+              </p>
+            ) : (
+              <p key="hint" id="register-password-note" className="m-0 text-sm text-muted-foreground">
+                英字と数字だけで、両方を含む8文字以上
+              </p>
+            )}
+          </FormField>
 
-              <input
-                type="email"
-                placeholder="Email"
-                name="email"
-                autoComplete="off"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                onFocus={handleFocus}
-                className={styles.input}
-              />
-              {emailError ? (
-                <p className={styles.error}>{emailError}</p>
-              ) : (
-                <p className={styles.instruction}>Enter your Email Address</p>
-              )}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading && <Loader2 className="size-4 animate-spin" aria-hidden />}
+            登録する
+          </Button>
+        </form>
 
-              <input
-                type="password"
-                placeholder="Password"
-                autoComplete="off"
-                name="password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                onFocus={handleFocus}
-                className={styles.input}
-              />
-              {passwordError ? (
-                <p className={styles.error}>{passwordError}</p>
-              ) : (
-                <p className={styles.instruction}>Enter Password</p>
-              )}
-
-              <button type="submit" disabled={loading}>
-                {loading ? <div className={styles.spinner}></div> : "Sign Up"}
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
+        <Button type="button" variant="ghost" className="self-center" onClick={handleBackTop}>
+          <ArrowLeft className="size-4" aria-hidden />
+          ログインへ戻る
+        </Button>
+      </AuthCard>
     </>
   );
 };

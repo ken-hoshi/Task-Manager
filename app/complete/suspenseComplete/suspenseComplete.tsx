@@ -1,21 +1,18 @@
 "use client";
 
-import BackgroundImage2 from "@/app/component/backgroundImage2/backgroundImage2";
-import Loading from "@/app/component/loading/loading";
-import styles from "./suspenseComplete.module.css";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { CircleCheck, CircleX, Loader2 } from "lucide-react";
+import { AuthCard } from "@/components/auth-card";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import NotificationBanner from "@/app/component/notificationBanner/notificationBanner";
 import { clientSupabase } from "@/app/lib/supabase/client";
 
 const SuspenseComplete: React.FC = () => {
   const { notificationValue } = useNotificationContext();
-  const router = useRouter();
 
   const [loading, setLoading] = useState(true);
-  const [registeredName, setRegisteredName] = useState();
-  const [registeredEmail, setRegisteredEmail] = useState();
+  const [registeredName, setRegisteredName] = useState<string>();
+  const [registeredEmail, setRegisteredEmail] = useState<string>();
 
   useEffect(() => {
     (async () => {
@@ -39,45 +36,61 @@ const SuspenseComplete: React.FC = () => {
     })();
   }, []);
 
+  if (loading) {
+    return (
+      <AuthCard>
+        <p role="status" className="m-0 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+          読み込み中
+        </p>
+      </AuthCard>
+    );
+  }
+
   return (
     <>
-      {loading ? (
-        <Loading />
-      ) : (
-        <>
-          {notificationValue.message && (
-            <NotificationBanner
-              message={notificationValue.message}
-              color={notificationValue.color}
-            />
-          )}
-
-          <div>
-            <BackgroundImage2 />
-
-            <div className={styles[`text-area`]}>
-              {registeredName && registeredEmail ? (
-                <>
-                  <h1 className={styles.success}>Success!</h1>
-                  <ul>
-                    <p>Name</p>
-                    <li className={styles[`name-item`]}>{registeredName}</li>
-                    <p>Email Address</p>
-                    <li className={styles[`email-item`]}>{registeredEmail}</li>
-                  </ul>
-                </>
-              ) : (
-                <>
-                  <h1 className={styles.failure}>Failure!</h1>
-                  <div className={styles[`failure-text`]}>
-                    メール認証に失敗しました。管理者に連絡してください。
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </>
+      {notificationValue.message && (
+        <NotificationBanner
+          message={notificationValue.message}
+          color={notificationValue.color}
+        />
       )}
+
+      <AuthCard>
+        {registeredName && registeredEmail ? (
+          <>
+            <div className="flex flex-col items-center gap-3 text-center">
+              <CircleCheck className="size-10 text-status-done" aria-hidden />
+              <h1 className="m-0 text-2xl font-semibold tracking-tight">
+                メール認証が完了しました
+              </h1>
+              <p className="m-0 text-sm text-muted-foreground">
+                登録した画面に戻るか、ログインしてワークスペース登録に進んでください。
+              </p>
+            </div>
+            <dl className="m-0 space-y-3 rounded-lg border p-4 text-sm">
+              <div>
+                <dt className="text-muted-foreground">名前</dt>
+                <dd className="m-0 mt-0.5 font-medium [overflow-wrap:anywhere]">{registeredName}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">メールアドレス</dt>
+                <dd className="m-0 mt-0.5 font-medium [overflow-wrap:anywhere]">{registeredEmail}</dd>
+              </div>
+            </dl>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-3 text-center">
+            <CircleX className="size-10 text-destructive" aria-hidden />
+            <h1 className="m-0 text-2xl font-semibold tracking-tight">
+              メール認証に失敗しました
+            </h1>
+            <p className="m-0 text-sm text-muted-foreground">
+              管理者に連絡してください。
+            </p>
+          </div>
+        )}
+      </AuthCard>
     </>
   );
 };
