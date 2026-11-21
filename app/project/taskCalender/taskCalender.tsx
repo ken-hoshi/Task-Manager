@@ -1,18 +1,39 @@
-import React, { useEffect, useState } from "react";
-import styles from "./taskCalender.module.css";
-import classNames from "classnames";
-import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
-import { useNotificationContext } from "@/app/provider/notificationProvider";
-import { clientSupabase } from "@/app/lib/supabase/client";
-import holidayJp from "holiday-jp";
-import { postMailNotifications } from "@/app/lib/postMailNotifications";
+"use client";
+
+import React, { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import holidayJp from "holiday-jp";
+import {
+  AlarmClock,
+  CalendarRange,
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+  Plus,
+  UserRound,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
+import { DateRangeField } from "@/components/date-range-field";
+import { EmptyState } from "@/components/empty-state";
+import { cn } from "@/lib/utils";
+import TaskPopup from "@/app/component/taskPopup/taskPopup";
+import { clientSupabase } from "@/app/lib/supabase/client";
 import { formatDate } from "@/app/lib/formatDateTime";
 import { isDeadlineNear } from "@/app/lib/isDeadlineNear";
-import { selectBoxStyles } from "./selectBoxStyles";
-import Select, { SingleValue } from "react-select";
-import TaskPopup from "@/app/component/taskPopup/taskPopup";
+import { postMailNotifications } from "@/app/lib/postMailNotifications";
+import { TASK_STATUS_DOT_CLASSES, taskStatusLabel } from "@/app/lib/taskStatus";
 import { useDisplayWorkspaceIdContext } from "@/app/provider/displayWorkspaceIdProvider";
+import { useNotificationContext } from "@/app/provider/notificationProvider";
+import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 
 interface TasksPeriodList {
   id: number;
@@ -20,9 +41,26 @@ interface TasksPeriodList {
   deadlineDate: Date | null;
 }
 
+// カレンダーの1行に使うタスクの項目（fetchProjectDetailsData が返す行の一部）
+interface CalendarTask {
+  id: number;
+  task_name: string;
+  status_id: number;
+  task_status?: { status: string } | null;
+  task_genre_id: number | null;
+  assigned_user_id: number;
+  start_date: string;
+  deadline_date: string;
+  number_of_days: number;
+  result_start_date: string | null;
+  result_deadline_date: string | null;
+  number_of_result_days: number | null;
+  users: { name: string };
+}
+
 interface TasksDividedBySmallProjectIdProps {
   smallProjectId: number;
-  taskDataArray: any[];
+  taskDataArray: CalendarTask[];
 }
 
 interface TaskGenreProps {
@@ -45,16 +83,6 @@ enum Target {
   taskGenre,
 }
 
-interface Option {
-  value: number;
-  label: string;
-}
-
-interface StatusOption {
-  taskId: number;
-  option: Option;
-}
-
 interface StatusProps {
   id: number;
   status: string;
@@ -71,6 +99,25 @@ interface TaskCalenderProps {
   statusData: StatusProps[];
 }
 
+// 帯の色。凡例と表で同じものを使う
+const BAR_CLASSES: Record<Target, string> = {
+  [Target.taskGenre]: "bg-primary/30",
+  [Target.task]: "bg-primary",
+  [Target.taskResult]: "bg-status-done",
+};
+
+const LEGEND: { target: Target; label: string }[] = [
+  { target: Target.taskGenre, label: "ジャンルの期間" },
+  { target: Target.task, label: "予定の期間" },
+  { target: Target.taskResult, label: "実績の期間" },
+];
+
+const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+
+// 左の列の数（名前・ステータス・開始・締切・人/日・期間の変更）。編集の行はこの幅にまたがる
+const LEFT_COLUMN_COUNT = 6;
+
+// プロジェクト画面の「カレンダー」。表示している小プロジェクトのジャンル・タスク・実績の期間を、月ごとの帯で出す
 const TaskCalender: React.FC<TaskCalenderProps> = ({
   userId,
   projectId,
@@ -82,8 +129,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
   statusData,
 }) => {
   const { displayWorkspaceId } = useDisplayWorkspaceIdContext();
-  const [useDisplaySmallProjectId, setUseDisplaySmallProjectId] = useState(0);
-  const [smallProjectTask, setSmallProjectTask] = useState<any[]>([]);
+  const [smallProjectTask, setSmallProjectTask] = useState<CalendarTask[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [dates, setDates] = useState<Date[]>([]);
   const [holidays, setHolidays] = useState<Date[]>([]);
@@ -94,7 +140,6 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
     null
   );
   const [updateTaskEndDate, setUpdateTaskEndDate] = useState<Date | null>(null);
-  const [clickCount, setClickCount] = useState<number>(0);
   const [tasksResultPeriodList, setTasksResultPeriodList] = useState<
     TasksPeriodList[]
   >([]);
@@ -117,8 +162,6 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
     useState<Date | null>(null);
   const [updateTaskGenreEndDate, setUpdateTaskGenreEndDate] =
     useState<Date | null>(null);
-  const [selectedStatuses, setSelectedStatuses] = useState<StatusOption[]>([]);
-  const [statusList, setStatusList] = useState<StatusProps[]>([]);
   const [taskGenreIdUseTaskPopup, setTaskGenreIdUseTaskPopup] = useState<
     null | number
   >(null);
@@ -126,15 +169,14 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
   const { setNotificationValue } = useNotificationContext();
   const router = useRouter();
+  const fieldId = useId();
 
   useEffect(() => {
     const changedDisplaySmallProjectId =
       displaySmallProjectId &&
       smallProjectIdList.includes(displaySmallProjectId)
-        ? displaySmallProjectId!
+        ? displaySmallProjectId
         : smallProjectIdList[0];
-
-    setUseDisplaySmallProjectId(changedDisplaySmallProjectId);
 
     const smallProjectTask = taskData.find(
       (task) => task.smallProjectId === changedDisplaySmallProjectId
@@ -148,40 +190,43 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
     if (!smallProjectTask || !smallProjectTaskGenreListData) {
       console.error("Data associated with displaySmallProjectId not found.");
       setNotificationValue({
-        message: "Couldn't get Project Data.",
+        message: "プロジェクトのデータを読めませんでした。",
         color: 1,
       });
       router.push("/task");
+      return;
     }
 
-    const formatTaskPeriod = (
-      list: any[],
-      startField: string,
-      deadlineField: string
-    ) => {
+    // 行ごとの期間を、その日の0時の Date にそろえる。項目の取り出し方は呼ぶ側が渡す
+    const formatTaskPeriod = <T,>(
+      list: T[],
+      pick: (item: T) => {
+        id: number;
+        start: string | null;
+        deadline: string | null;
+      }
+    ): TasksPeriodList[] => {
       return list.map((item) => {
-        const startDate = new Date(item[startField]);
+        const { id, start, deadline } = pick(item);
+        const startDate = new Date(start as string);
         startDate.setHours(0, 0, 0, 0);
-
-        const deadlineDate = new Date(item[deadlineField]);
+        const deadlineDate = new Date(deadline as string);
         deadlineDate.setHours(0, 0, 0, 0);
-
         return {
-          id: item.id ?? item.taskGenreId,
+          id,
           startDate: startDate,
           deadlineDate: deadlineDate,
         };
       });
     };
 
-    if (smallProjectTask!.taskDataArray.length > 0) {
-      setStatusList(statusData);
-
+    if (smallProjectTask.taskDataArray.length > 0) {
       const taskList = filterMyTasks
-        ? smallProjectTask!.taskDataArray.filter(
+        ? smallProjectTask.taskDataArray.filter(
             (task) => task.assigned_user_id === userId
           )
-        : smallProjectTask!.taskDataArray;
+        : smallProjectTask.taskDataArray;
+
       const sortedTaskList = [...taskList].sort((a, b) => {
         const dateA = new Date(a.start_date).getTime();
         const dateB = new Date(b.start_date).getTime();
@@ -190,59 +235,44 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
       setSmallProjectTask(sortedTaskList);
 
       if (taskList.length > 0) {
-        const tasksPeriod = formatTaskPeriod(
-          taskList,
-          "start_date",
-          "deadline_date"
+        setTasksPeriodList(
+          formatTaskPeriod(taskList, (task) => ({
+            id: task.id,
+            start: task.start_date,
+            deadline: task.deadline_date,
+          }))
         );
-        setTasksPeriodList(tasksPeriod);
-
-        const tasksResultPeriod = formatTaskPeriod(
-          taskList,
-          "result_start_date",
-          "result_deadline_date"
+        setTasksResultPeriodList(
+          formatTaskPeriod(taskList, (task) => ({
+            id: task.id,
+            start: task.result_start_date,
+            deadline: task.result_deadline_date,
+          }))
         );
-        setTasksResultPeriodList(tasksResultPeriod);
-
-        const taskStatuses = taskList.map((task) => {
-          return {
-            taskId: task.id,
-            option: {
-              value: task.status_id,
-              label: task.task_status.status,
-            },
-          };
-        });
-        setSelectedStatuses(taskStatuses);
       }
     } else {
       setSmallProjectTask([]);
       setTasksPeriodList([]);
       setTasksResultPeriodList([]);
-      setSelectedStatuses([]);
     }
 
-    if (smallProjectTaskGenreListData!.taskGenreDataArray.length > 0) {
-      setSmallProjectTaskGenre(
-        smallProjectTaskGenreListData!.taskGenreDataArray
+    if (smallProjectTaskGenreListData.taskGenreDataArray.length > 0) {
+      setSmallProjectTaskGenre(smallProjectTaskGenreListData.taskGenreDataArray);
+      setTasksGenrePeriodList(
+        formatTaskPeriod(smallProjectTaskGenreListData.taskGenreDataArray, (genre) => ({
+          id: genre.taskGenreId,
+          start: genre.startDate,
+          deadline: genre.deadlineDate,
+        }))
       );
-
-      const tasksGenrePeriod = formatTaskPeriod(
-        smallProjectTaskGenreListData!.taskGenreDataArray,
-        "startDate",
-        "deadlineDate"
-      );
-      setTasksGenrePeriodList(tasksGenrePeriod);
     } else {
       setSmallProjectTaskGenre([]);
       setTasksGenrePeriodList([]);
     }
 
     if (
-      (smallProjectTask!.taskDataArray &&
-        smallProjectTask!.taskDataArray.length > 0) ||
-      (smallProjectTaskGenreListData!.taskGenreDataArray &&
-        smallProjectTaskGenreListData!.taskGenreDataArray.length > 0)
+      smallProjectTask.taskDataArray.length > 0 ||
+      smallProjectTaskGenreListData.taskGenreDataArray.length > 0
     ) {
       const currentYear = currentMonth.getFullYear();
       const currentHolidays = holidayJp.between(
@@ -261,7 +291,6 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
         currentMonth.getMonth() + 1,
         0
       );
-
       const dates: Date[] = [];
       for (
         let d = new Date(startOfMonth);
@@ -291,94 +320,49 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
       case Target.task:
         setUpdateTaskStartDate(null);
         setUpdateTaskEndDate(null);
-        setClickCount(0);
         setOnEditTaskId(null);
         break;
 
       case Target.taskResult:
         setUpdateTaskResultStartDate(null);
         setUpdateTaskResultEndDate(null);
-        setClickCount(0);
         setOnEditResultTaskId(null);
         break;
 
       case Target.taskGenre:
         setUpdateTaskGenreStartDate(null);
         setUpdateTaskGenreEndDate(null);
-        setClickCount(0);
         setOnEditTaskGenreId(null);
         break;
     }
   };
 
-  const handleTaskDateClick = (date: Date) => {
-    if (clickCount === 0) {
-      setUpdateTaskStartDate(date);
-      setUpdateTaskEndDate(null);
-      setClickCount((prevCount) => prevCount + 1);
-    } else if (
-      (date == updateTaskStartDate && !updateTaskEndDate) ||
-      updateTaskStartDate == updateTaskEndDate
-    ) {
-      setUpdateTaskStartDate(null);
-      setUpdateTaskEndDate(null);
-      setClickCount(0);
-    } else {
-      setUpdateTaskEndDate(date);
-      setClickCount((prevCount) => prevCount + 1);
-    }
-  };
-
-  const handleTaskResultDateClick = (date: Date) => {
-    if (clickCount === 0) {
-      setUpdateTaskResultStartDate(date);
-      setUpdateTaskResultEndDate(null);
-      setClickCount((prevCount) => prevCount + 1);
-    } else if (
-      (date == updateTaskResultStartDate && !updateTaskResultEndDate) ||
-      updateTaskResultStartDate == updateTaskResultEndDate
-    ) {
-      setUpdateTaskResultStartDate(null);
-      setUpdateTaskResultEndDate(null);
-      setClickCount(0);
-    } else {
-      setUpdateTaskResultEndDate(date);
-      setClickCount((prevCount) => prevCount + 1);
-    }
-  };
-
-  const handleTaskGenreDateClick = (date: Date) => {
-    if (clickCount === 0) {
-      setUpdateTaskGenreStartDate(date);
-      setUpdateTaskGenreEndDate(null);
-      setClickCount((prevCount) => prevCount + 1);
-    } else if (
-      (date == updateTaskGenreStartDate && !updateTaskGenreEndDate) ||
-      updateTaskGenreStartDate == updateTaskGenreEndDate
-    ) {
-      setUpdateTaskGenreStartDate(null);
-      setUpdateTaskGenreEndDate(null);
-      setClickCount(0);
-    } else {
-      setUpdateTaskGenreEndDate(date);
-      setClickCount((prevCount) => prevCount + 1);
-    }
-  };
-
-  const getStatusOptions = (selectedStatusId: number): Option[] => {
-    return statusList
-      .filter((status) => status.id !== selectedStatusId)
-      .map((status) => ({ value: status.id, label: status.status }));
-  };
-
-  const handleStatusChange = async (
-    taskId: number,
-    selectedStatusOptions: SingleValue<Option>
+  // 期間の欄で選んだ開始日と終了日を、保存に使う state に入れる
+  const handlePeriodChange = (
+    target: Target,
+    [start, end]: [Date | null, Date | null]
   ) => {
+    switch (target) {
+      case Target.task:
+        setUpdateTaskStartDate(start);
+        setUpdateTaskEndDate(end);
+        break;
+      case Target.taskResult:
+        setUpdateTaskResultStartDate(start);
+        setUpdateTaskResultEndDate(end);
+        break;
+      case Target.taskGenre:
+        setUpdateTaskGenreStartDate(start);
+        setUpdateTaskGenreEndDate(end);
+        break;
+    }
+  };
+
+  const handleStatusChange = async (taskId: number, statusId: number) => {
     try {
       const { error } = await clientSupabase
         .from("tasks")
-        .update({ status_id: selectedStatusOptions!.value })
+        .update({ status_id: statusId })
         .eq("id", taskId);
 
       if (error) {
@@ -387,7 +371,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
     } catch (error) {
       console.error("Update Status", error);
       setNotificationValue({
-        message: "Couldn't update Status.",
+        message: "ステータスを変更できませんでした。",
         color: 1,
       });
     }
@@ -433,6 +417,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
         default:
           throw new Error("Invalid target");
       }
+
       if (startDate) {
         const numberOfDays = endDate
           ? Math.ceil(
@@ -486,7 +471,6 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
       }
 
       setPageUpdated(true);
-      setClickCount(0);
       if (target === Target.task) {
         setUpdateTaskStartDate(null);
         setUpdateTaskEndDate(null);
@@ -502,14 +486,13 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
       }
 
       setNotificationValue({
-        message: "Task was updated !",
+        message: "期間を更新しました。",
         color: 0,
       });
     } catch (error) {
       console.error("Update Task", error);
 
       setPageUpdated(true);
-      setClickCount(0);
       if (target === Target.task) {
         setUpdateTaskStartDate(null);
         setUpdateTaskEndDate(null);
@@ -525,7 +508,7 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
       }
 
       setNotificationValue({
-        message: "Couldn't update Task Data.",
+        message: "期間を更新できませんでした。",
         color: 1,
       });
     }
@@ -554,56 +537,250 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
     }
   };
 
-  const getCellClassName = (date: Date, target: Target) => {
-    let startDate, endDate;
-    const highlightClass = styles[`edit-highlight`];
+  const isEditing =
+    onEditResultTaskId !== null || onEditTaskId !== null || onEditTaskGenreId !== null;
 
-    switch (target) {
-      case Target.task:
-        startDate = updateTaskStartDate;
-        endDate = updateTaskEndDate;
-        break;
-      case Target.taskResult:
-        startDate = updateTaskResultStartDate;
-        endDate = updateTaskResultEndDate;
-        break;
-      case Target.taskGenre:
-        startDate = updateTaskGenreStartDate;
-        endDate = updateTaskGenreEndDate;
-        break;
-    }
+  // 編集の行を閉じたら（保存・やめる）、開いた行の「期間を変更」にフォーカスを戻す。
+  // 戻さないと、消えた行と一緒にフォーカスが body へ落ち、キーボードでは表のどこにいたか分からなくなる
+  const returnFocusTo = useRef<string | null>(null);
+  useEffect(() => {
+    if (isEditing || !returnFocusTo.current) return;
+    document.getElementById(returnFocusTo.current)?.focus();
+    returnFocusTo.current = null;
+  }, [isEditing]);
 
-    if (startDate && endDate) {
-      return date >= startDate && date <= endDate ? highlightClass : "";
-    } else if (startDate) {
-      return date.getTime() === startDate.getTime() ? highlightClass : "";
-    }
+  const isSameDay = (a: Date, b: Date) =>
+    a.getDate() === b.getDate() &&
+    a.getMonth() === b.getMonth() &&
+    a.getFullYear() === b.getFullYear();
 
-    return "";
-  };
+  const isHoliday = (date: Date) =>
+    holidays.some((holiday) => holiday.toDateString() === date.toDateString());
 
-  const getDateAttributes = (date: Date, today: Date, holidays: Date[]) => {
-    const dayOfWeek = date.getDay();
-    return {
-      isSaturday: dayOfWeek === 6,
-      isSunday: dayOfWeek === 0,
-      isHoliday: holidays.some(
-        (holiday) => holiday.toDateString() === date.toDateString()
-      ),
-      isToday:
-        date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear(),
-    };
-  };
+  const inPeriod = (period: TasksPeriodList | undefined, date: Date) =>
+    Boolean(
+      period &&
+        period.startDate &&
+        period.deadlineDate &&
+        date >= period.startDate &&
+        date <= period.deadlineDate
+    );
 
-  const isSameDateAsToday = (date: Date): boolean => {
+  // 日付のマス。期間に入る日は帯の色で塗る。マスは見るだけで、押しても何も起きない
+  const renderDayCells = (period: TasksPeriodList | undefined, target: Target) =>
+    dates.map((date) => {
+      const filled = inPeriod(period, date);
+      return (
+        <td
+          key={date.getDate()}
+          className={cn(
+            "h-8 border-l p-0",
+            isSameDay(date, today) && "bg-primary/5"
+          )}
+        >
+          {filled && <div className={cn("h-3", BAR_CLASSES[target])} />}
+        </td>
+      );
+    });
+
+  // 行ごとの「期間を変更」のボタンと、編集の行・期間の欄の id
+  const editButtonId = (target: Target, id: number) => `${fieldId}-edit-${target}-${id}`;
+  const editorRowId = (target: Target, id: number) => `${fieldId}-editor-${target}-${id}`;
+
+  // 期間を変更する行のボタン。編集中は、ほかの行のボタンを押せなくする
+  const renderEditButton = (
+    id: number,
+    target: Target,
+    editingId: number | null,
+    label: string
+  ) => (
+    <Button
+      id={editButtonId(target, id)}
+      variant="ghost"
+      size="icon-sm"
+      aria-label={label}
+      aria-expanded={editingId === id}
+      aria-controls={editingId === id ? editorRowId(target, id) : undefined}
+      disabled={isEditing && editingId !== id}
+      onClick={() => {
+        returnFocusTo.current = editButtonId(target, id);
+        toggleEditButton(id, target);
+      }}
+    >
+      <Pencil className="size-4" aria-hidden />
+    </Button>
+  );
+
+  // 「期間を変更」で、その行のすぐ下に出す編集の行
+  const renderEditorRow = (
+    id: number,
+    target: Target,
+    label: string,
+    start: Date | null,
+    end: Date | null
+  ) => {
+    const inputId = `${fieldId}-${target}-${id}`;
     return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
+      <tr id={editorRowId(target, id)} className="border-t bg-primary/5">
+        <td colSpan={LEFT_COLUMN_COUNT} className="sticky left-0 z-10 bg-card px-3 py-2">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="w-60 space-y-1">
+              <Label htmlFor={inputId}>{label}</Label>
+              <DateRangeField
+                id={inputId}
+                start={start ?? undefined}
+                end={end ?? undefined}
+                onChange={(range) => handlePeriodChange(target, range)}
+                portalId="project-calendar-datepicker"
+              />
+            </div>
+            <Button size="sm" disabled={!start} onClick={() => updateTaskPeriod(id, target)}>
+              保存
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => cancelTaskPeriod(target)}>
+              やめる
+            </Button>
+          </div>
+        </td>
+        <td colSpan={dates.length} />
+      </tr>
     );
   };
+
+  // タスクの行と、その実績の行
+  const renderTaskRows = (task: CalendarTask) => {
+    const deadlineStatus = isDeadlineNear(task.deadline_date, task.status_id);
+    const statusName = taskStatusLabel(task.status_id, task.task_status?.status);
+    return (
+      <React.Fragment key={task.id}>
+        <tr className="border-t">
+          <th scope="row" className="sticky left-0 z-10 max-w-56 truncate bg-card px-3 py-1.5 text-left font-medium">
+            {task.task_name}
+          </th>
+          {/* ボタンは行の見出しの外に置く（中に置くと、マスへ移るたびにボタンの名前まで読み上げる） */}
+          <td className="px-2 py-1">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    className="shrink-0 gap-1.5"
+                    aria-label={`「${task.task_name}」のステータス: ${statusName}（変更する）`}
+                  >
+                    <span
+                      className={cn(
+                        "size-2 rounded-full",
+                        TASK_STATUS_DOT_CLASSES[task.status_id] ?? "bg-muted-foreground"
+                      )}
+                      aria-hidden
+                    />
+                    {statusName}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-36">
+                  <DropdownMenuLabel>ステータス</DropdownMenuLabel>
+                  <DropdownMenuRadioGroup
+                    value={String(task.status_id)}
+                    onValueChange={(value) => {
+                      const statusId = Number(value);
+                      if (statusId !== task.status_id) {
+                        handleStatusChange(task.id, statusId);
+                      }
+                    }}
+                  >
+                    {statusData.map((status) => (
+                      <DropdownMenuRadioItem key={status.id} value={String(status.id)}>
+                        <span
+                          className={cn(
+                            "size-2 rounded-full",
+                            TASK_STATUS_DOT_CLASSES[status.id] ?? "bg-muted-foreground"
+                          )}
+                          aria-hidden
+                        />
+                        {taskStatusLabel(status.id, status.status)}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+          </td>
+          <td className="px-2 py-1.5 whitespace-nowrap tabular-nums">{formatDate(task.start_date)}</td>
+          <td
+            className={cn(
+              "px-2 py-1.5 whitespace-nowrap tabular-nums",
+              deadlineStatus === 1 && "font-medium text-deadline-near",
+              deadlineStatus === 2 && "font-medium text-overdue"
+            )}
+          >
+            <span className="inline-flex items-center gap-1">
+              {deadlineStatus !== 0 && <AlarmClock className="size-3.5" aria-hidden />}
+              {formatDate(task.deadline_date)}
+              {deadlineStatus === 1 && <span className="sr-only">（期限が近い）</span>}
+              {deadlineStatus === 2 && <span className="sr-only">（期限切れ）</span>}
+            </span>
+          </td>
+          <td className="px-2 py-1.5 text-right whitespace-nowrap tabular-nums">
+            {(1.0).toFixed(1) + " / " + task.number_of_days.toFixed(1)}
+          </td>
+          <td className="px-1 py-1 text-center">
+            {renderEditButton(task.id, Target.task, onEditTaskId, `「${task.task_name}」の予定の期間を変更`)}
+          </td>
+          {renderDayCells(tasksPeriodList.find((p) => p.id === task.id), Target.task)}
+        </tr>
+        {onEditTaskId === task.id &&
+          renderEditorRow(
+            task.id,
+            Target.task,
+            `「${task.task_name}」の予定の期間`,
+            updateTaskStartDate,
+            updateTaskEndDate
+          )}
+
+        <tr className="text-muted-foreground">
+          <th scope="row" className="sticky left-0 z-10 bg-card py-1.5 pr-3 pl-6 text-left font-normal">
+            <span className="inline-flex items-center gap-1.5">
+              <UserRound className="size-3.5" aria-hidden />
+              <span className="sr-only">実績：</span>
+              {task.users.name}
+            </span>
+          </th>
+          <td />
+          <td className="px-2 py-1.5 whitespace-nowrap tabular-nums">
+            {task.result_start_date && formatDate(task.result_start_date)}
+          </td>
+          <td className="px-2 py-1.5 whitespace-nowrap tabular-nums">
+            {task.result_deadline_date && formatDate(task.result_deadline_date)}
+          </td>
+          <td className="px-2 py-1.5 text-right whitespace-nowrap tabular-nums">
+            {task.number_of_result_days &&
+              (1.0).toFixed(1) + " / " + task.number_of_result_days.toFixed(1)}
+          </td>
+          <td className="px-1 py-1 text-center">
+            {renderEditButton(
+              task.id,
+              Target.taskResult,
+              onEditResultTaskId,
+              `「${task.task_name}」の実績の期間を変更`
+            )}
+          </td>
+          {renderDayCells(tasksResultPeriodList.find((p) => p.id === task.id), Target.taskResult)}
+        </tr>
+        {onEditResultTaskId === task.id &&
+          renderEditorRow(
+            task.id,
+            Target.taskResult,
+            `「${task.task_name}」の実績の期間`,
+            updateTaskResultStartDate,
+            updateTaskResultEndDate
+          )}
+      </React.Fragment>
+    );
+  };
+
+  const tasksWithoutGenre = smallProjectTask.filter((task) => !task.task_genre_id);
+  const hasRows =
+    smallProjectTask.length > 0 ||
+    (smallProjectTaskGenre !== undefined && smallProjectTaskGenre.length > 0);
 
   return (
     <>
@@ -618,958 +795,177 @@ const TaskCalender: React.FC<TaskCalenderProps> = ({
           taskGenreId={taskGenreIdUseTaskPopup}
         />
       )}
-      {(smallProjectTask && smallProjectTask.length > 0) ||
-      (smallProjectTaskGenre && smallProjectTaskGenre.length > 0) ? (
-        <div className={styles[`calender-area`]}>
-          <div className={styles.navigation}>
-            <button onClick={goToPreviousMonth}>
-              <span
-                className={classNames(
-                  "material-symbols-outlined",
-                  styles.arrow
-                )}
-              >
-                arrow_back
-              </span>
-            </button>
-            <span>
-              {currentMonth.toLocaleString("default", {
-                month: "long",
-                year: "numeric",
-              })}
-            </span>
-            <button onClick={goToNextMonth}>
-              {" "}
-              <span
-                className={classNames(
-                  "material-symbols-outlined",
-                  styles.arrow
-                )}
-              >
-                arrow_forward
-              </span>
-            </button>
+      <section
+        aria-labelledby="project-calendar-month"
+        className="overflow-hidden rounded-xl border bg-card text-sm text-card-foreground shadow-xs"
+      >
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-3">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon-sm" aria-label="前の月" onClick={goToPreviousMonth}>
+              <ChevronLeft className="size-4" aria-hidden />
+            </Button>
+            <h3
+              id="project-calendar-month"
+              className="m-0 min-w-28 text-center text-base font-semibold tabular-nums"
+              aria-live="polite"
+            >
+              {currentMonth.getFullYear()}年{currentMonth.getMonth() + 1}月
+            </h3>
+            <Button variant="outline" size="icon-sm" aria-label="次の月" onClick={goToNextMonth}>
+              <ChevronRight className="size-4" aria-hidden />
+            </Button>
           </div>
+          <ul
+            aria-label="凡例"
+            className="m-0 flex list-none flex-wrap items-center gap-4 p-0 text-xs text-muted-foreground"
+          >
+            {LEGEND.map(({ target, label }) => (
+              <li key={target} className="inline-flex items-center gap-1.5">
+                <span className={cn("h-3 w-5 rounded-sm", BAR_CLASSES[target])} aria-hidden />
+                {label}
+              </li>
+            ))}
+          </ul>
+        </header>
 
-          <div className={styles[`description-area`]}>
-            <div className={styles[`task-genre-description-area`]}>
-              <div className={styles.square}></div>
-              <div>Task Genre Period</div>
-            </div>
-
-            <div className={styles[`task-description-area`]}>
-              <div className={styles.square}></div>
-              <div>Estimated Task Period</div>
-            </div>
-
-            <div className={styles[`task-result-description-area`]}>
-              <div className={styles.square}></div>
-              <div>Task Result Period</div>
-            </div>
-          </div>
-
-          <div className={styles[`calender-container`]}>
-            <table className={styles[`calender-table`]}>
-              <thead>
+        {!hasRows ? (
+          // 「自分のタスクだけ」で0件のときは、一覧と同じく絞り込みを外せば出ると伝える
+          <EmptyState
+            icon={CalendarRange}
+            title={filterMyTasks ? "自分のタスクはありません" : "ジャンルもタスクもありません"}
+            description={
+              filterMyTasks
+                ? "「自分のタスクだけ」を外すと、ほかの人のタスクも出ます。"
+                : "プロジェクトの編集でジャンルを足すか、「一覧」の「タスクを追加」から作ると、ここに出ます。"
+            }
+          />
+        ) : (
+          // relative：読み上げ用の文字（sr-only、絶対配置）を、この箱の中に収める。無いと main を基準に置かれ、画面全体が横にはみ出す
+          <div className="relative overflow-x-auto">
+            <table className="border-collapse text-xs">
+              <thead className="bg-muted/50 text-muted-foreground">
                 <tr>
-                  <th
-                    className={classNames(
-                      styles[`task-name`],
-                      styles[`sticky-col`]
-                    )}
-                  >
-                    Task Name
+                  <th scope="col" className="sticky left-0 z-20 w-56 min-w-56 bg-muted px-3 py-2 text-left font-medium">
+                    名前
                   </th>
-                  <th className={styles[`task-start-date`]}>Start</th>
-                  <th className={styles[`task-deadline-date`]}>Deadline</th>
-                  <th className={styles[`task-person-days`]}>
-                    Persons
-                    <br />
-                    /Days
+                  <th scope="col" className="min-w-24 px-2 py-2 text-left font-medium">
+                    ステータス
                   </th>
-                  <th className={styles[`task-period-edit`]}></th>
-                  {dates.map((date, index) => {
-                    const { isSaturday, isSunday, isHoliday, isToday } =
-                      getDateAttributes(date, today, holidays);
+                  <th scope="col" className="min-w-20 px-2 py-2 text-left font-medium">
+                    開始
+                  </th>
+                  <th scope="col" className="min-w-24 px-2 py-2 text-left font-medium">
+                    締切
+                  </th>
+                  <th scope="col" className="min-w-20 px-2 py-2 text-right font-medium">
+                    人 / 日
+                  </th>
+                  <th scope="col" className="w-10 px-1 py-2">
+                    <span className="sr-only">期間の変更</span>
+                  </th>
+                  {dates.map((date) => {
+                    const day = date.getDay();
+                    const red = day === 0 || isHoliday(date);
+                    const isToday = isSameDay(date, today);
                     return (
                       <th
-                        key={index}
-                        className={classNames({
-                          [styles.saturday]: isSaturday,
-                          [styles.sunday]: isSunday || isHoliday,
-                          [styles.today]: isToday,
-                        })}
+                        key={date.getDate()}
+                        scope="col"
+                        className={cn(
+                          "w-7 min-w-7 border-l px-0 py-1 text-center font-medium tabular-nums",
+                          day === 6 && "text-primary",
+                          red && "text-destructive",
+                          isToday && "bg-primary/5"
+                        )}
                       >
-                        {date.getDate()}
+                        <span
+                          className={cn(
+                            "mx-auto flex size-5 items-center justify-center rounded-full",
+                            isToday && "bg-primary text-primary-foreground"
+                          )}
+                        >
+                          {date.getDate()}
+                        </span>
+                        <span className="block text-[0.625rem] font-normal">{WEEKDAYS[day]}</span>
+                        {isToday && <span className="sr-only">（今日）</span>}
                       </th>
                     );
                   })}
                 </tr>
               </thead>
               <tbody>
-                {smallProjectTaskGenre?.map((taskGenre, index) => (
-                  <React.Fragment key={index}>
-                    <tr>
-                      <td
-                        className={classNames(
-                          styles[`task-name`],
-                          styles[`task-genre-color`]
-                        )}
-                      >
-                        <div className={styles[`task-genre-name-area`]}>
-                          <p>{taskGenre.taskGenreName}</p>
-                          <div className={styles[`button-area`]}>
-                            <div className={styles[`add-button-container`]}>
-                              <span
-                                className={classNames(
-                                  "material-symbols-outlined",
-                                  styles.add
-                                )}
-                                onClick={() =>
-                                  toggleTaskPopup(taskGenre.taskGenreId)
-                                }
-                              >
-                                {" "}
-                                add{" "}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
+                {smallProjectTaskGenre?.map((taskGenre) => (
+                  <React.Fragment key={taskGenre.taskGenreId}>
+                    <tr className="border-t bg-muted/40 font-medium">
+                      <th scope="row" className="sticky left-0 z-10 max-w-56 truncate bg-muted px-3 py-1.5 text-left">
+                        {taskGenre.taskGenreName}
+                      </th>
+                      <td className="px-2 py-1">
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          aria-label={`「${taskGenre.taskGenreName}」にタスクを追加`}
+                          onClick={() => toggleTaskPopup(taskGenre.taskGenreId)}
+                        >
+                          <Plus aria-hidden />
+                          追加
+                        </Button>
                       </td>
-                      <td
-                        className={classNames(
-                          styles[`task-start-date`],
-                          styles[`task-genre-color`]
-                        )}
-                      >
-                        <div className={styles[`date-container`]}>
-                          <span
-                            className={styles[`calendar-white-icon`]}
-                          ></span>
-                          {formatDate(taskGenre.startDate)}
-                        </div>
-                      </td>
-                      <td
-                        className={classNames(
-                          styles[`task-deadline-date`],
-                          styles[`task-genre-color`]
-                        )}
-                      >
-                        <div className={styles[`date-container`]}>
-                          <span
-                            className={styles[`calendar-white-icon`]}
-                          ></span>
-                          {formatDate(taskGenre.deadlineDate)}
-                        </div>
-                      </td>
-                      <td
-                        className={classNames(
-                          styles[`task-person-days`],
-                          styles[`task-genre-color`]
-                        )}
-                      >
+                      <td className="px-2 py-1.5 whitespace-nowrap tabular-nums">{formatDate(taskGenre.startDate)}</td>
+                      <td className="px-2 py-1.5 whitespace-nowrap tabular-nums">{formatDate(taskGenre.deadlineDate)}</td>
+                      <td className="px-2 py-1.5 text-right whitespace-nowrap tabular-nums">
                         {(taskGenre.numberOfPersons ?? 0).toFixed(1) +
                           " / " +
                           (taskGenre.numberOfDays ?? 0).toFixed(1)}
                       </td>
-                      <td
-                        className={classNames(
-                          styles[`task-period-edit`],
-                          styles[`task-genre-color`]
-                        )}
-                      >
-                        {taskGenre.taskGenreId !== onEditTaskGenreId && (
-                          <span
-                            className={classNames(
-                              "material-symbols-outlined",
-                              styles.edit
-                            )}
-                            onClick={() =>
-                              toggleEditButton(taskGenre.taskGenreId, 2)
-                            }
-                          >
-                            edit
-                          </span>
-                        )}
-                        {taskGenre.taskGenreId == onEditTaskGenreId && (
-                          <div className={styles[`button-container`]}>
-                            <button
-                              className={styles[`check-button`]}
-                              onClick={() =>
-                                updateTaskPeriod(taskGenre.taskGenreId, 2)
-                              }
-                            >
-                              <span
-                                className={classNames(
-                                  "material-symbols-outlined",
-                                  styles.check
-                                )}
-                              >
-                                check_small
-                              </span>
-                            </button>
-
-                            <button
-                              className={styles[`cancel-button`]}
-                              onClick={() => cancelTaskPeriod(2)}
-                            >
-                              <span
-                                className={classNames(
-                                  "material-symbols-outlined",
-                                  styles.cancel
-                                )}
-                              >
-                                close_small
-                              </span>
-                            </button>
-                          </div>
+                      <td className="px-1 py-1 text-center">
+                        {renderEditButton(
+                          taskGenre.taskGenreId,
+                          Target.taskGenre,
+                          onEditTaskGenreId,
+                          `「${taskGenre.taskGenreName}」の期間を変更`
                         )}
                       </td>
-
-                      {dates.map((date, index) => {
-                        const taskPeriod = tasksGenrePeriodList.find(
-                          (tasksPeriod) =>
-                            tasksPeriod.id === taskGenre.taskGenreId
-                        );
-                        if (taskGenre.taskGenreId == onEditTaskGenreId) {
-                          return (
-                            <td
-                              key={index}
-                              onClick={() => handleTaskGenreDateClick(date)}
-                              className={getCellClassName(
-                                date,
-                                Target.taskGenre
-                              )}
-                            />
-                          );
-                        } else {
-                          return (
-                            <td
-                              key={index}
-                              className={
-                                taskPeriod &&
-                                taskPeriod.startDate &&
-                                taskPeriod.deadlineDate &&
-                                date >= taskPeriod.startDate &&
-                                date <= taskPeriod.deadlineDate
-                                  ? styles[`task-genre-highlight`]
-                                  : isSameDateAsToday(date)
-                                  ? styles.today
-                                  : ""
-                              }
-                            />
-                          );
-                        }
-                      })}
+                      {renderDayCells(
+                        tasksGenrePeriodList.find((p) => p.id === taskGenre.taskGenreId),
+                        Target.taskGenre
+                      )}
                     </tr>
+                    {onEditTaskGenreId === taskGenre.taskGenreId &&
+                      renderEditorRow(
+                        taskGenre.taskGenreId,
+                        Target.taskGenre,
+                        `「${taskGenre.taskGenreName}」の期間`,
+                        updateTaskGenreStartDate,
+                        updateTaskGenreEndDate
+                      )}
                     {smallProjectTask
-                      ?.filter(
-                        (task) => task.task_genre_id === taskGenre.taskGenreId
-                      )
-                      .map((task, index) => {
-                        const deadlineStatus = isDeadlineNear(
-                          task.deadline_date,
-                          task.status_id
-                        );
-                        const findSelectedStatus = selectedStatuses.find(
-                          (status) => status.taskId === task.id
-                        );
-                        return (
-                          <React.Fragment key={index}>
-                            <tr>
-                              <td
-                                className={classNames(
-                                  styles[`task-name`],
-                                  index % 2 === 0
-                                    ? styles[`odd-color`]
-                                    : styles[`even-color`]
-                                )}
-                              >
-                                <div className={styles[`task-name-area`]}>
-                                  <p>{task.task_name}</p>
-                                  <div className={styles[`right-area`]}>
-                                    {findSelectedStatus && (
-                                      <Select
-                                        value={findSelectedStatus.option}
-                                        options={getStatusOptions(
-                                          task.status_id
-                                        )}
-                                        styles={{
-                                          ...selectBoxStyles,
-                                          control: (baseStyles, state) => ({
-                                            ...selectBoxStyles.control(
-                                              baseStyles,
-                                              {
-                                                selectProps: {
-                                                  statusId: task.status_id,
-                                                },
-                                              }
-                                            ),
-                                          }),
-                                        }}
-                                        onChange={(selectedOption) =>
-                                          handleStatusChange(
-                                            task.id,
-                                            selectedOption
-                                          )
-                                        }
-                                        isSearchable={false}
-                                      />
-                                    )}
-                                  </div>
-                                </div>
-                              </td>
-                              <td
-                                className={classNames(
-                                  styles[`task-start-date`],
-                                  index % 2 === 0
-                                    ? styles[`odd-color`]
-                                    : styles[`even-color`]
-                                )}
-                              >
-                                <div className={styles[`date-container`]}>
-                                  <span
-                                    className={styles[`calendar-icon`]}
-                                  ></span>
-                                  {formatDate(task.start_date)}
-                                </div>
-                              </td>
-                              <td
-                                className={classNames(
-                                  styles[`task-deadline-date`],
-                                  {
-                                    [styles[`odd-color`]]:
-                                      index % 2 === 0 && deadlineStatus === 0,
-                                    [styles[`even-color`]]:
-                                      index % 2 !== 0 && deadlineStatus === 0,
-                                    [styles[`near-deadline`]]:
-                                      deadlineStatus === 1,
-                                    [styles[`pass-deadline`]]:
-                                      deadlineStatus === 2,
-                                  }
-                                )}
-                              >
-                                <div className={styles[`date-container`]}>
-                                  <span
-                                    className={classNames({
-                                      [styles[`calendar-icon`]]:
-                                        deadlineStatus === 0,
-                                      [styles[`alarm-yellow-icon`]]:
-                                        deadlineStatus === 1,
-                                      [styles[`alarm-icon`]]:
-                                        deadlineStatus === 2,
-                                    })}
-                                  ></span>
-                                  {formatDate(task.deadline_date)}
-                                </div>
-                              </td>
-                              <td
-                                className={classNames(
-                                  styles[`task-person-days`],
-                                  index % 2 === 0
-                                    ? styles[`odd-color`]
-                                    : styles[`even-color`]
-                                )}
-                              >
-                                {(1.0).toFixed(1) +
-                                  " / " +
-                                  task.number_of_days.toFixed(1)}
-                              </td>
-                              <td
-                                className={classNames(
-                                  styles[`task-period-edit`],
-                                  index % 2 === 0
-                                    ? styles[`odd-color`]
-                                    : styles[`even-color`]
-                                )}
-                              >
-                                {task.id !== onEditTaskId && (
-                                  <div className={styles[`button-area`]}>
-                                    <span
-                                      className={classNames(
-                                        "material-symbols-outlined",
-                                        styles.edit
-                                      )}
-                                      onClick={() =>
-                                        toggleEditButton(task.id, 0)
-                                      }
-                                    >
-                                      edit
-                                    </span>
-                                  </div>
-                                )}
-                                {task.id == onEditTaskId && (
-                                  <div className={styles[`button-container`]}>
-                                    <button
-                                      className={styles[`check-button`]}
-                                      onClick={() =>
-                                        updateTaskPeriod(task.id, 0)
-                                      }
-                                    >
-                                      <span
-                                        className={classNames(
-                                          "material-symbols-outlined",
-                                          styles.check
-                                        )}
-                                      >
-                                        check_small
-                                      </span>
-                                    </button>
-
-                                    <button
-                                      className={styles[`cancel-button`]}
-                                      onClick={() => cancelTaskPeriod(0)}
-                                    >
-                                      <span
-                                        className={classNames(
-                                          "material-symbols-outlined",
-                                          styles.cancel
-                                        )}
-                                      >
-                                        close_small
-                                      </span>
-                                    </button>
-                                  </div>
-                                )}
-                              </td>
-
-                              {dates.map((date, index) => {
-                                const taskPeriod = tasksPeriodList.find(
-                                  (tasksPeriod) => tasksPeriod.id === task.id
-                                );
-                                if (task.id == onEditTaskId) {
-                                  return (
-                                    <td
-                                      key={index}
-                                      onClick={() => handleTaskDateClick(date)}
-                                      className={getCellClassName(
-                                        date,
-                                        Target.task
-                                      )}
-                                    />
-                                  );
-                                } else {
-                                  return (
-                                    <td
-                                      key={index}
-                                      className={
-                                        taskPeriod &&
-                                        taskPeriod.startDate &&
-                                        taskPeriod.deadlineDate &&
-                                        date >= taskPeriod.startDate &&
-                                        date <= taskPeriod.deadlineDate
-                                          ? styles[`task-highlight`]
-                                          : isSameDateAsToday(date)
-                                          ? styles.today
-                                          : ""
-                                      }
-                                    />
-                                  );
-                                }
-                              })}
-                            </tr>
-
-                            <tr>
-                              <td
-                                className={classNames(
-                                  styles[`result-task-name`],
-                                  index % 2 === 0
-                                    ? styles[`odd-color`]
-                                    : styles[`even-color`]
-                                )}
-                              >
-                                <div className={styles[`result-area`]}>
-                                  <p>{task.users.name}</p>
-                                </div>
-                              </td>
-                              <td
-                                className={classNames(
-                                  styles[`task-start-date`],
-                                  index % 2 === 0
-                                    ? styles[`odd-color`]
-                                    : styles[`even-color`]
-                                )}
-                              >
-                                {task.result_start_date && (
-                                  <div className={styles[`date-container`]}>
-                                    <span
-                                      className={styles[`calendar-icon`]}
-                                    ></span>
-                                    {formatDate(task.result_start_date)}
-                                  </div>
-                                )}
-                              </td>
-                              <td
-                                className={classNames(
-                                  styles[`task-deadline-date`],
-                                  index % 2 === 0
-                                    ? styles[`odd-color`]
-                                    : styles[`even-color`]
-                                )}
-                              >
-                                {task.result_deadline_date && (
-                                  <div className={styles[`date-container`]}>
-                                    <span
-                                      className={styles[`calendar-icon`]}
-                                    ></span>
-                                    {formatDate(task.result_deadline_date)}
-                                  </div>
-                                )}
-                              </td>
-
-                              <td
-                                className={classNames(
-                                  styles[`task-person-days`],
-                                  index % 2 === 0
-                                    ? styles[`odd-color`]
-                                    : styles[`even-color`]
-                                )}
-                              >
-                                {task.number_of_result_days &&
-                                  (1.0).toFixed(1) +
-                                    " / " +
-                                    task.number_of_result_days.toFixed(1)}
-                              </td>
-                              <td
-                                className={classNames(
-                                  styles[`task-period-edit`],
-                                  index % 2 === 0
-                                    ? styles[`odd-color`]
-                                    : styles[`even-color`]
-                                )}
-                              >
-                                <div className={styles[`button-area`]}>
-                                  {task.id !== onEditResultTaskId && (
-                                    <span
-                                      className={classNames(
-                                        "material-symbols-outlined",
-                                        styles.edit
-                                      )}
-                                      onClick={() =>
-                                        toggleEditButton(task.id, 1)
-                                      }
-                                    >
-                                      edit
-                                    </span>
-                                  )}
-                                </div>
-                                {task.id == onEditResultTaskId && (
-                                  <div className={styles[`button-container`]}>
-                                    <button
-                                      className={styles[`check-button`]}
-                                      onClick={() =>
-                                        updateTaskPeriod(task.id, 1)
-                                      }
-                                    >
-                                      <span
-                                        className={classNames(
-                                          "material-symbols-outlined",
-                                          styles.check
-                                        )}
-                                      >
-                                        check_small
-                                      </span>
-                                    </button>
-
-                                    <button
-                                      className={styles[`cancel-button`]}
-                                      onClick={() => cancelTaskPeriod(1)}
-                                    >
-                                      <span
-                                        className={classNames(
-                                          "material-symbols-outlined",
-                                          styles.cancel
-                                        )}
-                                      >
-                                        close_small
-                                      </span>
-                                    </button>
-                                  </div>
-                                )}
-                              </td>
-
-                              {dates.map((date, index) => {
-                                const taskResultPeriod =
-                                  tasksResultPeriodList.find(
-                                    (tasksResultPeriod) =>
-                                      tasksResultPeriod.id === task.id
-                                  );
-                                if (task.id == onEditResultTaskId) {
-                                  return (
-                                    <td
-                                      key={index}
-                                      onClick={() =>
-                                        handleTaskResultDateClick(date)
-                                      }
-                                      className={getCellClassName(
-                                        date,
-                                        Target.taskResult
-                                      )}
-                                    />
-                                  );
-                                } else {
-                                  return (
-                                    <td
-                                      key={index}
-                                      className={
-                                        taskResultPeriod &&
-                                        taskResultPeriod.startDate &&
-                                        taskResultPeriod.deadlineDate &&
-                                        date >= taskResultPeriod.startDate &&
-                                        date <= taskResultPeriod.deadlineDate
-                                          ? styles[`result-highlight`]
-                                          : isSameDateAsToday(date)
-                                          ? styles.today
-                                          : ""
-                                      }
-                                    />
-                                  );
-                                }
-                              })}
-                            </tr>
-                          </React.Fragment>
-                        );
-                      })}
+                      .filter((task) => task.task_genre_id === taskGenre.taskGenreId)
+                      .map(renderTaskRows)}
                   </React.Fragment>
                 ))}
-
-                {smallProjectTask &&
-                  smallProjectTask?.filter((task) => !task.task_genre_id)
-                    .length > 0 && (
-                    <>
-                      <tr>
+                {tasksWithoutGenre.length > 0 && (
+                  <>
+                    <tr className="border-t bg-muted/40 font-medium">
+                      <th scope="row" className="sticky left-0 z-10 bg-muted px-3 py-1.5 text-left">
+                        ジャンルなし
+                      </th>
+                      <td colSpan={LEFT_COLUMN_COUNT - 1} />
+                      {dates.map((date) => (
                         <td
-                          className={classNames(
-                            styles[`task-name`],
-                            styles[`task-genre-color`]
-                          )}
-                        >
-                          <div className={styles[`task-genre-name-area`]}>
-                            <p>No Task Genre</p>
-                          </div>
-                        </td>
-                        <td className={styles[`task-start-date`]}></td>
-                        <td className={styles[`task-deadline-date`]}></td>
-                        <td className={styles[`task-person-days`]}></td>
-                        <td className={styles[`task-period-edit`]}></td>
-                        {dates.map((date, index) => (
-                          <td
-                            key={index}
-                            className={
-                              isSameDateAsToday(date) ? styles.today : ""
-                            }
-                          />
-                        ))}
-                      </tr>
-
-                      {smallProjectTask
-                        ?.filter((task) => !task.task_genre_id)
-                        .map((task, index) => {
-                          const findSelectedStatus = selectedStatuses.find(
-                            (status) => status.taskId === task.id
-                          );
-                          return (
-                            <React.Fragment key={index}>
-                              <tr>
-                                <td
-                                  className={classNames(
-                                    styles[`task-name`],
-                                    index % 2 === 0
-                                      ? styles[`odd-color`]
-                                      : styles[`even-color`]
-                                  )}
-                                >
-                                  <div className={styles[`task-name-area`]}>
-                                    <p>{task.task_name}</p>
-                                    <div className={styles[`right-area`]}>
-                                      {findSelectedStatus && (
-                                        <Select
-                                          value={findSelectedStatus.option}
-                                          options={getStatusOptions(
-                                            task.status_id
-                                          )}
-                                          styles={{
-                                            ...selectBoxStyles,
-                                            control: (baseStyles, state) => ({
-                                              ...selectBoxStyles.control(
-                                                baseStyles,
-                                                {
-                                                  selectProps: {
-                                                    statusId: task.status_id,
-                                                  },
-                                                }
-                                              ),
-                                            }),
-                                          }}
-                                          onChange={(selectedOption) =>
-                                            handleStatusChange(
-                                              task.id,
-                                              selectedOption
-                                            )
-                                          }
-                                          isSearchable={false}
-                                        />
-                                      )}
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className={styles[`task-start-date`]}>
-                                  {task.start_date && (
-                                    <div className={styles[`date-container`]}>
-                                      <span
-                                        className={styles[`calendar-icon`]}
-                                      ></span>
-                                      {formatDate(task.start_date)}
-                                    </div>
-                                  )}
-                                </td>
-                                <td className={styles[`task-deadline-date`]}>
-                                  {task.deadline_date && (
-                                    <div className={styles[`date-container`]}>
-                                      <span
-                                        className={styles[`calendar-icon`]}
-                                      ></span>
-                                      {formatDate(task.deadline_date)}
-                                    </div>
-                                  )}
-                                </td>
-
-                                <td className={styles[`task-person-days`]}>
-                                  {task.number_of_days &&
-                                    (1.0).toFixed(1) +
-                                      " / " +
-                                      task.number_of_days.toFixed(1)}
-                                </td>
-                                <td className={styles[`task-period-edit`]}>
-                                  <div className={styles[`button-area`]}>
-                                    {task.id !== onEditTaskId && (
-                                      <span
-                                        className={classNames(
-                                          "material-symbols-outlined",
-                                          styles.edit
-                                        )}
-                                        onClick={() =>
-                                          toggleEditButton(task.id, 0)
-                                        }
-                                      >
-                                        edit
-                                      </span>
-                                    )}
-                                  </div>
-                                  {task.id == onEditTaskId && (
-                                    <div className={styles[`button-container`]}>
-                                      <button
-                                        className={styles[`check-button`]}
-                                        onClick={() =>
-                                          updateTaskPeriod(task.id, 0)
-                                        }
-                                      >
-                                        <span
-                                          className={classNames(
-                                            "material-symbols-outlined",
-                                            styles.check
-                                          )}
-                                        >
-                                          check_small
-                                        </span>
-                                      </button>
-
-                                      <button
-                                        className={styles[`cancel-button`]}
-                                        onClick={() => cancelTaskPeriod(0)}
-                                      >
-                                        <span
-                                          className={classNames(
-                                            "material-symbols-outlined",
-                                            styles.cancel
-                                          )}
-                                        >
-                                          close_small
-                                        </span>
-                                      </button>
-                                    </div>
-                                  )}
-                                </td>
-                                {dates.map((date, index) => {
-                                  const taskPeriod = tasksPeriodList.find(
-                                    (tasksPeriod) => tasksPeriod.id === task.id
-                                  );
-                                  if (task.id == onEditTaskId) {
-                                    return (
-                                      <td
-                                        key={index}
-                                        onClick={() =>
-                                          handleTaskDateClick(date)
-                                        }
-                                        className={getCellClassName(
-                                          date,
-                                          Target.task
-                                        )}
-                                      />
-                                    );
-                                  } else {
-                                    return (
-                                      <td
-                                        key={index}
-                                        className={
-                                          taskPeriod &&
-                                          taskPeriod.startDate &&
-                                          taskPeriod.deadlineDate &&
-                                          date >= taskPeriod.startDate &&
-                                          date <= taskPeriod.deadlineDate
-                                            ? styles[`task-highlight`]
-                                            : isSameDateAsToday(date)
-                                            ? styles.today
-                                            : ""
-                                        }
-                                      />
-                                    );
-                                  }
-                                })}
-                              </tr>
-
-                              <tr>
-                                <td
-                                  className={classNames(
-                                    styles[`result-task-name`],
-                                    index % 2 === 0
-                                      ? styles[`odd-color`]
-                                      : styles[`even-color`]
-                                  )}
-                                >
-                                  <div className={styles[`result-area`]}>
-                                    <p>{task.users.name}</p>
-                                  </div>
-                                </td>
-                                <td className={styles[`task-start-date`]}>
-                                  {task.result_start_date && (
-                                    <div className={styles[`date-container`]}>
-                                      <span
-                                        className={styles[`calendar-icon`]}
-                                      ></span>
-                                      {formatDate(task.result_start_date)}
-                                    </div>
-                                  )}
-                                </td>
-                                <td className={styles[`task-deadline-date`]}>
-                                  {task.result_deadline_date && (
-                                    <div className={styles[`date-container`]}>
-                                      <span
-                                        className={styles[`calendar-icon`]}
-                                      ></span>
-                                      {formatDate(task.result_deadline_date)}
-                                    </div>
-                                  )}
-                                </td>
-
-                                <td className={styles[`task-person-days`]}>
-                                  {task.number_of_result_days &&
-                                    (1.0).toFixed(1) +
-                                      " / " +
-                                      task.number_of_result_days.toFixed(1)}
-                                </td>
-                                <td className={styles[`task-period-edit`]}>
-                                  <div className={styles[`button-area`]}>
-                                    {task.id !== onEditResultTaskId && (
-                                      <span
-                                        className={classNames(
-                                          "material-symbols-outlined",
-                                          styles.edit
-                                        )}
-                                        onClick={() =>
-                                          toggleEditButton(task.id, 1)
-                                        }
-                                      >
-                                        edit
-                                      </span>
-                                    )}
-                                  </div>
-                                  {task.id == onEditResultTaskId && (
-                                    <div className={styles[`button-container`]}>
-                                      <button
-                                        className={styles[`check-button`]}
-                                        onClick={() =>
-                                          updateTaskPeriod(task.id, 1)
-                                        }
-                                      >
-                                        <span
-                                          className={classNames(
-                                            "material-symbols-outlined",
-                                            styles.check
-                                          )}
-                                        >
-                                          check_small
-                                        </span>
-                                      </button>
-
-                                      <button
-                                        className={styles[`cancel-button`]}
-                                        onClick={() => cancelTaskPeriod(1)}
-                                      >
-                                        <span
-                                          className={classNames(
-                                            "material-symbols-outlined",
-                                            styles.cancel
-                                          )}
-                                        >
-                                          close_small
-                                        </span>
-                                      </button>
-                                    </div>
-                                  )}
-                                </td>
-
-                                {dates.map((date, index) => {
-                                  const taskResultPeriod =
-                                    tasksResultPeriodList.find(
-                                      (tasksResultPeriod) =>
-                                        tasksResultPeriod.id === task.id
-                                    );
-                                  if (task.id == onEditResultTaskId) {
-                                    return (
-                                      <td
-                                        key={index}
-                                        onClick={() =>
-                                          handleTaskResultDateClick(date)
-                                        }
-                                        className={getCellClassName(
-                                          date,
-                                          Target.taskResult
-                                        )}
-                                      />
-                                    );
-                                  } else {
-                                    return (
-                                      <td
-                                        key={index}
-                                        className={
-                                          taskResultPeriod &&
-                                          taskResultPeriod.startDate &&
-                                          taskResultPeriod.deadlineDate &&
-                                          date >= taskResultPeriod.startDate &&
-                                          date <= taskResultPeriod.deadlineDate
-                                            ? styles[`result-highlight`]
-                                            : isSameDateAsToday(date)
-                                            ? styles.today
-                                            : ""
-                                        }
-                                      />
-                                    );
-                                  }
-                                })}
-                              </tr>
-                            </React.Fragment>
-                          );
-                        })}
-                    </>
-                  )}
+                          key={date.getDate()}
+                          className={cn("border-l", isSameDay(date, today) && "bg-primary/5")}
+                        />
+                      ))}
+                    </tr>
+                    {tasksWithoutGenre.map(renderTaskRows)}
+                  </>
+                )}
               </tbody>
             </table>
           </div>
-        </div>
-      ) : (
-        <div className={styles[`non-tasks`]}>No Task</div>
-      )}
+        )}
+      </section>
     </>
   );
 };

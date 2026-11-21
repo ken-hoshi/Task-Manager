@@ -13,6 +13,9 @@ interface DateRangeFieldProps {
   required?: boolean;
   placeholder?: string;
   className?: string;
+  // カレンダーを body の下の、この id の入れ物に出す。
+  // 横スクロールや overflow-hidden の箱の中に置くと、カレンダーが切れたり、sticky のマスに隠れたりするため
+  portalId?: string;
 }
 
 // カレンダーの月・曜日を日本語で出す
@@ -36,6 +39,7 @@ export function DateRangeField({
   required,
   placeholder = "開始日 〜 終了日",
   className,
+  portalId,
 }: DateRangeFieldProps) {
   return (
     <DatePicker
@@ -55,6 +59,10 @@ export function DateRangeField({
       placeholderText={placeholder}
       required={required}
       autoComplete="off"
+      portalId={portalId}
+      // body の下に出すときは、画面の sticky のマス（z-10・z-20）より上、Sheet・Dialog（z-50）より下に置く。
+      // react-datepicker の CSS は layer の外で z-index: 1 を決めているので、! で上書きする
+      popperClassName={portalId ? "!z-30" : undefined}
       wrapperClassName="w-full"
       className={cn(
         "h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
