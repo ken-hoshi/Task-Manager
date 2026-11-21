@@ -1,17 +1,22 @@
 "use client";
 
-import BackgroundImage2 from "@/app/component/backgroundImage2/backgroundImage2";
 import Loading from "@/app/component/loading/loading";
-import styles from "./suspenseCreateWorkspace.module.css";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Loader2, LogOut, MailWarning, RefreshCw } from "lucide-react";
+import { AuthCard } from "@/components/auth-card";
+import { FormField } from "@/components/form-field";
+import { SignupSteps } from "@/components/signup-steps";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import NotificationBanner from "@/app/component/notificationBanner/notificationBanner";
 import { clientSupabase } from "@/app/lib/supabase/client";
-import classNames from "classnames";
 import { useFormContext } from "@/app/provider/formProvider";
 import { getUserId } from "@/app/lib/api/getUserId";
 import { Logout } from "@/app/hooks/logout";
+
+const NAME_INPUT_ID = "create-workspace-name";
 
 const SuspenseCreateWorkspace: React.FC = () => {
   const { setBackForm } = useFormContext();
@@ -31,6 +36,8 @@ const SuspenseCreateWorkspace: React.FC = () => {
   const [buttonLoading, setButtonLoading] = useState(false);
   const [workspaceName, setWorkspaceName] = useState("");
   const [workspaceNameError, setWorkspaceNameError] = useState("");
+  const [recheckNotice, setRecheckNotice] = useState("");
+  const focusNameAfterRecheck = useRef(false);
 
   useEffect(() => {
     setAtSignUp(paramsAtSignUp);
@@ -52,7 +59,7 @@ const SuspenseCreateWorkspace: React.FC = () => {
         } catch (error) {
           console.error("Error Display Page", error);
           setNotificationValue({
-            message: "You have not signed up.",
+            message: "ログインしていません。",
             color: 1,
           });
           router.push("/task");
@@ -62,17 +69,27 @@ const SuspenseCreateWorkspace: React.FC = () => {
         const emailVerified = sessionData?.session?.user.email_confirmed_at;
 
         if (!emailVerified) {
+          // 「確認し直す」を押した結果を伝える
+          if (isRefreshed) setRecheckNotice("まだメール認証を確認できません。");
           setVerifiedEmail(false);
           setIsRefreshed(false);
           setLoading(false);
           return;
         }
+        if (isRefreshed) focusNameAfterRecheck.current = true;
       }
       setVerifiedEmail(true);
       setLoading(false);
       setIsRefreshed(false);
     })();
   }, [isRefreshed]);
+
+  // 認証が確認できると、押した「確認し直す」が消えるので、フォーカスを名前の欄へ移す
+  useEffect(() => {
+    if (!verifiedEmail || !focusNameAfterRecheck.current) return;
+    focusNameAfterRecheck.current = false;
+    document.getElementById(NAME_INPUT_ID)?.focus();
+  }, [verifiedEmail]);
 
   const handleFocus = (event: React.FocusEvent<HTMLInputElement>) => {
     event.target.select();
@@ -100,6 +117,8 @@ const SuspenseCreateWorkspace: React.FC = () => {
       if (createWorkspaceError?.code === "23505") {
         setWorkspaceNameError("既に同名のワークスペースがあります。");
         setButtonLoading(false);
+        // 送信のボタンが押せない間に失ったフォーカスを、直す欄へ移す
+        document.getElementById(NAME_INPUT_ID)?.focus();
         return;
       }
       if (createWorkspaceError) {
@@ -107,7 +126,7 @@ const SuspenseCreateWorkspace: React.FC = () => {
       }
 
       setNotificationValue({
-        message: " Workspace was created !",
+        message: "ワークスペースを作成しました。",
         color: 0,
       });
       sessionStorage.setItem("spaceId", spaceId);
@@ -115,10 +134,11 @@ const SuspenseCreateWorkspace: React.FC = () => {
     } catch (error) {
       console.error("Add Workspace Name", error);
       setNotificationValue({
-        message: "Couldn't add Workspace Name.",
+        message: "ワークスペースを作成できませんでした。",
         color: 1,
       });
       setButtonLoading(false);
+      document.getElementById(NAME_INPUT_ID)?.focus();
     }
   };
 
@@ -142,133 +162,103 @@ const SuspenseCreateWorkspace: React.FC = () => {
     }
   };
 
+  if (loading) return <Loading />;
+
   return (
     <>
-      {loading ? (
-        <Loading />
-      ) : (
-        <>
-          {notificationValue.message && (
-            <NotificationBanner
-              message={notificationValue.message}
-              color={notificationValue.color}
-            />
-          )}
-
-          <div>
-            <BackgroundImage2 />
-
-            <div className={styles[`inner-area`]}>
-              {!atSignUp ? (
-                <span
-                  className={classNames(
-                    "material-symbols-outlined",
-                    styles.back
-                  )}
-                  onClick={handlePageBack}
-                >
-                  arrow_back
-                </span>
-              ) : (
-                <div className={styles[`progress-bar-container`]}>
-                  <div className={styles[`progress-bar`]}>
-                    <div className={styles.step}>
-                      <div className={styles.circle}></div>
-                      <span>Sign Up</span>
-                    </div>
-                    <div className={styles.line}></div>
-                    <div className={styles.step}>
-                      <div className={styles.circle}></div>
-                      <span>Email Verification</span>
-                    </div>
-                    <div className={styles.line}></div>
-                    <div className={`${styles.step} ${styles.active}`}>
-                      <div className={styles.circle}></div>
-                      <span className={styles.active}>Workspace Setup</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {!verifiedEmail ? (
-                <div className={styles[`attention-area`]}>
-                  <div className={styles[`attention-text`]}>
-                    メール認証が完了していません。メール認証してください。
-                  </div>
-                  <span
-                    className={classNames(
-                      "material-symbols-outlined",
-                      styles.refresh
-                    )}
-                    onClick={() => setIsRefreshed(true)}
-                  >
-                    refresh
-                  </span>
-
-                  <div className={styles[`to-login-page-text`]}>
-                    ※メール認証が完了しても画面が変わらない場合は、
-                    <br />
-                    <span
-                      onClick={handleBackTop}
-                      className={styles[`to-login-page-button`]}
-                    >
-                      ログイン
-                    </span>
-                    後にワークスペース登録をしてください。
-                  </div>
-                </div>
-              ) : (
-                <div className={styles[`form-area`]}>
-                  <h1>
-                    ワークスペース
-                    <br />
-                    を作成する
-                  </h1>
-
-                  <form onSubmit={handleSubmit}>
-                    <div className={styles[`input-area-container`]}>
-                      <div className={styles[`input-area`]}>
-                        <input
-                          type="text"
-                          placeholder="Workspace Name"
-                          name="name"
-                          autoComplete="off"
-                          required
-                          value={workspaceName}
-                          onChange={(e) => setWorkspaceName(e.target.value)}
-                          onFocus={handleFocus}
-                          className={styles.input}
-                        />
-
-                        {workspaceNameError ? (
-                          <p className={styles.error}>{workspaceNameError}</p>
-                        ) : (
-                          <p className={styles.instruction}>
-                            Enter Workspace Name
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <button type="submit" disabled={buttonLoading}>
-                      {buttonLoading ? (
-                        <div className={styles.spinner}></div>
-                      ) : (
-                        "Create"
-                      )}
-                    </button>
-                    <div
-                      className={styles[`to-join-workspace`]}
-                      onClick={handleMoveJoinWorkspace}
-                    >
-                      作成せずに既存のワークスペースに参加する
-                    </div>
-                  </form>
-                </div>
-              )}
-            </div>
-          </div>
-        </>
+      {notificationValue.message && (
+        <NotificationBanner
+          message={notificationValue.message}
+          color={notificationValue.color}
+        />
       )}
+
+      <AuthCard>
+        {paramsAtSignUp ? (
+          <SignupSteps current={2} />
+        ) : (
+          <Button type="button" variant="ghost" className="-ml-2 self-start" onClick={handlePageBack}>
+            {paramsWorkspaceId ? (
+              <>
+                <ArrowLeft className="size-4" aria-hidden />
+                ワークスペースの設定へ戻る
+              </>
+            ) : (
+              <>
+                <LogOut className="size-4" aria-hidden />
+                ログアウト
+              </>
+            )}
+          </Button>
+        )}
+
+        {!verifiedEmail ? (
+          <div className="flex flex-col items-center gap-3 text-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <MailWarning className="size-6" aria-hidden />
+            </span>
+            <h1 className="m-0 text-2xl font-semibold tracking-tight">
+              メール認証が完了していません
+            </h1>
+            <p className="m-0 text-sm text-muted-foreground">
+              メール内のリンクで認証してから、確認し直してください。
+            </p>
+            <Button type="button" variant="outline" onClick={() => setIsRefreshed(true)}>
+              <RefreshCw className="size-4" aria-hidden />
+              確認し直す
+            </Button>
+            <p role="status" className="m-0 min-h-5 text-sm text-destructive">
+              {recheckNotice}
+            </p>
+            <p className="m-0 text-sm text-muted-foreground">
+              認証が完了しても画面が変わらない場合は、
+              <Button type="button" variant="link" className="h-auto p-0" onClick={handleBackTop}>
+                ログイン
+              </Button>
+              してからワークスペースを登録してください。
+            </p>
+          </div>
+        ) : (
+          <>
+            <h1 className="m-0 text-2xl font-semibold tracking-tight">
+              ワークスペースを作成する
+            </h1>
+
+            <form aria-label="ワークスペースの作成" onSubmit={handleSubmit} className="space-y-4">
+              <FormField label="ワークスペース名" htmlFor={NAME_INPUT_ID} required>
+                <Input
+                  id={NAME_INPUT_ID}
+                  type="text"
+                  name="name"
+                  autoComplete="off"
+                  required
+                  aria-invalid={workspaceNameError ? true : undefined}
+                  aria-describedby={workspaceNameError ? `${NAME_INPUT_ID}-error` : undefined}
+                  value={workspaceName}
+                  onChange={(e) => {
+                    setWorkspaceName(e.target.value);
+                    setWorkspaceNameError("");
+                  }}
+                  onFocus={handleFocus}
+                />
+                {workspaceNameError && (
+                  <p id={`${NAME_INPUT_ID}-error`} role="alert" className="m-0 text-sm text-destructive">
+                    {workspaceNameError}
+                  </p>
+                )}
+              </FormField>
+
+              <Button type="submit" className="w-full" disabled={buttonLoading}>
+                {buttonLoading && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                作成する
+              </Button>
+              <Button type="button" variant="ghost" className="w-full" onClick={handleMoveJoinWorkspace}>
+                作成せずに既存のワークスペースに参加する
+              </Button>
+            </form>
+          </>
+        )}
+      </AuthCard>
     </>
   );
 };

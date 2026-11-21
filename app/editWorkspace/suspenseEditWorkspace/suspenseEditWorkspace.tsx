@@ -583,7 +583,7 @@ const SuspenseEditWorkspace: React.FC = () => {
                   </div>
                   <div className={styles[`form-group-container`]}>
                     <div className={styles[`form-group`]}>
-                      <p>Space ID</p>
+                      <p>合言葉</p>
                       <div
                         className={styles[`selected-workspace-space-id-area`]}
                       >

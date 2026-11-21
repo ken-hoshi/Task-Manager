@@ -101,4 +101,25 @@ const auth = {
   getSession: async () => ({ data: { session: { access_token: "test-token" } }, error: null }),
 };
 
-export const mockClient = { from, storage, auth };
+// DB の関数（RPC）の差し替え。表と同じ記録に `rpc:関数名` で残し、返事は setResponses("rpc:関数名", ...) で並べる
+const rpc = (name: string, args: unknown) => {
+  const table = `rpc:${name}`;
+  const entry = { table, ops: [["rpc", [args]]] as Op[] };
+  supabaseCalls.push(entry);
+  const call = {
+    single: () => {
+      entry.ops.push(["single", []]);
+      return call;
+    },
+    then: (resolve: (v: unknown) => unknown) => resolve(nextResult(table)),
+  };
+  return call;
+};
+
+// RPC に渡した引数を、呼ばれた順に返す
+export const rpcArgsOf = (name: string) =>
+  opsOf(`rpc:${name}`)
+    .filter(([op]) => op === "rpc")
+    .map(([, args]) => args[0]);
+
+export const mockClient = { from, storage, auth, rpc };
