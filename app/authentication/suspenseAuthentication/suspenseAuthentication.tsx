@@ -1,62 +1,40 @@
 "use client";
 
-import BackgroundImage2 from "@/app/component/backgroundImage2/backgroundImage2";
-import styles from "./suspenseAuthentication.module.css";
-import classNames from "classnames";
 import { useRouter } from "next/navigation";
-import { useNotificationContext } from "@/app/provider/notificationProvider";
+import { Mail } from "lucide-react";
+import { AuthCard } from "@/components/auth-card";
+import { SignupSteps } from "@/components/signup-steps";
+import { Button } from "@/components/ui/button";
 
 const SuspenseAuthentication: React.FC = () => {
-  const { setNotificationValue } = useNotificationContext();
   const router = useRouter();
 
   return (
-    <>
-      <BackgroundImage2 />
-      <div className={styles[`inner-area`]}>
-        <div className={styles[`progress-bar-container`]}>
-          <div className={styles[`progress-bar`]}>
-            <div className={styles.step}>
-              <div className={styles.circle}></div>
-              <span>Sign Up</span>
-            </div>
-            <div className={styles.line}></div>
-            <div className={`${styles.step} ${styles.active}`}>
-              <div className={styles.circle}></div>
-              <span className={styles.active}>Email Verification</span>
-            </div>
-            <div className={styles.line}></div>
-            <div className={styles.step}>
-              <div className={styles.circle}></div>
-              <span>Workspace Setup</span>
-            </div>
-          </div>
-        </div>
+    <AuthCard>
+      <SignupSteps current={1} />
 
-        <div className={styles[`mail-image-area`]}>
-          <span
-            className={classNames("material-symbols-outlined", styles.mail)}
-          >
-            mail
-          </span>
-        </div>
-
-        <div className={styles[`text-area`]}>
-          <p>
-            登録したメールアドレス宛に認証メールを送信しました。
-            <br />
-            メール内の認証が完了したらワークスペース登録に進んでください。
-          </p>
-        </div>
-
-        <div
-          className={styles[`to-workspace-setup-button`]}
-          onClick={() => router.push("/createWorkspace?atSignUp=true")}
-        >
-          ワークスペース登録へ
-        </div>
+      <div className="flex flex-col items-center gap-3 text-center">
+        <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <Mail className="size-6" aria-hidden />
+        </span>
+        <h1 className="m-0 text-2xl font-semibold tracking-tight">
+          確認メールを送りました
+        </h1>
+        <p className="m-0 text-sm text-muted-foreground">
+          登録したメールアドレス宛に認証メールを送信しました。
+          <br />
+          メール内の認証が完了したらワークスペース登録に進んでください。
+        </p>
       </div>
-    </>
+
+      <Button
+        type="button"
+        className="w-full"
+        onClick={() => router.push("/createWorkspace?atSignUp=true")}
+      >
+        ワークスペース登録へ
+      </Button>
+    </AuthCard>
   );
 };
 

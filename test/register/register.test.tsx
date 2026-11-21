@@ -1,9 +1,8 @@
 import { signUp } from "@/app/hooks/signUp";
 import Register from "@/app/register/page";
-import { act, render, screen, fireEvent } from "@testing-library/react";
-import { sign } from "crypto";
+import { NotificationProvider } from "@/app/provider/notificationProvider";
+import { act, render, screen, fireEvent, within } from "@testing-library/react";
 import { useRouter } from "next/navigation";
-import { use } from "react";
 
 process.env.NEXT_PUBLIC_ALLOWED_EMAIL_DOMAIN = "example.com";
 
@@ -24,53 +23,46 @@ jest.mock("next/navigation", () => ({
   })),
 }));
 
+const submitButton = () => screen.getByRole("button", { name: "登録する" });
+const nameInput = () => screen.getByLabelText(/^名前/);
+const emailInput = () => screen.getByLabelText(/^メールアドレス/);
+const passwordInput = () => screen.getByLabelText(/^パスワード/);
+const PASSWORD_ERROR = "パスワードは、英字と数字だけで両方を含む8文字以上にしてください。";
+
 describe("Register コンポーネント", () => {
   beforeEach(() => {
     signUpSuccessFlag = false;
   });
 
   const fillForm = (name: string, email: string, password: string) => {
-    const nameInput = screen.getByPlaceholderText("Name");
-    fireEvent.change(nameInput, { target: { value: name } });
-    expect(nameInput).toHaveValue(name);
+    fireEvent.change(nameInput(), { target: { value: name } });
+    expect(nameInput()).toHaveValue(name);
 
-    const emailInput = screen.getByPlaceholderText("Email");
-    fireEvent.change(emailInput, { target: { value: email } });
-    expect(emailInput).toHaveValue(email);
+    fireEvent.change(emailInput(), { target: { value: email } });
+    expect(emailInput()).toHaveValue(email);
 
-    const passwordInput = screen.getByPlaceholderText("Password");
-    fireEvent.change(passwordInput, { target: { value: password } });
-    expect(passwordInput).toHaveValue(password);
+    fireEvent.change(passwordInput(), { target: { value: password } });
+    expect(passwordInput()).toHaveValue(password);
   };
 
-  it("① Form コンポーネントが正しくレンダリングされる", () => {
+  it("① 見出し・進み具合・ラベル付きの欄・ボタンを出す", () => {
     render(<Register />);
 
-    expect(screen.getByText("arrow_back")).toBeInTheDocument();
-    expect(screen.getByText("Email Verification")).toBeInTheDocument();
-    expect(screen.getByText("Workspace Setup")).toBeInTheDocument();
-    expect(screen.getByText("Sign up")).toBeInTheDocument();
-    expect(screen.getByText("Enter your Name")).toBeInTheDocument();
-    expect(screen.getByText("Enter your Email Address")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "新規登録" })).toBeInTheDocument();
+    const steps = screen.getByRole("list", { name: "登録の進み具合" });
+    expect(within(steps).getAllByRole("listitem").map((step) => step.textContent)).toEqual([
+      "1登録",
+      "2メール確認",
+      "3ワークスペース",
+    ]);
+    expect(within(steps).getByText("登録").closest("li")).toHaveAttribute("aria-current", "step");
 
-    const form = screen.getByRole("form");
-    expect(form).toBeInTheDocument();
-
-    const nameInput = screen.getByPlaceholderText("Name");
-    expect(nameInput).toBeInTheDocument();
-    expect(nameInput).toHaveAttribute("type", "text");
-
-    const emailInput = screen.getByPlaceholderText("Email");
-    expect(emailInput).toBeInTheDocument();
-    expect(emailInput).toHaveAttribute("type", "email");
-
-    const passwordInput = screen.getByPlaceholderText("Password");
-    expect(passwordInput).toBeInTheDocument();
-    expect(passwordInput).toHaveAttribute("type", "password");
-
-    const signUpButton = screen.getByRole("button", { name: "Sign Up" });
-    expect(signUpButton).toBeInTheDocument();
-    expect(signUpButton).not.toBeDisabled();
+    expect(screen.getByRole("form", { name: "新規登録" })).toBeInTheDocument();
+    expect(nameInput()).toHaveAttribute("type", "text");
+    expect(emailInput()).toHaveAttribute("type", "email");
+    expect(passwordInput()).toHaveAttribute("type", "password");
+    expect(passwordInput()).toHaveAccessibleDescription("英字と数字だけで、両方を含む8文字以上");
+    expect(submitButton()).toBeEnabled();
   });
 
   it("② ユーザーがフォームに入力できる", () => {
@@ -85,10 +77,23 @@ describe("Register コンポーネント", () => {
 
     fillForm("", "", "");
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "Sign Up" }));
+      fireEvent.click(submitButton());
     });
 
     expect(signUpSuccessFlag).toBe(false);
+  });
+
+  it("③-2 名前だけが空なら、ほかの欄が正しくてもサインアップしない", async () => {
+    const useSignUp = jest.fn();
+    (signUp as jest.Mock).mockReturnValue({ useSignUp });
+    render(<Register />);
+
+    fillForm("", "email@example.com", "abcd1234");
+    await act(async () => {
+      fireEvent.click(submitButton());
+    });
+
+    expect(useSignUp).not.toHaveBeenCalled();
   });
 
   it("④ 不正なメールアドレスを入力場合、サインアップ処理が失敗する", async () => {
@@ -96,13 +101,14 @@ describe("Register コンポーネント", () => {
 
     fillForm("test", "invalid@example.org", "abcd1234");
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Sign Up" }));
+      fireEvent.click(submitButton());
     });
 
-    // バリデーションエラーメッセージが表示されることを確認
-    expect(
-      await screen.findByText("このメールアドレスは使用できません。")
-    ).toBeInTheDocument();
+    // バリデーションエラーメッセージが読み上げられ、欄と結び付き、直す欄へフォーカスが移ることを確認
+    expect(await screen.findByRole("alert")).toHaveTextContent("このメールアドレスは使用できません。");
+    expect(emailInput()).toHaveAttribute("aria-invalid", "true");
+    expect(emailInput()).toHaveAccessibleDescription("このメールアドレスは使用できません。");
+    expect(emailInput()).toHaveFocus();
 
     expect(signUpSuccessFlag).toBe(false);
   });
@@ -112,15 +118,14 @@ describe("Register コンポーネント", () => {
 
     fillForm("test", "email@example.com", "abcd");
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Sign Up" }));
+      fireEvent.click(submitButton());
     });
 
-    // バリデーションエラーメッセージが表示されることを確認
-    expect(
-      await screen.findByText(
-        "パスワードは英字と数字を含む8文字以上でなければなりません。"
-      )
-    ).toBeInTheDocument();
+    // バリデーションエラーメッセージが読み上げられ、欄と結び付き、直す欄へフォーカスが移ることを確認
+    expect(await screen.findByRole("alert")).toHaveTextContent(PASSWORD_ERROR);
+    expect(passwordInput()).toHaveAttribute("aria-invalid", "true");
+    expect(passwordInput()).toHaveAccessibleDescription(PASSWORD_ERROR);
+    expect(passwordInput()).toHaveFocus();
 
     expect(signUpSuccessFlag).toBe(false);
   });
@@ -136,19 +141,13 @@ describe("Register コンポーネント", () => {
 
     fillForm("test", "email@example.com", "abcd1234");
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Sign Up" }));
+      fireEvent.click(submitButton());
     });
 
     expect(
-      screen.queryByText(
-        "パスワードは英字と数字を含む8文字以上でなければなりません。"
-      )
+      screen.queryByText("このメールアドレスは使用できません。")
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(
-        "パスワードは英字と数字を含む8文字以上でなければなりません。"
-      )
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(PASSWORD_ERROR)).not.toBeInTheDocument();
 
     expect(useSignUp).toHaveBeenCalledWith(
       "test",
@@ -164,8 +163,46 @@ describe("Register コンポーネント", () => {
 
     render(<Register />);
 
-    fireEvent.click(screen.getByText("arrow_back"));
+    fireEvent.click(screen.getByRole("button", { name: "ログインへ戻る" }));
 
     expect(push).toHaveBeenCalledWith("/");
+  });
+
+  it("⑥-2 送信中はボタンを押せず、2回送らない", async () => {
+    const useSignUp = jest.fn(() => new Promise(() => {}));
+    (signUp as jest.Mock).mockReturnValue({ useSignUp });
+    render(<Register />);
+
+    fillForm("test", "email@example.com", "abcd1234");
+    await act(async () => {
+      fireEvent.click(submitButton());
+    });
+    expect(submitButton()).toBeDisabled();
+
+    await act(async () => {
+      fireEvent.click(submitButton());
+    });
+    expect(useSignUp).toHaveBeenCalledTimes(1);
+  });
+
+  it("⑧ 登録に失敗したら日本語で知らせ、もう一度押せる", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    const useSignUp = jest.fn(async () => new Error("boom"));
+    (signUp as jest.Mock).mockReturnValue({ useSignUp });
+
+    render(
+      <NotificationProvider>
+        <Register />
+      </NotificationProvider>
+    );
+
+    fillForm("test", "email@example.com", "abcd1234");
+    await act(async () => {
+      fireEvent.click(submitButton());
+    });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("登録できませんでした。");
+    expect(submitButton()).toBeEnabled();
+    consoleError.mockRestore();
   });
 });
