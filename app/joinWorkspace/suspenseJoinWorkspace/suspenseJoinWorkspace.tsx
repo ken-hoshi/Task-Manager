@@ -1,17 +1,22 @@
 "use client";
 
-import BackgroundImage2 from "@/app/component/backgroundImage2/backgroundImage2";
 import Loading from "@/app/component/loading/loading";
-import styles from "./suspenseJoinWorkspace.module.css";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ArrowLeft, Loader2, LogOut, Search, X } from "lucide-react";
+import { AuthCard } from "@/components/auth-card";
+import { FormField } from "@/components/form-field";
+import { SignupSteps } from "@/components/signup-steps";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import NotificationBanner from "@/app/component/notificationBanner/notificationBanner";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { useFormContext } from "@/app/provider/formProvider";
 import { getUserId } from "@/app/lib/api/getUserId";
-import classNames from "classnames";
 import { Logout } from "@/app/hooks/logout";
+
+const SPACE_ID_INPUT_ID = "join-workspace-space-id";
 
 interface WorkspaceProps {
   id: number;
@@ -63,7 +68,7 @@ const SuspenseJoinWorkspace: React.FC = () => {
       } catch (error) {
         console.error("Error Display Page", error);
         setNotificationValue({
-          message: "You have not signed up.",
+          message: "ログインしていません。",
           color: 1,
         });
         setBackForm(true);
@@ -85,7 +90,7 @@ const SuspenseJoinWorkspace: React.FC = () => {
             selectWorkspaceDataError && selectWorkspaceDataError
           );
           setNotificationValue({
-            message: "Couldn't get Workspace Data.",
+            message: "ワークスペースを読めませんでした。",
             color: 1,
           });
           router.back();
@@ -180,6 +185,8 @@ const SuspenseJoinWorkspace: React.FC = () => {
         (workspace) => workspace.id !== workspaceId
       )
     );
+    // 押したボタンが消えるので、フォーカスを合言葉の欄へ移す
+    document.getElementById(SPACE_ID_INPUT_ID)?.focus();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -198,23 +205,26 @@ const SuspenseJoinWorkspace: React.FC = () => {
       if (insertWorkspaceNameError?.code === "P0002") {
         setErrorMessage("ワークスペースが見つかりません。再度検索してください。");
         setButtonLoading(false);
+        // 送信のボタンが押せない間に失ったフォーカスを、合言葉の欄へ移す
+        document.getElementById(SPACE_ID_INPUT_ID)?.focus();
         return;
       }
       if (insertWorkspaceNameError) {
         throw insertWorkspaceNameError;
       }
       setNotificationValue({
-        message: "Joined Workspace !",
+        message: "ワークスペースに参加しました。",
         color: 0,
       });
       router.push("/task");
     } catch (error) {
       console.error("Join Workspace", error);
       setNotificationValue({
-        message: "Couldn't join Workspace.",
+        message: "ワークスペースに参加できませんでした。",
         color: 1,
       });
       setButtonLoading(false);
+      document.getElementById(SPACE_ID_INPUT_ID)?.focus();
     }
   };
 
@@ -228,159 +238,107 @@ const SuspenseJoinWorkspace: React.FC = () => {
     }
   };
 
+  if (loading) return <Loading />;
+
   return (
     <>
-      {loading ? (
-        <Loading />
-      ) : (
-        <>
-          {notificationValue.message && (
-            <NotificationBanner
-              message={notificationValue.message}
-              color={notificationValue.color}
-            />
+      {notificationValue.message && (
+        <NotificationBanner
+          message={notificationValue.message}
+          color={notificationValue.color}
+        />
+      )}
+
+      <AuthCard>
+        {paramsAtSignUp ? (
+          <SignupSteps current={2} />
+        ) : (
+          <Button type="button" variant="ghost" className="-ml-2 self-start" onClick={handlePageBack}>
+            {paramsWorkspaceId ? (
+              <>
+                <ArrowLeft className="size-4" aria-hidden />
+                ワークスペースの設定へ戻る
+              </>
+            ) : (
+              <>
+                <LogOut className="size-4" aria-hidden />
+                ログアウト
+              </>
+            )}
+          </Button>
+        )}
+
+        <h1 className="m-0 text-2xl font-semibold tracking-tight">
+          ワークスペースに参加する
+        </h1>
+
+        <form aria-label="ワークスペースへの参加" onSubmit={handleSubmit} className="space-y-4">
+          <FormField label="合言葉" htmlFor={SPACE_ID_INPUT_ID}>
+            <div className="flex gap-2">
+              <Input
+                id={SPACE_ID_INPUT_ID}
+                type="text"
+                autoComplete="off"
+                aria-invalid={errorMessage ? true : undefined}
+                aria-describedby={`${SPACE_ID_INPUT_ID}-note`}
+                value={spaceId}
+                onChange={(e) => {
+                  setSpaceId(e.target.value);
+                  setErrorMessage("");
+                }}
+              />
+              <Button type="button" variant="outline" onClick={searchSpaceId}>
+                {searchLoading ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <Search className="size-4" aria-hidden />
+                )}
+                検索
+              </Button>
+            </div>
+            {/* key を分けて要素ごと入れ替える（既存の要素に role="alert" を足すだけだと読み上げられない環境がある） */}
+            {errorMessage ? (
+              <p key="error" id={`${SPACE_ID_INPUT_ID}-note`} role="alert" className="m-0 text-sm text-destructive">
+                {errorMessage}
+              </p>
+            ) : (
+              <p key="hint" id={`${SPACE_ID_INPUT_ID}-note`} className="m-0 text-sm text-muted-foreground">
+                ワークスペースの設定にある合言葉を入れて検索します。
+              </p>
+            )}
+          </FormField>
+
+          {selectedWorkspaceList.length > 0 && (
+            <ul role="list" aria-label="参加するワークスペース" className="flex list-none flex-wrap gap-2 p-0">
+              {selectedWorkspaceList.map((selectedWorkspace) => (
+                <li
+                  key={selectedWorkspace.id}
+                  className="flex max-w-full items-center gap-1 rounded-md border bg-muted py-0.5 pr-0.5 pl-2.5 text-sm"
+                >
+                  <span className="min-w-0 truncate">{selectedWorkspace.name}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    aria-label={`「${selectedWorkspace.name}」を外す`}
+                    onClick={() => removeSelectedWorkspace(selectedWorkspace.id)}
+                  >
+                    <X className="size-3.5" aria-hidden />
+                  </Button>
+                </li>
+              ))}
+            </ul>
           )}
 
-          <div>
-            <BackgroundImage2 />
-
-            <div className={styles[`inner-area`]}>
-              {!atSignUp ? (
-                <span
-                  className={classNames(
-                    "material-symbols-outlined",
-                    styles.back
-                  )}
-                  onClick={handlePageBack}
-                >
-                  arrow_back
-                </span>
-              ) : (
-                <div className={styles[`progress-bar-container`]}>
-                  <div className={styles[`progress-bar`]}>
-                    <div className={styles.step}>
-                      <div className={styles.circle}></div>
-                      <span>Sign Up</span>
-                    </div>
-                    <div className={styles.line}></div>
-                    <div className={styles.step}>
-                      <div className={styles.circle}></div>
-                      <span>Email Verification</span>
-                    </div>
-                    <div className={styles.line}></div>
-                    <div className={`${styles.step} ${styles.active}`}>
-                      <div className={styles.circle}></div>
-                      <span className={styles.active}>Workspace Setup</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className={styles[`form-area`]}>
-                <h1>
-                  ワークスペース
-                  <br />
-                  に参加する
-                </h1>
-
-                <form onSubmit={handleSubmit}>
-                  <div className={styles[`input-area-container`]}>
-                    <div className={styles[`input-area`]}>
-                      <div className={styles[`search-workspace-area`]}>
-                        <div className={styles[`search-input-container`]}>
-                          <input
-                            type="text"
-                            value={spaceId}
-                            onChange={(e) => setSpaceId(e.target.value)}
-                            placeholder="Space ID"
-                            className={styles[`space-id`]}
-                          />
-                        </div>
-                        <div className={styles[`search-button-container`]}>
-                          <button type="button" onClick={searchSpaceId}>
-                            {searchLoading ? (
-                              <div
-                                className={styles[`search-button-spinner`]}
-                              ></div>
-                            ) : (
-                              "Search"
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                      {errorMessage ? (
-                        <div className={styles[`error-message`]}>
-                          {errorMessage}
-                        </div>
-                      ) : (
-                        <p className={styles.instruction}> Enter Space ID</p>
-                      )}
-
-                      <div className={styles[`join-workspace-display-area`]}>
-                        {selectedWorkspaceList.length > 0 && (
-                          <div
-                            className={styles[`workspace-name-block-container`]}
-                          >
-                            {selectedWorkspaceList.map(
-                              (selectedWorkspace, index) => (
-                                <div
-                                  className={styles[`workspace-name-block`]}
-                                  key={index}
-                                >
-                                  <div className={styles[`workspace-name`]}>
-                                    {selectedWorkspace.name}
-                                  </div>
-                                  <div
-                                    className={
-                                      styles[`cancel-button-container`]
-                                    }
-                                  >
-                                    <span
-                                      className={classNames(
-                                        "material-symbols-outlined",
-                                        styles.cancel
-                                      )}
-                                      onClick={() =>
-                                        removeSelectedWorkspace(
-                                          selectedWorkspace.id
-                                        )
-                                      }
-                                    >
-                                      close_small
-                                    </span>
-                                  </div>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={buttonLoading}
-                    className={styles[`join-button`]}
-                  >
-                    {buttonLoading ? (
-                      <div className={styles[`join-button-spinner`]}></div>
-                    ) : (
-                      "Join"
-                    )}
-                  </button>
-                  <div
-                    className={styles[`to-create-workspace`]}
-                    onClick={handleMoveCreateWorkspace}
-                  >
-                    ワークスペースを作成する
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+          <Button type="submit" className="w-full" disabled={buttonLoading}>
+            {buttonLoading && <Loader2 className="size-4 animate-spin" aria-hidden />}
+            参加する
+          </Button>
+          <Button type="button" variant="ghost" className="w-full" onClick={handleMoveCreateWorkspace}>
+            ワークスペースを作成する
+          </Button>
+        </form>
+      </AuthCard>
     </>
   );
 };

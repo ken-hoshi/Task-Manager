@@ -21,7 +21,7 @@ export const Logout = () => {
     } catch (error) {
       console.error("Log out", error);
       setNotificationValue({
-        message: "Failed to log out.",
+        message: "ログアウトできませんでした。",
         color: 1,
       });
     }
