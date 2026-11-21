@@ -27,8 +27,6 @@
     "radix-ui": "1.8.1",
     "react": "19.3.1",
     "react-datepicker": "^7.6.0",
-    "react-dnd": "^16.0.1",
-    "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "19.3.1",
     "react-markdown": "^9.0.1",
     "react-select": "^5.10.2",
