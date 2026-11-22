@@ -96,6 +96,48 @@ describe("AppShell", () => {
     expect(screen.getByRole("button", { name: "通知 未読 1 件" })).toBeInTheDocument();
   });
 
+  it("表示中のワークスペースが無いとき、設定の入口は作成の画面を開く", async () => {
+    displayWorkspaceId = null;
+    (getWorkspace as jest.Mock).mockResolvedValue([]);
+    await renderShell(null);
+
+    fireEvent.keyDown(screen.getByRole("button", { name: /^ワークスペースを切り替える/ }), { key: "Enter" });
+    fireEvent.click(screen.getByRole("menuitem", { name: "ワークスペースの設定" }));
+
+    expect(push).toHaveBeenCalledWith("/createWorkspace?atSignUp=false");
+  });
+
+  it("表示中が無くても所属があれば、設定の入口は最初のワークスペースの設定を開く", async () => {
+    displayWorkspaceId = null;
+    await renderShell(null);
+
+    fireEvent.keyDown(screen.getByRole("button", { name: /^ワークスペースを切り替える/ }), { key: "Enter" });
+    fireEvent.click(screen.getByRole("menuitem", { name: "ワークスペースの設定" }));
+
+    expect(push).toHaveBeenCalledWith("/editWorkspace?workspaceId=1");
+  });
+
+  it("一覧を読んでいる間は、設定の入口を押しても作成へ移さない", async () => {
+    displayWorkspaceId = null;
+    (getWorkspace as jest.Mock).mockReturnValue(new Promise(() => {}));
+    await renderShell(null);
+
+    fireEvent.keyDown(screen.getByRole("button", { name: /^ワークスペースを切り替える/ }), { key: "Enter" });
+    fireEvent.click(screen.getByRole("menuitem", { name: "ワークスペースの設定" }));
+
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("アカウント画面でワークスペースを切り替えても、画面を読み直さない", async () => {
+    await renderShell(null);
+
+    chooseWorkspace("開発チーム", "営業チーム");
+
+    expect(setDisplayWorkspaceId).toHaveBeenCalledWith(2);
+    expect(setPageUpdated).not.toHaveBeenCalled();
+    expect(push).not.toHaveBeenCalled();
+  });
+
   it("設定の画面でワークスペースを切り替えると、切り替え先の設定を開く", async () => {
     await renderShell({ kind: "workspaceSettings" });
 

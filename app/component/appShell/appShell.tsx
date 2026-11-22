@@ -39,6 +39,7 @@ const AppShell: React.FC<AppShellProps> = ({ userId, current, children }) => {
   const { pageUpdated, setPageUpdated } = usePageUpdateContext();
 
   const [workspaces, setWorkspaces] = useState<SidebarWorkspace[]>([]);
+  const [workspacesLoaded, setWorkspacesLoaded] = useState(false);
   const [projects, setProjects] = useState<SidebarProject[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -72,6 +73,7 @@ const AppShell: React.FC<AppShellProps> = ({ userId, current, children }) => {
             workspaceName: workspace.workspace_name,
           }))
       );
+      setWorkspacesLoaded(true);
     })();
     return () => {
       ignore = true;
@@ -173,8 +175,19 @@ const AppShell: React.FC<AppShellProps> = ({ userId, current, children }) => {
     } else if (current?.kind === "workspaceSettings") {
       // 設定の画面は URL のワークスペースを読むので、切り替え先の設定を開く
       router.push(`/editWorkspace?workspaceId=${workspaceId}`);
-    } else {
+    } else if (current?.kind === "tasks") {
+      // アカウント画面の中身はワークスペースに関係しないので、読み直さない（書きかけの入力を守る）
       setPageUpdated(true);
+    }
+  };
+
+  const handleEditWorkspace = () => {
+    const workspaceId = displayWorkspaceId ?? workspaces[0]?.id;
+    if (workspaceId) {
+      router.push(`/editWorkspace?workspaceId=${workspaceId}`);
+    } else if (workspacesLoaded) {
+      // 所属が1つも無いと分かったときだけ、作成へ移す
+      router.push("/createWorkspace?atSignUp=false");
     }
   };
 
@@ -190,9 +203,7 @@ const AppShell: React.FC<AppShellProps> = ({ userId, current, children }) => {
           notificationsOpen={showNotifications}
           notificationsId={NOTIFICATION_LIST_ID}
           onSelectWorkspace={handleSelectWorkspace}
-          onEditWorkspace={() =>
-            router.push(`/editWorkspace?workspaceId=${displayWorkspaceId}`)
-          }
+          onEditWorkspace={handleEditWorkspace}
           onOpenTasks={() => router.push("/task")}
           onOpenProject={(projectId) =>
             router.push(
