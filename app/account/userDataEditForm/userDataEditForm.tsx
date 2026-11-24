@@ -1,9 +1,17 @@
 import { Dispatch, SetStateAction, useState } from "react";
-import styles from "./userDataEditForm.module.css";
+import { Loader2 } from "lucide-react";
+import { FormField } from "@/components/form-field";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import { isAllowedEmail } from "@/app/lib/isAllowedEmail";
+import { FieldNote } from "../fieldNote";
+
+const NAME_ID = "account-user-name";
+const EMAIL_ID = "account-user-email";
+const PASSWORD_ID = "account-user-password";
 
 type formData = {
   name: string;
@@ -44,23 +52,28 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({ ...prevData, [name]: value }));
+    if (name === "email") setEmailError("");
+    if (name === "password") setPasswordError("");
   };
 
   const validate = (email: string, password: string) => {
-    let judge = false;
     const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    const emailInvalid = !isAllowedEmail(email);
+    const passwordInvalid = !regex.test(password);
 
-    if (!isAllowedEmail(email)) {
+    if (emailInvalid) {
       setEmailError("このメールアドレスは使用できません。");
-      judge = true;
     }
-    if (!regex.test(password)) {
-      setPasswordError(
-        "パスワードは英字と数字を含む8文字以上でなければなりません。"
-      );
-      judge = true;
+    if (passwordInvalid) {
+      setPasswordError("パスワードは、英字と数字だけで両方を含む8文字以上にしてください。");
     }
-    return judge;
+    // 送信のボタンが押せない間に失ったフォーカスを、直す欄へ移す
+    if (emailInvalid) {
+      document.getElementById(EMAIL_ID)?.focus();
+    } else if (passwordInvalid) {
+      document.getElementById(PASSWORD_ID)?.focus();
+    }
+    return emailInvalid || passwordInvalid;
   };
 
   const handleUpdateUserData = async (e: React.FormEvent) => {
@@ -81,6 +94,7 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
       console.error("Password verification failed", signInError.message);
       setPasswordError("パスワードが違います。");
       setUpdateLoading(false);
+      document.getElementById(PASSWORD_ID)?.focus();
       return;
     }
 
@@ -126,14 +140,16 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
     } catch (error) {
       console.error("Update User Data", error);
       setNotificationValue({
-        message: "Couldn't update User Data.",
+        message: "名前とメールアドレスを更新できませんでした。",
         color: 1,
       });
     }
     setUpdateLoading(false);
+    // 読み直しの返事を待たずに編集を開いても、送ったパスワードが欄に残らないようにする
+    setFormData((prevData) => ({ ...prevData, password: "" }));
     setPageUpdated(true);
     setNotificationValue({
-      message: "User data was updated !",
+      message: "名前とメールアドレスを更新しました。",
       color: 0,
     });
     setSwitchDisplay({
@@ -144,58 +160,65 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
   };
 
   return (
-    <div className={styles[`user-data-edit-form-area`]}>
-      <form onSubmit={handleUpdateUserData}>
-        <input
-          type="text"
-          placeholder="Name"
-          name="name"
-          required
-          value={formData.name}
-          onChange={handleChange}
-          onFocus={handleFocus}
-          className={styles.input}
-        />
-        <p className={styles.instruction}>Enter your Name</p>
+    <section aria-labelledby="account-user-heading" className="rounded-lg border bg-card p-4">
+      <h2 id="account-user-heading" className="m-0 mb-4 text-base font-semibold">
+        名前・メールアドレスを編集
+      </h2>
+      <form aria-label="名前とメールアドレスの編集" onSubmit={handleUpdateUserData} className="space-y-4">
+        <FormField label="名前" htmlFor={NAME_ID} required>
+          <Input
+            id={NAME_ID}
+            type="text"
+            name="name"
+            autoComplete="name"
+            required
+            autoFocus
+            value={formData.name}
+            onChange={handleChange}
+            onFocus={handleFocus}
+          />
+        </FormField>
 
-        <input
-          type="email"
-          placeholder="Email"
-          name="email"
-          autoComplete="email"
-          required
-          value={formData.email}
-          onChange={handleChange}
-          onFocus={handleFocus}
-          className={styles.input}
-        />
-        {emailError ? (
-          <p className={styles.error}>{emailError}</p>
-        ) : (
-          <p className={styles.instruction}>Enter your Email Address</p>
-        )}
+        <FormField label="メールアドレス" htmlFor={EMAIL_ID} required>
+          <Input
+            id={EMAIL_ID}
+            type="email"
+            name="email"
+            autoComplete="email"
+            required
+            aria-invalid={emailError ? true : undefined}
+            aria-describedby={emailError ? `${EMAIL_ID}-note` : undefined}
+            value={formData.email}
+            onChange={handleChange}
+            onFocus={handleFocus}
+          />
+          <FieldNote id={`${EMAIL_ID}-note`} error={emailError} />
+        </FormField>
 
-        <input
-          type="password"
-          placeholder="Password"
-          name="password"
-          autoComplete="current-password"
-          required
-          value={formData.password}
-          onChange={handleChange}
-          onFocus={handleFocus}
-          className={styles.input}
-        />
-        {passwordError ? (
-          <p className={styles.error}>{passwordError}</p>
-        ) : (
-          <p className={styles.instruction}>Enter Password</p>
-        )}
+        <FormField label="パスワード" htmlFor={PASSWORD_ID} required>
+          <Input
+            id={PASSWORD_ID}
+            type="password"
+            name="password"
+            autoComplete="current-password"
+            required
+            aria-invalid={passwordError ? true : undefined}
+            aria-describedby={`${PASSWORD_ID}-note`}
+            value={formData.password}
+            onChange={handleChange}
+            onFocus={handleFocus}
+          />
+          <FieldNote
+            id={`${PASSWORD_ID}-note`}
+            error={passwordError}
+            hint="本人確認のために、今のパスワードを入力します。"
+          />
+        </FormField>
 
-        <div className={styles[`button-area`]}>
-          <button
-            className={styles[`back-button`]}
+        <div className="flex justify-end gap-2">
+          <Button
             type="button"
+            variant="outline"
             onClick={() =>
               setSwitchDisplay({
                 profile: true,
@@ -204,19 +227,15 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
               })
             }
           >
-            Back
-          </button>
-
-          <button
-            className={styles[`update-button`]}
-            type="submit"
-            disabled={updateLoading}
-          >
-            {updateLoading ? <div className={styles.spinner}></div> : "Update"}
-          </button>
+            戻る
+          </Button>
+          <Button type="submit" disabled={updateLoading}>
+            {updateLoading && <Loader2 className="size-4 animate-spin" aria-hidden />}
+            更新する
+          </Button>
         </div>
       </form>
-    </div>
+    </section>
   );
 };
 
