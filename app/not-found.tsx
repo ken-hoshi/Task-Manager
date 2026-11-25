@@ -1,80 +1,27 @@
 import Image from "next/image";
+import Link from "next/link";
+import { AuthCard } from "@/components/auth-card";
+import { Button } from "@/components/ui/button";
 
-const backgroundContainer: React.CSSProperties = {
-  position: "absolute",
-  width: "100%",
-  height: "60vh",
-  bottom: 0,
-};
-
-const textArea: React.CSSProperties = {
-  backgroundColor: " #ffffff",
-  position: "absolute",
-  top: "50vh",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: "70vh",
-  height: "70vh",
-  borderRadius: "15px",
-  boxShadow: "3px 3px 20px rgba(0, 0, 0, 10)",
-  color: "#000000",
-};
-
-const h1: React.CSSProperties = {
-  fontWeight: 500,
-  fontSize: "8vh",
-  textAlign: "center",
-  marginBottom: 0,
-  color:"red",
-};
-
-const p: React.CSSProperties = {
-  marginTop: 0,
-  textAlign: "center",
-};
-
-const dogArea: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "center",
-  marginTop: "9vh",
-};
-
-const dogImage: React.CSSProperties = {
-  width: "35vh",
-  height: "25vh",
-  position: "relative",
-};
-
+// 無いページを開いたときの画面。入口と同じカードに置く
 const NotFound = () => {
   return (
-    <>
-      <div style={backgroundContainer}>
-        <Image
-          src="/img/background-image1.jpeg"
-          alt="background-image1"
-          style={{ objectFit: "cover", objectPosition: "top", opacity: 0.05 }}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          priority={true}
-        />
-      </div>
-      <div style={textArea}>
-        <h1 style={h1}>404 Not Found</h1>
-        <p style={p}>There is no page you are looking for!</p>
-        <div style={dogArea}>
-          <div style={dogImage}>
-            <Image
-              src="/img/dog.png"
-              alt="dog"
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              priority={true}
-            />
-          </div>
-          <p style={p}>Sorry...</p>
+    <AuthCard>
+      <div className="flex flex-col items-center gap-3 text-center">
+        <div className="relative h-32 w-44">
+          <Image src="/img/dog.png" alt="" fill sizes="176px" className="object-contain" priority />
         </div>
+        <h1 className="text-2xl font-semibold tracking-tight">ページが見つかりません</h1>
+        <p className="text-sm text-muted-foreground">
+          お探しのページは、移動したか削除された可能性があります。
+        </p>
       </div>
-    </>
+      <Button asChild className="w-full">
+        <Link href="/">
+          トップへ戻る
+        </Link>
+      </Button>
+    </AuthCard>
   );
 };
 

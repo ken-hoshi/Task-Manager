@@ -90,23 +90,6 @@
   * {
     @apply border-border outline-ring/50;
   }
-
-  /*
-   * 移行中だけ使う、ブラウザの既定の見た目。preflight が消す見出しの大きさ・太さと、
-   * リンクの色・下線を、まだ Tailwind に移していない画面のために戻す。
-   * 全画面を移し終えたら、このかたまりを消す（台帳 決定20）
-   */
-  h1 { font-size: 2em; font-weight: bold; margin: 0.67em 0; }
-  h2 { font-size: 1.5em; font-weight: bold; margin: 0.83em 0; }
-  h3 { font-size: 1.17em; font-weight: bold; margin: 1em 0; }
-  h4 { font-weight: bold; margin: 1.33em 0; }
-  h5 { font-size: 0.83em; font-weight: bold; margin: 1.67em 0; }
-  h6 { font-size: 0.67em; font-weight: bold; margin: 2.33em 0; }
-  p { margin: 1em 0; }
-  ul { list-style: disc; margin: 1em 0; padding-left: 40px; }
-  ol { list-style: decimal; margin: 1em 0; padding-left: 40px; }
-  a { color: LinkText; text-decoration: underline; }
-  a:visited { color: VisitedText; }
 }
 
 html,
@@ -116,13 +99,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/*
- * まだ移していない画面の下地。文字の大きさ（vh）と背景色は、その画面が前提にしている。
- * 画面を移すたびにその画面の側で上書きし、全画面を移し終えたら消す
- */
+/* 下地。文字の大きさはブラウザの既定（1rem）のままにし、色は変数から取る（台帳 決定5・10） */
 body {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: 2vh;
-  background-color: #d0e0e3;
+  background-color: var(--background);
+  color: var(--foreground);
 }

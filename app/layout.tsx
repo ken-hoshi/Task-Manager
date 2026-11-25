@@ -37,11 +37,6 @@ export default function RootLayout({
         <meta name="description" content={metadata.description} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/img/favicon.ico" />
-        {/* アイコン。画面を Tailwind に移すたびに lucide に置き換え、全画面を移したら外す */}
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
-        />
       </head>
       <body>
         <DisplayWorkspaceIdProvider>

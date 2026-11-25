@@ -167,7 +167,13 @@ const SuspenseCreateWorkspace: React.FC = () => {
     }
   };
 
-  if (loading) return <Loading />;
+  // 読み終えたあとと同じカードの中に出し、表示の位置が跳ばないようにする
+  if (loading)
+    return (
+      <AuthCard>
+        <Loading className="min-h-0" />
+      </AuthCard>
+    );
 
   return (
     <>
