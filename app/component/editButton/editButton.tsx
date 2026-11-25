@@ -39,7 +39,7 @@ const EditButton: React.FC<EditButtonProps> = ({
         "Error get Task ID Project ID: Task ID or Project ID couldn't get."
       );
       setNotificationValue({
-        message: "Couldn't get the Data.",
+        message: "データを読めませんでした。",
         color: 1,
       });
     }

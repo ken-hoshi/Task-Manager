@@ -1,6 +1,5 @@
 "use client";
 
-import styles from "./task.module.css";
 import { useEffect, useMemo, useState } from "react";
 import AppShell from "@/app/component/appShell/appShell";
 import React from "react";
@@ -288,7 +287,7 @@ const Task: React.FC = () => {
       {loading ? (
         <Loading />
       ) : (
-        <div className={styles[`task-container`]}>
+        <div className="relative min-h-full">
           <h1 className="sr-only">タスク</h1>
           <div className="mx-auto max-w-6xl space-y-6 px-6 pt-6 pb-24">
               <ProjectList
@@ -317,7 +316,8 @@ const Task: React.FC = () => {
                 statuses={statuses}
               />
           </div>
-          <div className={styles[`robot-button-container`]}>
+          {/* プロジェクト画面と同じく、右下に置く */}
+          <div className="absolute right-4 bottom-4">
             <RobotButton />
           </div>
         </div>

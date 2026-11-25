@@ -1,7 +1,7 @@
 # Task-Manager
 
 タスク管理アプリ（Next.js + Supabase）。2024年の版を、公開できる水準まで手直ししている。
-画面ごとに UI を作り直している途中で、作り直していない画面には CSS Modules と英語の文言が残る。
+UI は全画面を Tailwind CSS と shadcn/ui で作り直し済み（2026-11）。
 
 Next.js は版が新しく、手元の知識と違うところがある。Next の API を書く前に `AGENTS.md` を読む。
 
@@ -15,7 +15,6 @@ Next.js は版が新しく、手元の知識と違うところがある。Next �
 
 見た目や操作が変わる変更は、dev サーバー（ポート 3000）を内蔵ブラウザで開いても確かめる。jsdom にはアニメーションも配置も無いので、テストが通っても次のことは起きうる。
 - Radix のメニューは、閉じる途中にフォーカスを中へ引き戻す。項目を選んだあとに別の欄へ移すなら、`onCloseAutoFocus` の中で移す
-- 古い画面の CSS が、新しい部品に効く（「作り直しの決まり」）
 - react-datepicker のカレンダーは、選び終えたあと jsdom の中でだけ開き直る。Escape を確かめるテストでは、カレンダーを開かずに済む形にする
 
 ## テストの書き方
@@ -27,15 +26,14 @@ Next.js は版が新しく、手元の知識と違うところがある。Next �
 - Radix の Select は、ボタンへの keyDown Enter で開く。react-select は ArrowDown で開く
 - react-markdown と remark-gfm は ESM だけで配られていて Jest で読めない。使う部品のテストでは差し替える
 
-## 作り直しの決まり
+## 画面の決まり
 
 - 画面の言葉は日本語。ステータスは「未着手・進行中・完了」（DB の名前は英語のまま。`app/lib/taskStatus.ts`）
 - 色は `app/globals.css` の CSS 変数（`--primary`・`--status-*`・`--overdue` など）を、Tailwind のクラスで使う
 - 共通部品を先に探す：`components/ui/`（shadcn/ui）、`components/`（ConfirmDialog・FileDropzone・DateRangeField・MultiSelect・FormField・EmptyState）、`lib/dialog.ts`
 - 操作できる要素は button か link にする。入力欄はすべてラベルを持つ
-- 古い画面の CSS Modules は layer の外にあり、Tailwind のクラスより強い。新しい部品は、古い `dl`・`dt`・`dd`・`table` の外に置く
-- 古い CSS の z-index は 40 以下にする（Sheet・Dialog が 50、通知の帯が 60）
-- 1つの画面は、見た目の PR（`refactor:`）と、そのすぐあとの不具合の PR（`fix:`）に分ける。見た目の PR では保存の処理を変えず、作りを変えたことで変わる動きを説明文に書く
+- 見出し・リストの見た目は Tailwind の土台（preflight）が消す。Markdown を描くところでは付け直す（`app/project/wiki/wiki.tsx` の `MARKDOWN_CLASSES`）
+- 画面を手直しするときは、見た目の PR（`refactor:`）と、そのすぐあとの不具合の PR（`fix:`）に分ける。見た目の PR では保存の処理を変えず、作りを変えたことで変わる動きを説明文に書く
 - 直していない不具合は README の「既知の問題」に書き、直したら消す
 
 ## PR

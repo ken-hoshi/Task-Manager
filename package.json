@@ -17,7 +17,6 @@
     "@tailwindcss/postcss": "4.3.4",
     "axios": "^1.7.7",
     "class-variance-authority": "0.7.1",
-    "classnames": "^2.5.1",
     "cn": "0.5.2",
     "date-fns": "3.6.0",
     "holiday-jp": "^1.0.0",

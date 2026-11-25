@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
@@ -14,6 +14,52 @@ interface ChatMessage {
   user: string;
   content: string;
 }
+
+// AI の答えの文字の決まり。Tailwind の土台は見出し・リスト・引用などの見た目を消すので、ここで付け直す
+const AI_MARKDOWN_CLASSES = cn(
+  "space-y-2 [&_p]:my-0",
+  "[&_:is(h3,h4,h5)]:mb-1 [&_:is(h3,h4,h5)]:font-semibold [&_h3]:text-base [&_:is(h4,h5)]:text-sm",
+  "[&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5",
+  // チェックリストの行だけ点を消す（wiki と同じ）
+  "[&_.task-list-item]:-ml-5 [&_.task-list-item]:list-none [&_.task-list-item_input]:mr-1.5",
+  "[&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground [&_hr]:border-border",
+  "[&_:not(pre)>code]:rounded [&_:not(pre)>code]:bg-background [&_:not(pre)>code]:px-1 [&_:not(pre)>code]:py-0.5 [&_:not(pre)>code]:text-xs"
+);
+
+// 答えの見出しは、パネルの題（h2）の下に来るよう h3 から描く（# と ## は h3、### は h4、それ以下は h5）
+const aiMarkdownComponents: Components = {
+  h1: ({ node, ...props }) => <h3 {...props} />,
+  h2: ({ node, ...props }) => <h3 {...props} />,
+  h3: ({ node, ...props }) => <h4 {...props} />,
+  h4: ({ node, ...props }) => <h5 {...props} />,
+  h5: ({ node, ...props }) => <h5 {...props} />,
+  h6: ({ node, ...props }) => <h5 {...props} />,
+  // チェックリストの欄にも名前を付ける（wiki と同じ）
+  input: ({ node, ...props }) => (
+    <input
+      {...props}
+      aria-label={props.type === "checkbox" ? (props.checked ? "完了" : "未完了") : props["aria-label"]}
+    />
+  ),
+  // 表とコードは、吹き出しの幅を超えるぶんを横にスクロールさせる
+  table: ({ node, ...props }) => (
+    <div className="max-w-full overflow-x-auto">
+      <table
+        {...props}
+        // 列を潰して1文字ずつ折り返さないよう、見出しは折り返さず、長いセルだけ 15rem で折り返す
+        className="w-max border-collapse text-xs [&_td]:max-w-60 [&_td]:border [&_td]:px-2 [&_td]:py-1 [&_td]:align-top [&_th]:border [&_th]:bg-background [&_th]:px-2 [&_th]:py-1 [&_th]:whitespace-nowrap"
+      />
+    </div>
+  ),
+  pre: ({ node, ...props }) => (
+    <pre {...props} className="max-w-full overflow-x-auto rounded-md bg-background p-2 text-xs" />
+  ),
+  a: ({ node, ...props }) => (
+    <a {...props} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+      {props.children}
+    </a>
+  ),
+};
 
 // AI チャットの中身。RobotButton が開く Sheet の中に置く
 const AiChatArea: React.FC = () => {
@@ -125,30 +171,8 @@ const AiChatArea: React.FC = () => {
                 {isUserMessage ? (
                   message.content
                 ) : (
-                  <div className="space-y-2 [&_ol]:my-1 [&_ol]:pl-5 [&_p]:my-0 [&_ul]:my-1 [&_ul]:pl-5">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        // 表とコードは、吹き出しの幅を超えるぶんを横にスクロールさせる
-                        table: ({ node, ...props }) => (
-                          <div className="max-w-full overflow-x-auto">
-                            <table
-                              {...props}
-                              // 列を潰して1文字ずつ折り返さないよう、見出しは折り返さず、長いセルだけ 15rem で折り返す
-                              className="w-max border-collapse text-xs [&_td]:max-w-60 [&_td]:border [&_td]:px-2 [&_td]:py-1 [&_td]:align-top [&_th]:border [&_th]:bg-background [&_th]:px-2 [&_th]:py-1 [&_th]:whitespace-nowrap"
-                            />
-                          </div>
-                        ),
-                        pre: ({ node, ...props }) => (
-                          <pre {...props} className="max-w-full overflow-x-auto rounded-md bg-background p-2 text-xs" />
-                        ),
-                        a: ({ node, ...props }) => (
-                          <a {...props} target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                            {props.children}
-                          </a>
-                        ),
-                      }}
-                    >
+                  <div className={AI_MARKDOWN_CLASSES}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={aiMarkdownComponents}>
                       {message.content}
                     </ReactMarkdown>
                   </div>
