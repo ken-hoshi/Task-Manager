@@ -6,24 +6,17 @@ import { Input } from "@/components/ui/input";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
-import { isAllowedEmail } from "@/app/lib/isAllowedEmail";
 import { FieldNote } from "../fieldNote";
 
 const NAME_ID = "account-user-name";
 const EMAIL_ID = "account-user-email";
 const PASSWORD_ID = "account-user-password";
 
-type formData = {
-  name: string;
-  email: string;
-  password: string;
-};
-
 interface UserDataEditFormProps {
   userId: number;
-  formData: formData;
-  setFormData: Dispatch<SetStateAction<formData>>;
-  copiedFormData: formData;
+  // 保存されている名前とメール。書きかけはこのフォームの中だけに持つ
+  profileData: { name: string; email: string };
+  onSaved: (name: string) => void;
   handleFocus: (event: React.FocusEvent<HTMLInputElement>) => void;
   setSwitchDisplay: Dispatch<
     SetStateAction<{
@@ -34,61 +27,43 @@ interface UserDataEditFormProps {
   >;
 }
 
+// 名前の編集。メールアドレスは確認の流れが無く変更が必ず失敗していたので、表示だけにする（台帳 決定29）
 const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
   userId,
-  formData,
-  setFormData,
-  copiedFormData,
+  profileData,
+  onSaved,
   handleFocus,
   setSwitchDisplay,
 }) => {
   const { setNotificationValue } = useNotificationContext();
   const { setPageUpdated } = usePageUpdateContext();
 
-  const [emailError, setEmailError] = useState("");
+  const [name, setName] = useState(profileData.name);
+  const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
-    if (name === "email") setEmailError("");
-    if (name === "password") setPasswordError("");
-  };
-
-  const validate = (email: string, password: string) => {
-    const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
-    const emailInvalid = !isAllowedEmail(email);
-    const passwordInvalid = !regex.test(password);
-
-    if (emailInvalid) {
-      setEmailError("このメールアドレスは使用できません。");
-    }
-    if (passwordInvalid) {
-      setPasswordError("パスワードは、英字と数字だけで両方を含む8文字以上にしてください。");
-    }
-    // 送信のボタンが押せない間に失ったフォーカスを、直す欄へ移す
-    if (emailInvalid) {
-      document.getElementById(EMAIL_ID)?.focus();
-    } else if (passwordInvalid) {
-      document.getElementById(PASSWORD_ID)?.focus();
-    }
-    return emailInvalid || passwordInvalid;
-  };
+  const backToProfile = () =>
+    setSwitchDisplay({
+      profile: true,
+      userDataForm: false,
+      passwordForm: false,
+    });
 
   const handleUpdateUserData = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { name, email, password } = formData;
 
     if (updateLoading) return;
     setUpdateLoading(true);
+    setPasswordError("");
 
-    const { error: signInError } = await clientSupabase.auth.signInWithPassword(
-      {
-        email: email,
-        password: password,
-      }
-    );
+    // 本人確認は、ログイン中の認証のメールと入れたパスワードで行う（users 表のメールは認証のメールと食い違うことがある）。
+    // パスワードの規則は登録のときのもので、今のパスワードが規則に合うとは限らないので確かめない
+    const { data: authUserData } = await clientSupabase.auth.getUser();
+    const { error: signInError } = await clientSupabase.auth.signInWithPassword({
+      email: authUserData?.user?.email ?? profileData.email,
+      password: password,
+    });
 
     if (signInError) {
       console.error("Password verification failed", signInError.message);
@@ -98,21 +73,10 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
       return;
     }
 
-    setEmailError("");
-    setPasswordError("");
-    if (validate(email, password)) {
-      setUpdateLoading(false);
-      return;
-    }
-
     try {
-      const { error: authUserUpdateError } =
-        await clientSupabase.auth.updateUser({
-          email: email,
-          data: {
-            display_name: name,
-          },
-        });
+      const { error: authUserUpdateError } = await clientSupabase.auth.updateUser({
+        data: { display_name: name },
+      });
 
       if (authUserUpdateError) {
         throw authUserUpdateError;
@@ -120,51 +84,48 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
 
       const { error: userUpdateError } = await clientSupabase
         .from("users")
-        .update({ email: email, name: name })
+        .update({ name: name })
         .eq("id", userId);
 
       if (userUpdateError) {
-        const { error: authUserUpdateError } =
-          await clientSupabase.auth.updateUser({
-            email: copiedFormData.email,
-            data: {
-              display_name: copiedFormData.name,
-            },
-          });
+        // users 表に入らなかったので、認証の側の名前を元に戻す
+        const { error: rollbackError } = await clientSupabase.auth.updateUser({
+          data: { display_name: profileData.name },
+        });
 
-        if (authUserUpdateError) {
-          throw authUserUpdateError;
+        if (rollbackError) {
+          throw rollbackError;
         }
         throw userUpdateError;
       }
+
+      // 保存できたときだけ、プロフィールへ映して閉じる
+      onSaved(name);
+      setPageUpdated(true);
+      setNotificationValue({
+        message: "名前を更新しました。",
+        color: 0,
+      });
+      setUpdateLoading(false);
+      backToProfile();
     } catch (error) {
       console.error("Update User Data", error);
       setNotificationValue({
-        message: "名前とメールアドレスを更新できませんでした。",
+        message: "名前を更新できませんでした。",
         color: 1,
       });
+      setUpdateLoading(false);
+      // 押した「更新する」が待つ間に押せなくなって失ったフォーカスを、名前の欄へ戻す
+      document.getElementById(NAME_ID)?.focus();
     }
-    setUpdateLoading(false);
-    // 読み直しの返事を待たずに編集を開いても、送ったパスワードが欄に残らないようにする
-    setFormData((prevData) => ({ ...prevData, password: "" }));
-    setPageUpdated(true);
-    setNotificationValue({
-      message: "名前とメールアドレスを更新しました。",
-      color: 0,
-    });
-    setSwitchDisplay({
-      profile: true,
-      userDataForm: false,
-      passwordForm: false,
-    });
   };
 
   return (
     <section aria-labelledby="account-user-heading" className="rounded-lg border bg-card p-4">
       <h2 id="account-user-heading" className="m-0 mb-4 text-base font-semibold">
-        名前・メールアドレスを編集
+        名前を編集
       </h2>
-      <form aria-label="名前とメールアドレスの編集" onSubmit={handleUpdateUserData} className="space-y-4">
+      <form aria-label="名前の編集" onSubmit={handleUpdateUserData} className="space-y-4">
         <FormField label="名前" htmlFor={NAME_ID} required>
           <Input
             id={NAME_ID}
@@ -173,26 +134,23 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
             autoComplete="name"
             required
             autoFocus
-            value={formData.name}
-            onChange={handleChange}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             onFocus={handleFocus}
           />
         </FormField>
 
-        <FormField label="メールアドレス" htmlFor={EMAIL_ID} required>
+        <FormField label="メールアドレス" htmlFor={EMAIL_ID}>
           <Input
             id={EMAIL_ID}
             type="email"
             name="email"
-            autoComplete="email"
-            required
-            aria-invalid={emailError ? true : undefined}
-            aria-describedby={emailError ? `${EMAIL_ID}-note` : undefined}
-            value={formData.email}
-            onChange={handleChange}
-            onFocus={handleFocus}
+            readOnly
+            aria-describedby={`${EMAIL_ID}-note`}
+            value={profileData.email}
+            className="bg-muted text-muted-foreground"
           />
-          <FieldNote id={`${EMAIL_ID}-note`} error={emailError} />
+          <FieldNote id={`${EMAIL_ID}-note`} hint="メールアドレスは変更できません。" />
         </FormField>
 
         <FormField label="パスワード" htmlFor={PASSWORD_ID} required>
@@ -204,8 +162,11 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
             required
             aria-invalid={passwordError ? true : undefined}
             aria-describedby={`${PASSWORD_ID}-note`}
-            value={formData.password}
-            onChange={handleChange}
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setPasswordError("");
+            }}
             onFocus={handleFocus}
           />
           <FieldNote
@@ -216,17 +177,7 @@ const UserDataEditForm: React.FC<UserDataEditFormProps> = ({
         </FormField>
 
         <div className="flex justify-end gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() =>
-              setSwitchDisplay({
-                profile: true,
-                userDataForm: false,
-                passwordForm: false,
-              })
-            }
-          >
+          <Button type="button" variant="outline" onClick={backToProfile}>
             戻る
           </Button>
           <Button type="submit" disabled={updateLoading}>

@@ -194,6 +194,19 @@ describe("ワークスペースの作成", () => {
     consoleError.mockRestore();
   });
 
+  it("設定から開いて作成したら、参加の画面へ今のワークスペースも引き継ぐ", async () => {
+    setResponses("rpc:create_workspace", { data: "space-1", error: null });
+    await renderCreate("atSignUp=false&workspaceId=7");
+
+    fireEvent.change(nameInput(), { target: { value: "開発チーム" } });
+    await act(async () => {
+      fireEvent.click(button("作成する"));
+    });
+
+    // 引き継がないと、参加の画面の戻るが設定ではなくログアウトになる
+    expect(mockPush).toHaveBeenCalledWith("/joinWorkspace?atSignUp=false&workspaceId=7");
+  });
+
   it("作成の返事を待つ間は押せず、2回送らない", async () => {
     setResponses("rpc:create_workspace", new Promise(() => {}) as never);
     await renderCreate();
@@ -242,6 +255,53 @@ describe("ワークスペースへの参加", () => {
     expect(spaceInput()).toHaveValue("");
   });
 
+  it("参加するワークスペースを選ぶまで、「参加する」は押せない", async () => {
+    setResponses("rpc:find_workspace_by_space_id", { data: { id: 3, workspace_name: "営業" }, error: null });
+    await renderJoin();
+    expect(button("参加する")).toBeDisabled();
+
+    await search("space-3");
+    expect(button("参加する")).toBeEnabled();
+
+    fireEvent.click(button("「営業」を外す"));
+    expect(button("参加する")).toBeDisabled();
+  });
+
+  it("1つ選んだあとに次の合言葉で Enter を押しても、参加の送信を止めて検索する", async () => {
+    setResponses(
+      "rpc:find_workspace_by_space_id",
+      { data: { id: 3, workspace_name: "営業" }, error: null },
+      { data: { id: 4, workspace_name: "開発" }, error: null }
+    );
+    await renderJoin();
+    await search("space-3");
+
+    fireEvent.change(spaceInput(), { target: { value: "space-4" } });
+    let notPrevented = true;
+    await act(async () => {
+      notPrevented = fireEvent.keyDown(spaceInput(), { key: "Enter", code: "Enter" });
+    });
+
+    // false は Enter の既定の動き（フォームの送信）を止めたこと
+    expect(notPrevented).toBe(false);
+    expect(rpcArgsOf("join_workspaces")).toEqual([]);
+    expect(within(selected()).getByText("開発")).toBeInTheDocument();
+  });
+
+  it("合言葉の欄で Enter を押すと、参加ではなく検索する", async () => {
+    setResponses("rpc:find_workspace_by_space_id", { data: { id: 3, workspace_name: "営業" }, error: null });
+    await renderJoin();
+
+    fireEvent.change(spaceInput(), { target: { value: "space-3" } });
+    await act(async () => {
+      fireEvent.keyDown(spaceInput(), { key: "Enter", code: "Enter" });
+    });
+
+    expect(rpcArgsOf("find_workspace_by_space_id")).toEqual([{ p_space_id: "space-3" }]);
+    expect(rpcArgsOf("join_workspaces")).toEqual([]);
+    expect(within(selected()).getByText("営業")).toBeInTheDocument();
+  });
+
   it("検索の返事を待つ間にもう一度押しても、2回検索しない", async () => {
     setResponses("rpc:find_workspace_by_space_id", new Promise(() => {}) as never);
     await renderJoin();
@@ -272,6 +332,8 @@ describe("ワークスペースへの参加", () => {
     await search("nothing");
 
     expect(screen.getByRole("alert")).toHaveTextContent("ワークスペースが見つかりません。再度検索してください。");
+    // 見つからないときは、id の無い条件で所属を問い合わせない
+    expect(opsOf("workspace_users")).toEqual([]);
     expect(spaceInput()).toHaveAttribute("aria-invalid", "true");
     expect(spaceInput()).toHaveAccessibleDescription("ワークスペースが見つかりません。再度検索してください。");
 

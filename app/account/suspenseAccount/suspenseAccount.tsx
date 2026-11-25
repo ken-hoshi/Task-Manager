@@ -9,7 +9,6 @@ import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import PasswordEditForm from "../passwordEditForm/passwordEditForm";
 import Profile, {
   EDIT_PASSWORD_BUTTON_ID,
@@ -30,7 +29,6 @@ const SuspenseAccount: React.FC = () => {
     useDisplayWorkspaceIdContext();
   const { setBackForm } = useFormContext();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [userId, setUserId] = useState(0);
   const [loading, setLoading] = useState(true);
   const [switchDisplay, setSwitchDisplay] = useState({
@@ -38,24 +36,15 @@ const SuspenseAccount: React.FC = () => {
     userDataForm: false,
     passwordForm: false,
   });
-  const [formData, setFormData] = useState({
+  // 保存されている名前とメール。書きかけは各フォームの中だけに持ち、保存できたときだけここへ映す
+  const [profileData, setProfileData] = useState({
     name: "",
     email: "",
-    password: "",
   });
-  const [copiedFormData, setCopiedFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
-  // サイドバーでワークスペースを切り替えると読み直しが走る。編集中なら、書きかけの入力を消さない
-  const isEditing = useRef(false);
   const openedForm = useRef<string | null>(null);
   const latestDisplayWorkspaceId = useRef(displayWorkspaceId);
 
   useEffect(() => {
-    isEditing.current = !switchDisplay.profile;
-
     // フォームを閉じると押したボタンが消えるので、開いたときのボタンへフォーカスを戻す
     if (switchDisplay.userDataForm) {
       openedForm.current = EDIT_USER_BUTTON_ID;
@@ -119,18 +108,7 @@ const SuspenseAccount: React.FC = () => {
         }
 
         if (userData) {
-          if (!isEditing.current) {
-            setFormData({
-              name: userData.name,
-              email: userData.email,
-              password: "",
-            });
-          }
-          setCopiedFormData({
-            name: userData.name,
-            email: userData.email,
-            password: "",
-          });
+          setProfileData({ name: userData.name, email: userData.email });
         } else {
           throw new Error("User ID couldn't get.");
         }
@@ -157,45 +135,6 @@ const SuspenseAccount: React.FC = () => {
     event.target.select();
   };
 
-  const openModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
-
-  const handleAccountDelete = async () => {
-    try {
-      const { data: authUserData, error: getAuthUserDataError } =
-        await clientSupabase.auth.getUser();
-
-      if (getAuthUserDataError) {
-        throw getAuthUserDataError;
-      }
-
-      const userId = authUserData?.user?.id;
-      if (userId) {
-        const { error: userDeleteError } =
-          await clientSupabase.auth.admin.deleteUser(userId);
-
-        if (userDeleteError) {
-          throw userDeleteError;
-        }
-      }
-      router.push("/");
-    } catch (error) {
-      console.error("Delete User", error);
-      setNotificationValue({
-        message: "アカウントを削除できませんでした。",
-        color: 1,
-      });
-      alert(
-        "バックエンドサービスが無料プランのため現在、削除機能が使用できません。管理者に削除依頼をしてください。 (Error Code:403)"
-      );
-    }
-  };
-
   return (
     <>
       {notificationValue.message && (
@@ -213,19 +152,14 @@ const SuspenseAccount: React.FC = () => {
             <h1 className="text-xl font-semibold">アカウント</h1>
 
             {switchDisplay.profile && (
-              <Profile
-                formData={formData}
-                setSwitchDisplay={setSwitchDisplay}
-                openModal={openModal}
-              />
+              <Profile profileData={profileData} setSwitchDisplay={setSwitchDisplay} />
             )}
 
             {switchDisplay.userDataForm && (
               <UserDataEditForm
                 userId={userId}
-                formData={formData}
-                setFormData={setFormData}
-                copiedFormData={copiedFormData}
+                profileData={profileData}
+                onSaved={(name) => setProfileData((prev) => ({ ...prev, name }))}
                 handleFocus={handleFocus}
                 setSwitchDisplay={setSwitchDisplay}
               />
@@ -235,19 +169,7 @@ const SuspenseAccount: React.FC = () => {
               <PasswordEditForm
                 handleFocus={handleFocus}
                 setSwitchDisplay={setSwitchDisplay}
-                email={formData.email}
-              />
-            )}
-
-            {isModalOpen && (
-              <ConfirmDialog
-                title="アカウントを削除しますか？"
-                description="ログインできなくなり、元に戻せません。"
-                confirmLabel="削除する"
-                pendingLabel="削除中"
-                destructive
-                onConfirm={handleAccountDelete}
-                onCancel={closeModal}
+                email={profileData.email}
               />
             )}
           </div>

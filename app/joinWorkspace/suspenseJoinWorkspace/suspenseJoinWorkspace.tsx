@@ -140,18 +140,19 @@ const SuspenseJoinWorkspace: React.FC = () => {
         .rpc("find_workspace_by_space_id", { p_space_id: spaceId })
         .single<{ id: number; workspace_name: string }>();
 
-    const { data: workspaceUsersData } = await clientSupabase
-      .from("workspace_users")
-      .select("id")
-      .eq("workspace_id", workspaceData?.id)
-      .eq("user_id", userId)
-      .single();
-
+    // 見つからないときは、id の無い条件で所属を問い合わせない
     if (!workspaceData || selectWorkspaceDataError) {
       setErrorMessage("ワークスペースが見つかりません。再度検索してください。");
       setSearchLoading(false);
       return;
     }
+
+    const { data: workspaceUsersData } = await clientSupabase
+      .from("workspace_users")
+      .select("id")
+      .eq("workspace_id", workspaceData.id)
+      .eq("user_id", userId)
+      .single();
     if (
       selectedWorkspaceList.find(
         (selectedWorkspace) => selectedWorkspace.id === workspaceData.id
@@ -282,6 +283,13 @@ const SuspenseJoinWorkspace: React.FC = () => {
                 aria-invalid={errorMessage ? true : undefined}
                 aria-describedby={`${SPACE_ID_INPUT_ID}-note`}
                 value={spaceId}
+                onKeyDown={(e) => {
+                  // Enter は参加の送信ではなく、検索にする（日本語の変換の確定は除く）
+                  if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                    e.preventDefault();
+                    searchSpaceId();
+                  }
+                }}
                 onChange={(e) => {
                   setSpaceId(e.target.value);
                   setErrorMessage("");
@@ -330,7 +338,11 @@ const SuspenseJoinWorkspace: React.FC = () => {
             </ul>
           )}
 
-          <Button type="submit" className="w-full" disabled={buttonLoading}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={buttonLoading || selectedWorkspaceList.length === 0}
+          >
             {buttonLoading && <Loader2 className="size-4 animate-spin" aria-hidden />}
             参加する
           </Button>

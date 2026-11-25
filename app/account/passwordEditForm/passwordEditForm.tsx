@@ -69,9 +69,11 @@ const PasswordEditForm: React.FC<PasswordEditForm> = ({
     if (confirmInvalid) {
       setConfirmPasswordError("確認用のパスワードが、新しいパスワードと違います。");
     }
+    // 本人確認は、ログイン中の認証のメールで行う（users 表のメールは認証のメールと食い違うことがある）
+    const { data: authUserData } = await clientSupabase.auth.getUser();
     const { error: signInError } = await clientSupabase.auth.signInWithPassword(
       {
-        email: email,
+        email: authUserData?.user?.email ?? email,
         password: currentPassword,
       }
     );
@@ -114,24 +116,29 @@ const PasswordEditForm: React.FC<PasswordEditForm> = ({
       if (passwordUpdateError) {
         throw passwordUpdateError;
       }
+
+      // 保存できたときだけ、知らせて閉じる（以前は失敗のあとも「更新しました」で上書きしていた）
+      setUpdateLoading(false);
+      setPageUpdated(true);
+      setNotificationValue({
+        message: "パスワードを更新しました。",
+        color: 0,
+      });
+      setSwitchDisplay({
+        profile: true,
+        userDataForm: false,
+        passwordForm: false,
+      });
     } catch (error) {
       console.error("Update Password", error);
       setNotificationValue({
         message: "パスワードを更新できませんでした。",
         color: 1,
       });
+      setUpdateLoading(false);
+      // 押した「更新する」が待つ間に押せなくなって失ったフォーカスを、新しいパスワードの欄へ戻す
+      document.getElementById(NEW_ID)?.focus();
     }
-    setUpdateLoading(false);
-    setPageUpdated(true);
-    setNotificationValue({
-      message: "パスワードを更新しました。",
-      color: 0,
-    });
-    setSwitchDisplay({
-      profile: true,
-      userDataForm: false,
-      passwordForm: false,
-    });
   };
 
   return (

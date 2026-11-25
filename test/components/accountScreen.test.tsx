@@ -116,9 +116,8 @@ describe("表示", () => {
     expect(screen.getByRole("heading", { level: 1, name: "アカウント" })).toBeInTheDocument();
     expect(screen.getByText("山田")).toBeInTheDocument();
     expect(screen.getByText("yamada@example.com")).toBeInTheDocument();
-    expect(button("名前・メールアドレスを編集")).toBeInTheDocument();
+    expect(button("名前を編集")).toBeInTheDocument();
     expect(button("パスワードを編集")).toBeInTheDocument();
-    expect(button("アカウントを削除")).toBeInTheDocument();
   });
 
   it("表示中のワークスペースが無ければ、最初のものを選ぶ", async () => {
@@ -191,10 +190,10 @@ describe("表示", () => {
   });
 });
 
-describe("名前とメールアドレスの編集", () => {
+describe("名前の編集", () => {
   const open = async () => {
     await renderPage();
-    fireEvent.click(button("名前・メールアドレスを編集"));
+    fireEvent.click(button("名前を編集"));
   };
 
   it("今の値をラベル付きの欄に出し、戻るとボタンへフォーカスを戻す", async () => {
@@ -202,35 +201,35 @@ describe("名前とメールアドレスの編集", () => {
 
     expect(field(/^名前\*/)).toHaveValue("山田");
     expect(field(/^メールアドレス/)).toHaveValue("yamada@example.com");
+    // メールの変更は確認の流れが無く必ず失敗していたので、表示だけにする（台帳 決定29）
+    expect(field(/^メールアドレス/)).toHaveAttribute("readonly");
+    expect(field(/^メールアドレス/)).toHaveAccessibleDescription("メールアドレスは変更できません。");
     expect(field(/^パスワード/)).toHaveAccessibleDescription("本人確認のために、今のパスワードを入力します。");
 
     fireEvent.click(button("戻る"));
-    expect(button("名前・メールアドレスを編集")).toHaveFocus();
+    expect(button("名前を編集")).toHaveFocus();
   });
 
-  it("保存すると、認証と users 表の両方へ送る", async () => {
+  it("保存すると、名前だけを認証と users 表の両方へ送る", async () => {
     await open();
     change(field(/^名前\*/), "山田太郎");
     change(field(/^パスワード/), "abcd1234");
     await submit();
 
     expect(mockSignIn).toHaveBeenCalledWith({ email: "yamada@example.com", password: "abcd1234" });
-    expect(mockUpdateUser).toHaveBeenCalledWith({
-      email: "yamada@example.com",
-      data: { display_name: "山田太郎" },
-    });
+    expect(mockUpdateUser).toHaveBeenCalledWith({ data: { display_name: "山田太郎" } });
     const ops = opsOf("users");
     const updateIndex = ops.findIndex(([op]) => op === "update");
     expect(ops.slice(updateIndex, updateIndex + 2)).toEqual([
-      ["update", [{ email: "yamada@example.com", name: "山田太郎" }]],
+      ["update", [{ name: "山田太郎" }]],
       ["eq", ["id", 5]],
     ]);
     expect(mockSetPageUpdated).toHaveBeenCalledWith(true);
-    expect(mockSetNotification).toHaveBeenCalledWith({ message: "名前とメールアドレスを更新しました。", color: 0 });
-    expect(button("名前・メールアドレスを編集")).toHaveFocus();
+    expect(mockSetNotification).toHaveBeenCalledWith({ message: "名前を更新しました。", color: 0 });
+    expect(button("名前を編集")).toHaveFocus();
 
     // 送ったパスワードを、次に開いたフォームへ残さない
-    fireEvent.click(button("名前・メールアドレスを編集"));
+    fireEvent.click(button("名前を編集"));
     expect(field(/^パスワード/)).toHaveValue("");
   });
 
@@ -246,7 +245,7 @@ describe("名前とメールアドレスの編集", () => {
     outside.focus();
     await act(async () => finish({ error: null }));
 
-    expect(button("名前・メールアドレスを編集")).toBeInTheDocument();
+    expect(button("名前を編集")).toBeInTheDocument();
     expect(outside).toHaveFocus();
     outside.remove();
   });
@@ -269,25 +268,67 @@ describe("名前とメールアドレスの編集", () => {
     consoleError.mockRestore();
   });
 
-  it("使えないメールなら、欄にエラーを出して保存しない", async () => {
-    process.env.NEXT_PUBLIC_ALLOWED_EMAIL_DOMAIN = "example.com";
+  it("今のパスワードが今の規則に合わなくても、本人確認が通れば保存できる", async () => {
     await open();
-    change(field(/^メールアドレス/), "yamada@other.test");
+    change(field(/^名前\*/), "山田太郎");
+    change(field(/^パスワード/), "old-pass!");
+    await submit();
+
+    expect(mockSignIn).toHaveBeenCalledWith({ email: "yamada@example.com", password: "old-pass!" });
+    expect(screen.queryByText(PASSWORD_RULE)).not.toBeInTheDocument();
+    expect(mockUpdateUser).toHaveBeenCalledWith({ data: { display_name: "山田太郎" } });
+  });
+
+  it("保存に失敗したら、失敗だけを知らせ、フォームと入力を残す", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    mockUpdateUser.mockResolvedValue({ error: { message: "boom" } });
+    await open();
+    change(field(/^名前\*/), "山田太郎");
+    change(field(/^パスワード/), "abcd1234");
+    button("更新する").focus();
+    await submit();
+
+    expect(mockSetNotification).toHaveBeenCalledWith({ message: "名前を更新できませんでした。", color: 1 });
+    expect(mockSetNotification).not.toHaveBeenCalledWith({ message: "名前を更新しました。", color: 0 });
+    expect(field(/^名前\*/)).toHaveValue("山田太郎");
+    expect(button("更新する")).toBeEnabled();
+    // 押した「更新する」が待つ間に押せなくなって失ったフォーカスを、名前の欄へ戻す
+    expect(field(/^名前\*/)).toHaveFocus();
+    consoleError.mockRestore();
+  });
+
+  it("本人確認は、ログイン中の認証のメールで行う", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "auth-1", email: "auth@example.com" } }, error: null });
+    await open();
     change(field(/^パスワード/), "abcd1234");
     await submit();
 
-    expect(screen.getByRole("alert")).toHaveTextContent("このメールアドレスは使用できません。");
-    expect(field(/^メールアドレス/)).toHaveFocus();
-    expect(mockUpdateUser).not.toHaveBeenCalled();
+    expect(mockSignIn).toHaveBeenCalledWith({ email: "auth@example.com", password: "abcd1234" });
   });
 
-  it("パスワードが規則に合わなければ、保存しない", async () => {
+  it("保存せずに戻ると、書きかけの名前をプロフィールに残さない", async () => {
     await open();
-    change(field(/^パスワード/), "abc");
+    change(field(/^名前\*/), "書きかけの名前");
+    fireEvent.click(button("戻る"));
+
+    expect(screen.getByText("山田")).toBeInTheDocument();
+    expect(screen.queryByText("書きかけの名前")).not.toBeInTheDocument();
+    fireEvent.click(button("名前を編集"));
+    expect(field(/^名前\*/)).toHaveValue("山田");
+  });
+
+  it("メールの欄が書き換わって戻っても、パスワードの変更は今のメールで本人確認する", async () => {
+    await open();
+    // 表示だけの欄でも、値が書き換わったときに書きかけが外へ漏れないことを確かめる
+    change(field(/^メールアドレス/), "other@example.com");
+    fireEvent.click(button("戻る"));
+    fireEvent.click(button("パスワードを編集"));
+    change(screen.getByLabelText(/^新しいパスワード\*/), "newpass123");
+    change(screen.getByLabelText(/^新しいパスワード（確認）/), "newpass123");
+    change(screen.getByLabelText(/^今のパスワード/), "abcd1234");
     await submit();
 
-    expect(screen.getByRole("alert")).toHaveTextContent(PASSWORD_RULE);
-    expect(mockUpdateUser).not.toHaveBeenCalled();
+    expect(mockSignIn).toHaveBeenCalledWith({ email: "yamada@example.com", password: "abcd1234" });
   });
 
   it("users 表の更新に失敗したら、認証の側を元の値へ戻す", async () => {
@@ -303,10 +344,9 @@ describe("名前とメールアドレスの編集", () => {
     change(field(/^パスワード/), "abcd1234");
     await submit();
 
-    expect(mockUpdateUser).toHaveBeenLastCalledWith({
-      email: "yamada@example.com",
-      data: { display_name: "山田" },
-    });
+    expect(mockUpdateUser).toHaveBeenLastCalledWith({ data: { display_name: "山田" } });
+    expect(mockSetNotification).toHaveBeenCalledWith({ message: "名前を更新できませんでした。", color: 1 });
+    expect(mockSetNotification).not.toHaveBeenCalledWith({ message: "名前を更新しました。", color: 0 });
     consoleError.mockRestore();
   });
 
@@ -318,14 +358,14 @@ describe("名前とメールアドレスの編集", () => {
     expect(button("更新する")).toBeDisabled();
 
     await act(async () => {
-      fireEvent.submit(screen.getByRole("form", { name: "名前とメールアドレスの編集" }));
+      fireEvent.submit(screen.getByRole("form", { name: "名前の編集" }));
     });
     expect(mockSignIn).toHaveBeenCalledTimes(1);
   });
 
   it("編集中に読み直しが走っても、書きかけの入力を消さない", async () => {
     const { rerender } = await renderPage();
-    fireEvent.click(button("名前・メールアドレスを編集"));
+    fireEvent.click(button("名前を編集"));
     change(field(/^名前\*/), "書きかけ");
 
     mockPageUpdated = true;
@@ -407,33 +447,38 @@ describe("パスワードの編集", () => {
     expect(mockSignIn).not.toHaveBeenCalled();
     expect(button("パスワードを編集")).toHaveFocus();
   });
+
+  it("保存に失敗したら、失敗だけを知らせ、フォームを残す", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    mockUpdateUser.mockResolvedValue({ error: { message: "boom" } });
+    await open();
+    fill("newpass123", "newpass123", "abcd1234");
+    button("更新する").focus();
+    await submit();
+
+    expect(mockSetNotification).toHaveBeenCalledWith({ message: "パスワードを更新できませんでした。", color: 1 });
+    expect(mockSetNotification).not.toHaveBeenCalledWith({ message: "パスワードを更新しました。", color: 0 });
+    expect(button("更新する")).toBeEnabled();
+    expect(field(/^新しいパスワード\*/)).toHaveFocus();
+    consoleError.mockRestore();
+  });
+
+  it("本人確認は、ログイン中の認証のメールで行う", async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: "auth-1", email: "auth@example.com" } }, error: null });
+    await open();
+    fill("newpass123", "newpass123", "abcd1234");
+    await submit();
+
+    expect(mockSignIn).toHaveBeenCalledWith({ email: "auth@example.com", password: "abcd1234" });
+  });
 });
 
 describe("アカウントの削除", () => {
-  it("確認でキャンセルすると、何も送らない", async () => {
+  // ブラウザから管理者用の API を呼んでいて必ず失敗していたので、入口ごと消す（台帳 決定28）
+  it("削除の入口を出さず、管理者用の API も呼ばない", async () => {
     await renderPage();
-    fireEvent.click(button("アカウントを削除"));
-    expect(screen.getByRole("dialog", { name: "アカウントを削除しますか？" })).toBeInTheDocument();
 
-    fireEvent.click(button("キャンセル"));
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "アカウントを削除" })).not.toBeInTheDocument();
     expect(mockDeleteUser).not.toHaveBeenCalled();
-  });
-
-  it("削除に失敗したら、日本語で知らせる", async () => {
-    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
-    const alertSpy = jest.spyOn(window, "alert").mockImplementation(() => {});
-    await renderPage();
-    fireEvent.click(button("アカウントを削除"));
-    await act(async () => {
-      fireEvent.click(button("削除する"));
-    });
-
-    expect(mockDeleteUser).toHaveBeenCalledWith("auth-1");
-    expect(mockSetNotification).toHaveBeenCalledWith({ message: "アカウントを削除できませんでした。", color: 1 });
-    expect(alertSpy).toHaveBeenCalled();
-    alertSpy.mockRestore();
-    consoleError.mockRestore();
   });
 });

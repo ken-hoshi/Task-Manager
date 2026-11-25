@@ -21,6 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Check, GripVertical, Loader2, Pencil, Plus, Tags, Trash2, X } from "lucide-react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,7 +88,7 @@ const GenreNameForm: React.FC<{
       <Button type="button" variant="ghost" size="icon-sm" aria-label="入力をやめる" onClick={onCancel}>
         <X aria-hidden />
       </Button>
-      <Button type="submit" size="icon-sm" aria-label="ジャンルを保存">
+      <Button type="submit" size="icon-sm" aria-label="ジャンルを保存" disabled={saving}>
         {saving ? <Loader2 className="animate-spin" aria-hidden /> : <Check aria-hidden />}
       </Button>
     </form>
@@ -208,6 +209,7 @@ const TaskGenreSection: React.FC<TaskGenreSectionProps> = ({
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const returnFocusTo = useRef<string | null>(null);
   const focusAddAfterDelete = useRef(false);
+  const [deleteTarget, setDeleteTarget] = useState<WorkspaceTaskGenre | null>(null);
   // 保存の返事を待つ間に別のフォームへ移っていたら、そのフォームを閉じない
   const latestForm = useRef(activeForm);
   const sensors = useSensors(
@@ -235,15 +237,19 @@ const TaskGenreSection: React.FC<TaskGenreSectionProps> = ({
     target?.focus();
   }, [activeForm]);
 
-  // 行を消すと押したボタンも消える。フォーカスを失ったときだけ「追加」へ移す（別の欄に入力中なら動かさない）
+  // 行を消すと押したボタンも消える。フォーカスを失ったときだけ「追加」へ移す（別の欄に入力中なら動かさない）。
+  // Radix のダイアログが閉じたあとフォーカスを戻す処理（setTimeout）より後に確かめる
   useEffect(() => {
-    if (!focusAddAfterDelete.current) return;
+    if (deleteTarget || !focusAddAfterDelete.current) return;
     focusAddAfterDelete.current = false;
-    const active = document.activeElement;
-    if (!active || active === document.body) {
-      document.getElementById(ADD_BUTTON_ID)?.focus();
-    }
-  }, [genres]);
+    const timer = setTimeout(() => {
+      const active = document.activeElement;
+      if (!active || active === document.body) {
+        document.getElementById(ADD_BUTTON_ID)?.focus();
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [genres, deleteTarget]);
 
   const closeForm = (form: ActiveForm, focusId: string) => {
     if (!isSameForm(latestForm.current, form)) return;
@@ -254,6 +260,8 @@ const TaskGenreSection: React.FC<TaskGenreSectionProps> = ({
   const sortedGenres = [...genres].sort((a, b) => a.sortId - b.sortId);
 
   const handleAdd = async (name: string) => {
+    // 返事を待つ間に Enter などでもう一度送っても、2回は入れない
+    if (adding) return;
     setAdding(true);
     try {
       const lastSortId = genres.length > 0 ? genres[genres.length - 1].sortId : 0;
@@ -299,6 +307,7 @@ const TaskGenreSection: React.FC<TaskGenreSectionProps> = ({
   };
 
   const handleUpdate = async (id: number, name: string) => {
+    if (savingId !== null) return;
     setSavingId(id);
     try {
       const { error: updateError } = await clientSupabase
@@ -332,6 +341,9 @@ const TaskGenreSection: React.FC<TaskGenreSectionProps> = ({
     // 以前は削除中にボタンを消していたので、続けて押しても2回は送らない
     if (deletingId !== null) return;
     setDeletingId(id);
+    // DB から消えたあとに詰め直しで失敗したときは、「削除できなかった」とは言わない
+    let deleted = false;
+    const previousGenres = [...genres];
     try {
       const target = genres.find((genre) => genre.id === id);
 
@@ -339,7 +351,6 @@ const TaskGenreSection: React.FC<TaskGenreSectionProps> = ({
         throw new Error("deleteWorkspaceTaskGenre couldn't get.");
       }
 
-      const previousGenres = [...genres];
       const shiftedGenres: WorkspaceTaskGenre[] = [];
 
       const remainingGenres = genres
@@ -361,6 +372,7 @@ const TaskGenreSection: React.FC<TaskGenreSectionProps> = ({
       if (deleteError) {
         throw deleteError;
       }
+      deleted = true;
 
       for (const genre of shiftedGenres) {
         const { error: updateError } = await clientSupabase
@@ -397,12 +409,26 @@ const TaskGenreSection: React.FC<TaskGenreSectionProps> = ({
       });
     } catch (error) {
       console.error("Error Delete Task Genre Name", error);
-      setNotificationValue({
-        message: "ジャンルを削除できませんでした。",
-        color: 1,
-      });
+      if (deleted) {
+        // 行は DB から消えている。残りの行は巻き戻した元の順番のまま出す
+        focusAddAfterDelete.current = true;
+        setGenres(previousGenres.filter((genre) => genre.id !== id));
+        if (activeForm?.type === "editGenre" && activeForm.id === id) {
+          setActiveForm(null);
+        }
+        setNotificationValue({
+          message: "ジャンルを削除しましたが、並び順を保存できませんでした。",
+          color: 1,
+        });
+      } else {
+        setNotificationValue({
+          message: "ジャンルを削除できませんでした。",
+          color: 1,
+        });
+      }
     }
     setDeletingId(null);
+    setDeleteTarget(null);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -412,9 +438,10 @@ const TaskGenreSection: React.FC<TaskGenreSectionProps> = ({
     const sortedItems = [...genres].sort((a, b) => a.sortId - b.sortId);
     const oldIndex = sortedItems.findIndex((item) => item.id === Number(active.id));
     const newIndex = sortedItems.findIndex((item) => item.id === Number(over.id));
+    // 画面の順番の値も DB と同じ1始まりにする（0始まりだと、次に足す行の値が既存の行と重なる）
     const updatedItems = arrayMove(sortedItems, oldIndex, newIndex).map((item, index) => ({
       ...item,
-      sortId: index,
+      sortId: index + 1,
     }));
 
     try {
@@ -448,7 +475,7 @@ const TaskGenreSection: React.FC<TaskGenreSectionProps> = ({
           console.error(`ロールバック失敗: taskGenre id=${original.id}`, rollbackError);
         }
       }
-      throw error;
+      // 失敗は知らせて元に戻したので、投げ直さない（投げると未処理の例外になる）
     }
   };
 
@@ -499,7 +526,7 @@ const TaskGenreSection: React.FC<TaskGenreSectionProps> = ({
                   onEdit={() => setActiveForm({ type: "editGenre", id: genre.id })}
                   onCancel={() => closeForm({ type: "editGenre", id: genre.id }, editButtonId(genre.id))}
                   onSave={(name) => handleUpdate(genre.id, name)}
-                  onDelete={() => handleDelete(genre.id)}
+                  onDelete={() => setDeleteTarget(genre)}
                 />
               ))}
             </ul>
@@ -507,6 +534,18 @@ const TaskGenreSection: React.FC<TaskGenreSectionProps> = ({
         </DndContext>
       ) : (
         activeForm?.type !== "addGenre" && <EmptyState icon={Tags} title="ジャンルはまだありません" />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title={`「${deleteTarget.taskGenreName}」を削除しますか？`}
+          description="このワークスペースのジャンルから消します。元に戻せません。"
+          confirmLabel="削除する"
+          pendingLabel="削除中"
+          destructive
+          onConfirm={() => handleDelete(deleteTarget.id)}
+          onCancel={() => setDeleteTarget(null)}
+        />
       )}
     </div>
   );

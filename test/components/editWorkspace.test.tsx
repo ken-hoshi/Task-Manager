@@ -101,6 +101,14 @@ const renderPage = async () => {
   return result;
 };
 
+// 削除のボタンを押し、確認で「削除する」を押す
+const deleteGenre = async (name: string) => {
+  fireEvent.click(screen.getByRole("button", { name: `「${name}」を削除` }));
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "削除する" }));
+  });
+};
+
 const openMemberTab = () => {
   fireEvent.mouseDown(screen.getByRole("tab", { name: "メンバー" }), { button: 0 });
 };
@@ -380,13 +388,29 @@ describe("ジャンル", () => {
     consoleError.mockRestore();
   });
 
+  it("削除は確認を挟み、キャンセルなら何も送らない", async () => {
+    await renderPage();
+
+    button("「設計」を削除").focus();
+    fireEvent.click(button("「設計」を削除"));
+    expect(screen.getByRole("dialog", { name: "「設計」を削除しますか？" })).toBeInTheDocument();
+    expect(opsOf("workspace_task_genre")).toEqual([]);
+
+    await act(async () => {
+      fireEvent.click(button("キャンセル"));
+    });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(opsOf("workspace_task_genre")).toEqual([]);
+    expect(genreNames()).toEqual(["調査", "設計", "実装"]);
+    // 確認を閉じたら、押した削除のボタンへフォーカスを戻す
+    expect(button("「設計」を削除")).toHaveFocus();
+  });
+
   it("削除すると行を消し、後ろの行の順番を1つ詰める", async () => {
     setResponses("workspace_task_genre", ok());
     await renderPage();
 
-    await act(async () => {
-      fireEvent.click(button("「設計」を削除"));
-    });
+    await deleteGenre("設計");
 
     expect(opsOf("workspace_task_genre")).toEqual([
       ["delete", []],
@@ -396,7 +420,7 @@ describe("ジャンル", () => {
     ]);
     expect(genreNames()).toEqual(["調査", "実装"]);
     expect(mockSetNotification).toHaveBeenCalledWith({ message: "ジャンルを削除しました。", color: 0 });
-    expect(button("ジャンルを追加")).toHaveFocus();
+    await waitFor(() => expect(button("ジャンルを追加")).toHaveFocus());
   });
 
   it("削除に失敗したら知らせて、行を残す", async () => {
@@ -404,23 +428,19 @@ describe("ジャンル", () => {
     setResponses("workspace_task_genre", failed);
     await renderPage();
 
-    await act(async () => {
-      fireEvent.click(button("「設計」を削除"));
-    });
+    await deleteGenre("設計");
 
     expect(mockSetNotification).toHaveBeenCalledWith({ message: "ジャンルを削除できませんでした。", color: 1 });
     expect(genreNames()).toEqual(["調査", "設計", "実装"]);
     consoleError.mockRestore();
   });
 
-  it("順番の詰め直しに失敗したら、全行を元の順番へ戻して知らせる", async () => {
+  it("削除のあとの詰め直しに失敗したら、行は消したまま、並び順を保存できなかったと知らせる", async () => {
     const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
     setResponses("workspace_task_genre", ok(), failed, ok());
     await renderPage();
 
-    await act(async () => {
-      fireEvent.click(button("「設計」を削除"));
-    });
+    await deleteGenre("設計");
 
     const updates = opsOf("workspace_task_genre").filter(([op]) => op === "update");
     expect(updates).toEqual([
@@ -430,22 +450,112 @@ describe("ジャンル", () => {
       ["update", [{ sort_id: 2 }]],
       ["update", [{ sort_id: 3 }]],
     ]);
-    expect(mockSetNotification).toHaveBeenCalledWith({ message: "ジャンルを削除できませんでした。", color: 1 });
+    // DB からは消えているので、行も消し、削除に失敗したとは言わない
+    expect(genreNames()).toEqual(["調査", "実装"]);
+    expect(mockSetNotification).toHaveBeenCalledWith({
+      message: "ジャンルを削除しましたが、並び順を保存できませんでした。",
+      color: 1,
+    });
+    expect(mockSetNotification).not.toHaveBeenCalledWith({ message: "ジャンルを削除できませんでした。", color: 1 });
     consoleError.mockRestore();
   });
 
-  it("削除の返事を待つ間に続けて押しても、2回送らない", async () => {
+  it("削除の返事を待つ間は、確認の「削除する」を押せず、2回送らない", async () => {
     setResponses("workspace_task_genre", new Promise(() => {}) as never);
     await renderPage();
 
+    fireEvent.click(button("「設計」を削除"));
     await act(async () => {
-      fireEvent.click(button("「設計」を削除"));
+      fireEvent.click(button("削除する"));
     });
     await act(async () => {
-      fireEvent.click(button("「設計」を削除"));
+      fireEvent.click(button("削除中"));
     });
 
     expect(opsOf("workspace_task_genre").filter(([op]) => op === "delete")).toHaveLength(1);
+  });
+
+  it("並べ替えのあとにジャンルを足すと、DB の順番の続きの値で入れる", async () => {
+    setResponses("workspace_task_genre", ok(), ok(), ok(), ok({ id: 13, task_genre_name: "試験", sort_id: 4 }));
+    await renderPage();
+
+    await act(async () => {
+      await mockOnDragEnd!({ active: { id: "12" }, over: { id: "10" } } as unknown as DragEndEvent);
+    });
+    fireEvent.click(button("ジャンルを追加"));
+    fireEvent.change(screen.getByRole("textbox", { name: "ジャンル名" }), { target: { value: "試験" } });
+    await act(async () => {
+      fireEvent.click(button("ジャンルを保存"));
+    });
+
+    // DB の順番は1から3なので、足す行は4。以前は画面の値（0から2）を使い、3が重なった
+    expect(insertsOf("workspace_task_genre")).toEqual([
+      { task_genre_name: "試験", workspace_id: 1, sort_id: 4 },
+    ]);
+    expect(genreNames()).toEqual(["実装", "調査", "設計", "試験"]);
+  });
+
+  it("並べ替えの保存に失敗しても、例外を投げずに元の並びへ戻して知らせる", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    setResponses("workspace_task_genre", failed, ok());
+    await renderPage();
+
+    await act(async () => {
+      await expect(
+        mockOnDragEnd!({ active: { id: "12" }, over: { id: "10" } } as unknown as DragEndEvent)
+      ).resolves.toBeUndefined();
+    });
+
+    expect(genreNames()).toEqual(["調査", "設計", "実装"]);
+    expect(mockSetNotification).toHaveBeenCalledWith({ message: "ジャンルを並べ替えられませんでした。", color: 1 });
+    consoleError.mockRestore();
+  });
+
+  it("名前の保存の返事を待つ間は押せず、2回送らない", async () => {
+    setResponses("workspace", ok(workspaceRow()), new Promise(() => {}) as never);
+    await renderPage();
+
+    fireEvent.click(button("ワークスペース名を編集"));
+    await act(async () => {
+      fireEvent.click(button("ワークスペース名を保存"));
+    });
+    expect(button("ワークスペース名を保存")).toBeDisabled();
+    await act(async () => {
+      fireEvent.submit(screen.getByRole("form", { name: "ワークスペース名の編集" }));
+    });
+
+    expect(opsOf("workspace").filter(([op]) => op === "update")).toHaveLength(1);
+  });
+
+  it("ジャンルの追加と編集の返事を待つ間は押せず、2回送らない", async () => {
+    setResponses("workspace_task_genre", new Promise(() => {}) as never);
+    await renderPage();
+
+    fireEvent.click(button("ジャンルを追加"));
+    fireEvent.change(screen.getByRole("textbox", { name: "ジャンル名" }), { target: { value: "試験" } });
+    await act(async () => {
+      fireEvent.click(button("ジャンルを保存"));
+    });
+    expect(button("ジャンルを保存")).toBeDisabled();
+    await act(async () => {
+      fireEvent.submit(screen.getByRole("form", { name: "ジャンルの追加" }));
+    });
+    expect(insertsOf("workspace_task_genre")).toHaveLength(1);
+  });
+
+  it("ジャンルの編集の返事を待つ間は押せず、2回送らない", async () => {
+    setResponses("workspace_task_genre", new Promise(() => {}) as never);
+    await renderPage();
+
+    fireEvent.click(button("「設計」を編集"));
+    await act(async () => {
+      fireEvent.click(button("ジャンルを保存"));
+    });
+    expect(button("ジャンルを保存")).toBeDisabled();
+    await act(async () => {
+      fireEvent.submit(screen.getByRole("form", { name: "「設計」の編集" }));
+    });
+    expect(opsOf("workspace_task_genre").filter(([op]) => op === "update")).toHaveLength(1);
   });
 
   it("追加の返事を待つ間に別のフォームを開いても、そのフォームを閉じない", async () => {
@@ -466,18 +576,15 @@ describe("ジャンル", () => {
     expect(screen.getByLabelText("ワークスペース名")).toHaveValue("入力中");
   });
 
-  it("名前の編集中にジャンルを消しても、編集の欄のフォーカスを奪わない", async () => {
+  it("名前の編集中にジャンルを消しても、名前の編集の欄は残る", async () => {
     setResponses("workspace_task_genre", ok());
     await renderPage();
 
     fireEvent.click(button("ワークスペース名を編集"));
-    const nameInput = screen.getByLabelText("ワークスペース名");
-    nameInput.focus();
-    await act(async () => {
-      fireEvent.click(button("「設計」を削除"));
-    });
+    fireEvent.change(screen.getByLabelText("ワークスペース名"), { target: { value: "入力中" } });
+    await deleteGenre("設計");
 
-    expect(nameInput).toHaveFocus();
+    expect(screen.getByLabelText("ワークスペース名")).toHaveValue("入力中");
   });
 
   it("並べ替えは Enter で掴み、長押しの繰り返しでは置かず、Tab でやめると何も送らない", async () => {
@@ -575,6 +682,8 @@ describe("メンバー", () => {
     await renderPage();
     openMemberTab();
 
+    // ブラウザでは押したボタンにフォーカスが移る
+    button("「佐藤」をメンバーから外す").focus();
     fireEvent.click(button("「佐藤」をメンバーから外す"));
     expect(screen.getByRole("dialog", { name: "「佐藤」を外しますか？" })).toBeInTheDocument();
     expect(opsOf("workspace_users")).toEqual([]);

@@ -39,6 +39,10 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const [pending, setPending] = useState(false);
+  // 開く前にフォーカスがあった要素。呼び出す側が DialogTrigger を使わないので、Radix は閉じたあとここへ戻せない
+  const [returnFocusTo] = useState(() =>
+    typeof document === "undefined" ? null : (document.activeElement as HTMLElement | null)
+  );
 
   const handleConfirm = async () => {
     if (pending) return;
@@ -62,6 +66,11 @@ export function ConfirmDialog({
         className="sm:max-w-sm"
         // 以前の確認と同じく、外を押しても閉じない
         onInteractOutside={(e) => e.preventDefault()}
+        // 閉じたら、開く前の要素へフォーカスを戻す。消えていたら（削除できた行のボタンなど）呼び出す側に任せる
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+          if (returnFocusTo?.isConnected) returnFocusTo.focus();
+        }}
       >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
