@@ -1,15 +1,14 @@
 import { Dispatch, SetStateAction } from "react";
-import { ChevronRight, KeyRound, Trash2, UserRound, UserRoundPen } from "lucide-react";
+import { ChevronRight, KeyRound, UserRound, UserRoundPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const EDIT_USER_BUTTON_ID = "account-edit-user";
 export const EDIT_PASSWORD_BUTTON_ID = "account-edit-password";
 
 interface ProfileProps {
-  formData: {
+  profileData: {
     name: string;
     email: string;
-    password: string;
   };
   setSwitchDisplay: Dispatch<
     SetStateAction<{
@@ -18,16 +17,12 @@ interface ProfileProps {
       passwordForm: boolean;
     }>
   >;
-  openModal: () => void;
 }
 
 const ROW_CLASSES = "h-auto w-full justify-start gap-2 rounded-none px-4 py-3 font-normal";
 
-const Profile: React.FC<ProfileProps> = ({
-  formData,
-  setSwitchDisplay,
-  openModal,
-}) => {
+// 「アカウントを削除」は、ブラウザから管理者用の API を呼んでいて必ず失敗していたので置かない（台帳 決定28）
+const Profile: React.FC<ProfileProps> = ({ profileData, setSwitchDisplay }) => {
   return (
     <section aria-label="プロフィール" className="overflow-hidden rounded-lg border bg-card">
       <div className="flex items-center gap-3 p-4">
@@ -35,9 +30,9 @@ const Profile: React.FC<ProfileProps> = ({
           <UserRound className="size-6" aria-hidden />
         </span>
         <div className="min-w-0">
-          <p className="m-0 font-semibold [overflow-wrap:anywhere]">{formData.name}</p>
+          <p className="m-0 font-semibold [overflow-wrap:anywhere]">{profileData.name}</p>
           <p className="m-0 mt-0.5 text-sm text-muted-foreground [overflow-wrap:anywhere]">
-            {formData.email}
+            {profileData.email}
           </p>
         </div>
       </div>
@@ -57,7 +52,7 @@ const Profile: React.FC<ProfileProps> = ({
           }
         >
           <UserRoundPen aria-hidden />
-          <span className="flex-1 text-left">名前・メールアドレスを編集</span>
+          <span className="flex-1 text-left">名前を編集</span>
           <ChevronRight className="text-muted-foreground" aria-hidden />
         </Button>
         <Button
@@ -76,15 +71,6 @@ const Profile: React.FC<ProfileProps> = ({
           <KeyRound aria-hidden />
           <span className="flex-1 text-left">パスワードを編集</span>
           <ChevronRight className="text-muted-foreground" aria-hidden />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          className={`${ROW_CLASSES} text-destructive hover:text-destructive`}
-          onClick={openModal}
-        >
-          <Trash2 aria-hidden />
-          <span className="flex-1 text-left">アカウントを削除</span>
         </Button>
       </div>
     </section>

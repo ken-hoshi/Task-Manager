@@ -1,3 +1,4 @@
+import React from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
@@ -49,6 +50,42 @@ describe("ConfirmDialog", () => {
       finish();
     });
     expect(screen.getByRole("button", { name: "削除する" })).not.toBeDisabled();
+  });
+
+  it("閉じたら、開く前にフォーカスがあったボタンへ戻す", async () => {
+    const Harness = () => {
+      const [open, setOpen] = React.useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            開く
+          </button>
+          {open && (
+            <ConfirmDialog
+              title="削除しますか？"
+              description="元に戻せません。"
+              confirmLabel="削除する"
+              onConfirm={jest.fn()}
+              onCancel={() => setOpen(false)}
+            />
+          )}
+        </>
+      );
+    };
+    render(<Harness />);
+    const opener = screen.getByRole("button", { name: "開く" });
+    opener.focus();
+    fireEvent.click(opener);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    });
+    // Radix は閉じたあとのフォーカスの処理を次の拍で行う
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(opener).toHaveFocus();
   });
 
   it("Escape で閉じると onCancel を呼ぶ", () => {

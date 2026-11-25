@@ -130,7 +130,12 @@ const SuspenseCreateWorkspace: React.FC = () => {
         color: 0,
       });
       sessionStorage.setItem("spaceId", spaceId);
-      router.push(`/joinWorkspace?atSignUp=${atSignUp}`);
+      // 設定から来たときは、参加の画面の戻るが設定へ戻れるよう、ワークスペースも引き継ぐ
+      router.push(
+        paramsWorkspaceId
+          ? `/joinWorkspace?atSignUp=${atSignUp}&workspaceId=${paramsWorkspaceId}`
+          : `/joinWorkspace?atSignUp=${atSignUp}`
+      );
     } catch (error) {
       console.error("Add Workspace Name", error);
       setNotificationValue({

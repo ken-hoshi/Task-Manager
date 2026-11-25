@@ -68,6 +68,8 @@ const WorkspaceInfoSection: React.FC<WorkspaceInfoSectionProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // 返事を待つ間に Enter などでもう一度送っても、2回は送らない
+    if (saving) return;
     setSaving(true);
     try {
       const { error: workspaceNameUpdateError } = await clientSupabase
@@ -135,7 +137,7 @@ const WorkspaceInfoSection: React.FC<WorkspaceInfoSectionProps> = ({
                 <Button type="button" variant="ghost" size="icon-sm" aria-label="編集をやめる" onClick={closeForm}>
                   <X aria-hidden />
                 </Button>
-                <Button type="submit" size="icon-sm" aria-label="ワークスペース名を保存">
+                <Button type="submit" size="icon-sm" aria-label="ワークスペース名を保存" disabled={saving}>
                   {saving ? <Loader2 className="animate-spin" aria-hidden /> : <Check aria-hidden />}
                 </Button>
               </div>
