@@ -552,6 +552,12 @@ revoke all on all tables in schema public from anon;
 revoke all on all sequences in schema public from anon;
 revoke all on all functions in schema private from anon;
 grant select, insert, update, delete on all tables in schema public to authenticated;
+-- users で本人が変えられるのは名前だけ。行を足す・消す・email と auth_user_id を書くのは、登録のトリガーだけ
+-- （email を書き換えられると、まだ登録していない人のアドレスを先に押さえ、その人の登録を一意の制約で落とせる）。
+-- 上の「all tables」の grant を流し直したときは、この3行も続けて流す（流さないと users 全体の update が戻る）
+revoke update on public.users from authenticated;
+grant update (name) on public.users to authenticated;
+revoke insert, delete on public.users from authenticated;
 grant usage, select on all sequences in schema public to authenticated;
 
 -- ---------------------------------------------------------------
