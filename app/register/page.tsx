@@ -12,9 +12,8 @@ import { useFormContext } from "../provider/formProvider";
 import { signUp } from "../hooks/signUp";
 import { useNotificationContext } from "../provider/notificationProvider";
 import NotificationBanner from "../component/notificationBanner/notificationBanner";
-import { isAllowedEmail } from "../lib/isAllowedEmail";
-
-const PASSWORD_ERROR = "パスワードは、英字と数字だけで両方を含む8文字以上にしてください。";
+import { EMAIL_NOT_ALLOWED, isAllowedEmail } from "../lib/isAllowedEmail";
+import { isValidPassword, PASSWORD_ERROR, PASSWORD_HINT } from "../lib/passwordRule";
 
 const Register: React.FC = () => {
   const { setBackForm } = useFormContext();
@@ -33,12 +32,11 @@ const Register: React.FC = () => {
   });
 
   const validate = (email: string, password: string) => {
-    const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
     const emailInvalid = !isAllowedEmail(email);
-    const passwordInvalid = !regex.test(password);
+    const passwordInvalid = !isValidPassword(password);
 
     if (emailInvalid) {
-      setEmailError("このメールアドレスは使用できません。");
+      setEmailError(EMAIL_NOT_ALLOWED);
     }
     if (passwordInvalid) {
       setPasswordError(PASSWORD_ERROR);
@@ -83,6 +81,13 @@ const Register: React.FC = () => {
     const signUpError = await useSignUp(name, email, password);
     if (signUpError) {
       console.error("Sign up ", signUpError);
+      // 登録前フックがドメインで断ったときは、メールの欄に出して直してもらう
+      if (signUpError instanceof Error && signUpError.message === EMAIL_NOT_ALLOWED) {
+        setEmailError(EMAIL_NOT_ALLOWED);
+        document.getElementById("register-email")?.focus();
+        setLoading(false);
+        return;
+      }
       setNotificationValue({
         message: "登録できませんでした。",
         color: 1,
@@ -144,8 +149,7 @@ const Register: React.FC = () => {
               id="register-password"
               type="password"
               name="password"
-              // ブラウザが提案する記号入りのパスワードは検証を通らないので、提案を出さない
-              autoComplete="off"
+              autoComplete="new-password"
               required
               aria-invalid={passwordError ? true : undefined}
               aria-describedby="register-password-note"
@@ -160,7 +164,7 @@ const Register: React.FC = () => {
               </p>
             ) : (
               <p key="hint" id="register-password-note" className="m-0 text-sm text-muted-foreground">
-                英字と数字だけで、両方を含む8文字以上
+                {PASSWORD_HINT}
               </p>
             )}
           </FormField>

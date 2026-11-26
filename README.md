@@ -55,8 +55,9 @@
 - ワークスペースの作成と参加は、DB の関数（RPC）からだけできる。参加には合言葉が要る
 - タスクの担当者・通知の宛先は、そのワークスペースのメンバーに限る
 - ログインしていない人には、表も関数も渡さない（DB を起こす関数を除く。返すのは件数だけ）
+- 登録できるメールのドメインは、画面に加えて、Supabase の登録前フック（Before User Created）でも確かめる。API を直接呼んでも、許していないドメインではユーザーが作られない
 
-表・RLS・関数はすべて `supabase/schema.sql` にあり、`supabase/tests/rls.sql` で3人のユーザーになりすまして34項目を確かめます。
+表・RLS・関数はすべて `supabase/schema.sql` にあり、`supabase/tests/rls.sql` で3人のユーザーになりすまして34項目を確かめます。登録前フックは `supabase/tests/signup_hook.sql` で14項目を確かめます。
 
 ### Gemini の鍵はサーバーの外に出さない
 
@@ -70,7 +71,7 @@ AI の答えは HTML を通しません。
 
 ### テスト
 
-Jest のテストは422件あります。
+Jest のテストは435件あります。
 
 - `test/lib/`：日付・通知・並べ替え・ステータス・DB の問い合わせの関数
 - `test/components/`：タスク画面の表・ポップアップ・AI チャット・通知・コメント、共通部品、プロジェクト画面の枠・一覧・カレンダー・ボード・Wiki、ワークスペースの作成・参加・設定、アカウント
@@ -110,7 +111,6 @@ Jest のテストは422件あります。
 ### 権限と入力の確認
 
 - users の email を、本人なら確認なしに書き換えられる。まだ登録していない人のアドレスを先に押さえられる
-- 登録できるメールのドメインは画面の側でしか確かめていない
 - ワークスペース名の重複の確認は全ワークスペースが対象で、名前を変えるときは確かめない
 - メンバーなら誰でも、ほかのメンバーをワークスペースから外せる（役割の区別がない）
 
@@ -128,14 +128,18 @@ Jest のテストは422件あります。
    | `GEMINI_API_KEY` | Gemini の API キー |
    | `NEXT_PUBLIC_ALLOWED_EMAIL_DOMAIN` | 登録できるメールのドメイン（例：`example.com`）。空なら絞らない |
 
-3. 起動する
+3. Supabase のダッシュボードの Authentication > Providers > Email で、パスワードの最短の長さを 8、必要な文字を「Letters and digits」にする（画面の規則と同じ条件を、API を直接呼ばれたときにもかける）
+4. 登録できるメールのドメインを絞るときは、次の2つを行う（絞らないなら不要）。すでに動いている DB に足すときは、`schema.sql` のうち「登録できるメールのドメイン」の節（表・関数・revoke と grant）だけを SQL Editor で実行してから行う
+   - Supabase のダッシュボードの Authentication > Hooks で、Before User Created に `public.hook_restrict_signup_by_email_domain` を選んで有効にする
+   - SQL Editor で、許すドメインを小文字で入れる：`insert into private.signup_allowed_domains (domain) values ('example.com');`。環境変数 `NEXT_PUBLIC_ALLOWED_EMAIL_DOMAIN` にも同じドメインを入れる（画面は送る前に知らせ、DB は送られたあとに止める）
+5. 起動する
 
    ```bash
    npm install
    npm run dev
    ```
 
-テストは `npm test` で動きます。RLS を確かめるときは、`supabase/tests/rls.sql` を SQL Editor で実行します（最後に取り消すので、データは残りません）。
+テストは `npm test` で動きます。RLS と登録前フックを確かめるときは、`supabase/tests/rls.sql` と `supabase/tests/signup_hook.sql` を SQL Editor で実行します（最後に取り消すので、データは残りません）。
 
 ## サイトマップ
 

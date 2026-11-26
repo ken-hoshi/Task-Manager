@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { clientSupabase } from "@/app/lib/supabase/client";
 import { useNotificationContext } from "@/app/provider/notificationProvider";
 import { usePageUpdateContext } from "@/app/provider/pageUpdateProvider";
+import { isValidPassword, PASSWORD_ERROR, PASSWORD_HINT } from "@/app/lib/passwordRule";
 import { FieldNote } from "../fieldNote";
 
 const NEW_ID = "account-new-password";
@@ -59,12 +60,11 @@ const PasswordEditForm: React.FC<PasswordEditForm> = ({
     confirmPassword: string,
     currentPassword: string
   ) => {
-    const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
-    const newInvalid = !regex.test(newPassword);
+    const newInvalid = !isValidPassword(newPassword);
     const confirmInvalid = newPassword !== confirmPassword;
 
     if (newInvalid) {
-      setNewPasswordError("パスワードは、英字と数字だけで両方を含む8文字以上にしてください。");
+      setNewPasswordError(PASSWORD_ERROR);
     }
     if (confirmInvalid) {
       setConfirmPasswordError("確認用のパスワードが、新しいパスワードと違います。");
@@ -164,7 +164,7 @@ const PasswordEditForm: React.FC<PasswordEditForm> = ({
           <FieldNote
             id={`${NEW_ID}-note`}
             error={newPasswordError}
-            hint="英字と数字だけで、両方を含む8文字以上"
+            hint={PASSWORD_HINT}
           />
         </FormField>
 

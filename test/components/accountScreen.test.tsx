@@ -74,7 +74,7 @@ jest.mock("@/app/component/appShell/appShell", () => ({
   },
 }));
 
-const PASSWORD_RULE = "パスワードは、英字と数字だけで両方を含む8文字以上にしてください。";
+const PASSWORD_RULE = "パスワードは、英字と数字を両方含む8文字以上にしてください。空白と全角の文字は使えません。";
 const button = (name: string | RegExp) => screen.getByRole("button", { name });
 const field = (label: RegExp) => screen.getByLabelText(label);
 const change = (element: HTMLElement, value: string) => fireEvent.change(element, { target: { value } });
@@ -391,7 +391,7 @@ describe("パスワードの編集", () => {
 
   it("保存すると、今のパスワードで確かめてから新しいパスワードを送る", async () => {
     await open();
-    expect(field(/^新しいパスワード\*/)).toHaveAccessibleDescription("英字と数字だけで、両方を含む8文字以上");
+    expect(field(/^新しいパスワード\*/)).toHaveAccessibleDescription("英字と数字を両方含む8文字以上（記号も使えます）");
     fill("newpass123", "newpass123", "abcd1234");
     await submit();
 
@@ -399,6 +399,14 @@ describe("パスワードの編集", () => {
     expect(mockUpdateUser).toHaveBeenCalledWith({ password: "newpass123" });
     expect(mockSetNotification).toHaveBeenCalledWith({ message: "パスワードを更新しました。", color: 0 });
     expect(button("パスワードを編集")).toHaveFocus();
+  });
+
+  it("新しいパスワードに記号を含めても保存できる", async () => {
+    await open();
+    fill("newpass123!#", "newpass123!#", "abcd1234");
+    await submit();
+
+    expect(mockUpdateUser).toHaveBeenCalledWith({ password: "newpass123!#" });
   });
 
   it("新しいパスワードが規則に合わなければ、その欄へフォーカスを移す", async () => {
