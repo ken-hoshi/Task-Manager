@@ -1,5 +1,5 @@
 // AI チャット（RobotButton と AiChatArea）。開く・送る・答えの表を横スクロールの箱に入れる、を確かめる
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import RobotButton from "@/app/component/robotButton/robotButton";
 
 const setNotificationValue = jest.fn();
@@ -91,6 +91,8 @@ describe("AI チャット", () => {
     fetchMock.mockReturnValue(new Promise((resolve) => (reply = resolve)));
     openChat();
 
+    // ブラウザでは押したボタンにフォーカスが移る（fireEvent.click は移さないので、先に移しておく）
+    screen.getByRole("button", { name: "送る" }).focus();
     await ask("見積もりは？");
 
     expect(screen.getByRole("button", { name: "送っています" })).toBeDisabled();
@@ -99,7 +101,8 @@ describe("AI チャット", () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     expect(screen.getByRole("button", { name: "送る" })).not.toBeDisabled();
-    expect(screen.getByRole("textbox", { name: "AI への質問" })).toHaveFocus();
+    // 部品は setTimeout の中でフォーカスを戻すので、戻るのを待ってから確かめる
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "AI への質問" })).toHaveFocus());
   });
 
   it("答えのリンクは、新しいタブで開き、開いた先にこの画面を触らせない", async () => {

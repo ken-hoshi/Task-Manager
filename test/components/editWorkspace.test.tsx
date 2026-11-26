@@ -402,8 +402,9 @@ describe("ジャンル", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(opsOf("workspace_task_genre")).toEqual([]);
     expect(genreNames()).toEqual(["調査", "設計", "実装"]);
-    // 確認を閉じたら、押した削除のボタンへフォーカスを戻す
-    expect(button("「設計」を削除")).toHaveFocus();
+    // 確認を閉じたら、押した削除のボタンへフォーカスを戻す。Radix は閉じたあとのフォーカスを
+    // setTimeout(0) で動かすので、すぐに確かめると戻る前に当たり、ときどき落ちる
+    await waitFor(() => expect(button("「設計」を削除")).toHaveFocus());
   });
 
   it("削除すると行を消し、後ろの行の順番を1つ詰める", async () => {
