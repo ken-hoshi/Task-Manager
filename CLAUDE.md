@@ -24,6 +24,7 @@ Next.js は版が新しく、手元の知識と違うところがある。Next �
 - 不具合を直すときは、直す前の作りで落ちるテストを先に書き、落ちる理由が狙いどおりかを見てから直す。足したテストは、直した箇所を元に戻して落ちることも確かめる
 - `act(async () => …)` の中で、開く操作と、開いたものを探す操作を続けて書かない。入れ子の act は外側を抜けるまで描画を反映しないので、開いた一覧が見つからない
 - Radix の Select は、ボタンへの keyDown Enter で開く。react-select は ArrowDown で開く
+- Radix のダイアログ・メニューを閉じたあとのフォーカスは `setTimeout(0)` で動く。`await waitFor(() => expect(…).toHaveFocus())` で確かめる。`fireEvent.click` はフォーカスを動かさないので、フォーカスが戻ることを確かめるときは、先に押すボタンへ `.focus()` する
 - react-markdown と remark-gfm は ESM だけで配られていて Jest で読めない。使う部品のテストでは差し替える
 
 ## 画面の決まり
