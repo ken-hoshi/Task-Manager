@@ -27,7 +27,7 @@ const submitButton = () => screen.getByRole("button", { name: "登録する" });
 const nameInput = () => screen.getByLabelText(/^名前/);
 const emailInput = () => screen.getByLabelText(/^メールアドレス/);
 const passwordInput = () => screen.getByLabelText(/^パスワード/);
-const PASSWORD_ERROR = "パスワードは、英字と数字だけで両方を含む8文字以上にしてください。";
+const PASSWORD_ERROR = "パスワードは、英字と数字を両方含む8文字以上にしてください。空白と全角の文字は使えません。";
 
 describe("Register コンポーネント", () => {
   beforeEach(() => {
@@ -61,7 +61,7 @@ describe("Register コンポーネント", () => {
     expect(nameInput()).toHaveAttribute("type", "text");
     expect(emailInput()).toHaveAttribute("type", "email");
     expect(passwordInput()).toHaveAttribute("type", "password");
-    expect(passwordInput()).toHaveAccessibleDescription("英字と数字だけで、両方を含む8文字以上");
+    expect(passwordInput()).toHaveAccessibleDescription("英字と数字を両方含む8文字以上（記号も使えます）");
     expect(submitButton()).toBeEnabled();
   });
 
@@ -155,6 +155,86 @@ describe("Register コンポーネント", () => {
       "abcd1234"
     );
     expect(signUpSuccessFlag).toBe(true);
+  });
+
+  it("⑥-3 記号を含むパスワードでも登録へ進む", async () => {
+    const useSignUp = jest.fn();
+    (signUp as jest.Mock).mockReturnValue({ useSignUp });
+    render(<Register />);
+
+    fillForm("test", "email@example.com", "abcd1234!#$");
+    await act(async () => {
+      fireEvent.click(submitButton());
+    });
+
+    expect(useSignUp).toHaveBeenCalledWith("test", "email@example.com", "abcd1234!#$");
+  });
+
+  it.each([
+    ["空白を含む", "abcd 1234"],
+    ["全角を含む", "abcd1234あ"],
+    ["数字が無い", "abcdefg!"],
+    ["英字が無い", "1234567!"],
+    ["7文字の", "abc12!#"],
+    ["タブを含む", "abcd\t1234"],
+    ["全角の英数字を含む", "ａｂｃｄ1234"],
+  ])("⑤-2 %sパスワードは通さない", async (_, password) => {
+    const useSignUp = jest.fn();
+    (signUp as jest.Mock).mockReturnValue({ useSignUp });
+    render(<Register />);
+
+    fillForm("test", "email@example.com", password);
+    await act(async () => {
+      fireEvent.click(submitButton());
+    });
+
+    expect(passwordInput()).toHaveAttribute("aria-invalid", "true");
+    expect(useSignUp).not.toHaveBeenCalled();
+  });
+
+  it("⑥-5 ちょうど8文字なら記号を含んでも登録へ進む", async () => {
+    const useSignUp = jest.fn();
+    (signUp as jest.Mock).mockReturnValue({ useSignUp });
+    render(<Register />);
+
+    fillForm("test", "email@example.com", "abc123!#");
+    await act(async () => {
+      fireEvent.click(submitButton());
+    });
+
+    expect(useSignUp).toHaveBeenCalledWith("test", "email@example.com", "abc123!#");
+  });
+
+  it("⑥-4 パスワードの欄は、ブラウザが新しいパスワードを提案できる", () => {
+    render(<Register />);
+
+    expect(passwordInput()).toHaveAttribute("autocomplete", "new-password");
+  });
+
+  it("⑧-2 サーバーがメールのドメインで断ったら、メールの欄に出してフォーカスを移す", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    // 登録前フック（supabase/schema.sql）が返す文が、そのまま error.message に入る
+    const useSignUp = jest.fn(async () =>
+      Object.assign(new Error("このメールアドレスは使用できません。"), { status: 403 })
+    );
+    (signUp as jest.Mock).mockReturnValue({ useSignUp });
+    render(
+      <NotificationProvider>
+        <Register />
+      </NotificationProvider>
+    );
+
+    fillForm("test", "email@example.com", "abcd1234");
+    await act(async () => {
+      fireEvent.click(submitButton());
+    });
+
+    expect(emailInput()).toHaveAttribute("aria-invalid", "true");
+    expect(emailInput()).toHaveAccessibleDescription("このメールアドレスは使用できません。");
+    expect(emailInput()).toHaveFocus();
+    expect(screen.queryByText("登録できませんでした。")).not.toBeInTheDocument();
+    expect(submitButton()).toBeEnabled();
+    consoleError.mockRestore();
   });
 
   it("⑦ 戻るボタンが正しく機能する", () => {

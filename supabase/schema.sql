@@ -510,6 +510,41 @@ revoke all on function public.keep_alive() from public;
 grant execute on function public.keep_alive() to anon, authenticated;
 
 -- ---------------------------------------------------------------
+-- 登録できるメールのドメイン（Supabase の Before User Created フック）
+-- 画面の判定（NEXT_PUBLIC_ALLOWED_EMAIL_DOMAIN）は API を直接呼べば通れるので、ユーザーを作る直前にここでも確かめる。
+-- フックはダッシュボードの Authentication > Hooks で、この関数を選んで有効にする（SQL だけでは有効にならない）。
+-- 許すドメインは下の表に小文字で入れる。表が空なら絞らない（環境変数が空のときと同じ）
+-- ---------------------------------------------------------------
+
+create table private.signup_allowed_domains (
+  -- 小文字のドメインだけ（前後の空白・@・末尾の . を入れると、表は空でないのに誰とも一致せず、全員の登録を断ってしまう）
+  domain text primary key check (domain ~ '^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$')
+);
+
+create function public.hook_restrict_signup_by_email_domain(event jsonb)
+returns jsonb
+language plpgsql stable security definer set search_path = ''
+as $$
+declare
+  -- 画面の判定（@ドメイン で終わるか）と同じく、最後の @ のあとを見る
+  email_domain text := lower(substring(event -> 'user' ->> 'email' from '@([^@]*)$'));
+begin
+  if not exists (select 1 from private.signup_allowed_domains)
+    or exists (select 1 from private.signup_allowed_domains where domain = email_domain) then
+    return '{}'::jsonb;
+  end if;
+  -- 画面の判定と同じ文を返す（app/lib/isAllowedEmail.ts の EMAIL_NOT_ALLOWED。画面はこの文でメールの欄に出す）
+  return jsonb_build_object(
+    'error', jsonb_build_object('http_code', 403, 'message', 'このメールアドレスは使用できません。')
+  );
+end;
+$$;
+
+-- 呼べるのは Supabase の認証だけ。画面（anon・authenticated）からは呼べない
+revoke all on function public.hook_restrict_signup_by_email_domain(jsonb) from public, anon, authenticated;
+grant execute on function public.hook_restrict_signup_by_email_domain(jsonb) to supabase_auth_admin;
+
+-- ---------------------------------------------------------------
 -- 権限（ログインしていない人 anon には、keep_alive のほかは表も関数も渡さない）
 -- ---------------------------------------------------------------
 
