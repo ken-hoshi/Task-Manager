@@ -243,6 +243,23 @@ begin
     raise exception 'FAIL 32: メンバーでない人に通知を送れる';
   exception when insufficient_privilege then null;
   end;
+
+  -- 自分の users の行で変えられるのは名前だけ。メールを書き換えられると、まだ登録していない人の
+  -- アドレスを先に押さえられ、その人の登録（users の行を作るトリガー）が一意の制約で落ちる
+  begin
+    update public.users set email = 'rls-test-squat@example.com' where auth_user_id = (select auth.uid());
+    raise exception 'FAIL 34: 自分の users の email を書き換えられる';
+  exception when insufficient_privilege then null;
+  end;
+  update public.users set name = 'RLS Test A renamed' where auth_user_id = (select auth.uid());
+  if not found then
+    raise exception 'FAIL 35: 自分の名前を変えられない';
+  end if;
+  -- 同じワークスペースにいて見える B の行でも、名前は変えられない
+  update public.users set name = 'hacked' where id = current_setting('rls_test.user_b')::integer;
+  if found then
+    raise exception 'FAIL 36: A が B の名前を変えられる';
+  end if;
 end $$;
 
 -- ---------------------------------------------------------------
