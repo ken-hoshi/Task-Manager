@@ -118,7 +118,8 @@ describe("コメント欄", () => {
       ])
     );
     expect(opsOf("comments")).toContainEqual(["eq", ["id", 2]]);
-    // メニューのボタンは消えるので、フォーカスは書く欄へ移る
-    expect(screen.getByRole("textbox", { name: "コメント" })).toHaveFocus();
+    // メニューのボタンは消えるので、フォーカスは書く欄へ移る。Radix のメニューは閉じたあとの
+    // フォーカスを setTimeout で動かすので、移るのを待ってから確かめる
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "コメント" })).toHaveFocus());
   });
 });
